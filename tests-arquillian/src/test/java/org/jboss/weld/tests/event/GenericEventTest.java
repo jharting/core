@@ -19,6 +19,7 @@ package org.jboss.weld.tests.event;
 import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.BeanManager;
+import javax.enterprise.util.TypeLiteral;
 import javax.inject.Inject;
 
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -38,8 +39,7 @@ import org.junit.runner.RunWith;
 public class GenericEventTest {
     @Deployment
     public static Archive<?> deploy() {
-        return ShrinkWrap.create(BeanArchive.class)
-                .addPackage(GenericEventTest.class.getPackage());
+        return ShrinkWrap.create(BeanArchive.class).addPackage(GenericEventTest.class.getPackage());
     }
 
     private static boolean ENTRY_EVENT_OBSERVED;
@@ -51,45 +51,73 @@ public class GenericEventTest {
         ENTRY_ADDED_EVENT_OBSERVED = false;
     }
 
+    
     @Inject
     private BeanManager beanManager;
+    
+    @Inject
+    private Event<EntryEvent<?, ?>> wildcardEvent; 
 
     @Inject
     private Event<EntryEvent<String, String>> event;
-
+    
     @Inject
     private Event<EntryAddedEvent<String, String>> extendedEvent;
 
     @Test
-    public void testFireGenericEventOnManager() {
-        beanManager.fireEvent(new EntryEvent<String, String>("key", "value"));
-
+    public void testConcreteSubclassOnManager() {
+        beanManager.fireEvent(new ConcreteEntryEvent("key", "value"));
         Assert.assertTrue(ENTRY_EVENT_OBSERVED);
     }
 
     @Test
-    public void testFireGenericEventOnEvent() {
+    public void testConcreteExtendedSubclassOnManager() {
+        beanManager.fireEvent(new ConcreteEntryAddedEvent("key", "value"));
+        Assert.assertTrue(ENTRY_EVENT_OBSERVED);
+        Assert.assertTrue(ENTRY_ADDED_EVENT_OBSERVED);
+    }
+    
+    @Test
+    public void testConcreteSubclassOnEvent() {
+        event.fire(new ConcreteEntryEvent("key", "value"));
+        Assert.assertTrue(ENTRY_EVENT_OBSERVED);
+    }
+    
+    @Test
+    public void testConcreteExtendedSubclassOnEvent() {
+        extendedEvent.fire(new ConcreteEntryAddedEvent("key", "value"));
+        Assert.assertTrue(ENTRY_EVENT_OBSERVED);
+        Assert.assertTrue(ENTRY_ADDED_EVENT_OBSERVED);
+    }
+    
+    @Test
+    public void testGenericEventOnEvent() {
         event.fire(new EntryEvent<String, String>("key", "value"));
-
         Assert.assertTrue(ENTRY_EVENT_OBSERVED);
     }
 
     @Test
-    public void testFireExtendedGenericEventOnManager() {
-        beanManager.fireEvent(new EntryAddedEvent<String, String>("key", "value"));
-
-        Assert.assertTrue(ENTRY_EVENT_OBSERVED);
-        Assert.assertTrue(ENTRY_ADDED_EVENT_OBSERVED);
-    }
-
-    @Test
-    public void testFireExtendedGenericEventOnEvent() {
+    public void testExtendedGenericEventOnEvent() {
         extendedEvent.fire(new EntryAddedEvent<String, String>("key", "value"));
-
         Assert.assertTrue(ENTRY_EVENT_OBSERVED);
         Assert.assertTrue(ENTRY_ADDED_EVENT_OBSERVED);
     }
-
+    
+    @Test
+    @SuppressWarnings("serial")
+    public void testSelectGenericEventOnEvent() {
+        wildcardEvent.select(new TypeLiteral<EntryEvent<String, String>>() {}).fire(new EntryEvent<String, String>("key", "value"));
+        Assert.assertTrue(ENTRY_EVENT_OBSERVED);
+    }
+    
+    @Test
+    @SuppressWarnings("serial")
+    public void testSelectGenericExtendedEventOnEvent() {
+        wildcardEvent.select(new TypeLiteral<EntryAddedEvent<String, String>>() {}).fire(new EntryAddedEvent<String, String>("key", "value"));
+        Assert.assertTrue(ENTRY_EVENT_OBSERVED);
+        Assert.assertTrue(ENTRY_ADDED_EVENT_OBSERVED);
+    }
+    
     static class EntryEvent<K, V> {
         final K key;
         final V value;
@@ -100,10 +128,24 @@ public class GenericEventTest {
         }
     }
 
+    static class ConcreteEntryEvent extends EntryEvent<String, String> {
+        ConcreteEntryEvent(String key, String value) {
+            super(key, value);
+        }
+    }
+
     static class EntryAddedEvent<K, V> extends EntryEvent<K, V> {
         EntryAddedEvent(K key, V value) {
             super(key, value);
         }
+    }
+    
+    static class ConcreteEntryAddedEvent extends EntryAddedEvent<String, String>
+    {
+        ConcreteEntryAddedEvent(String key, String value) {
+            super(key, value);
+        }
+        
     }
 
     static class Observer {
