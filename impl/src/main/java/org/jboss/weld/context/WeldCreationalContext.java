@@ -16,6 +16,8 @@
  */
 package org.jboss.weld.context;
 
+import java.util.Map;
+
 import org.jboss.weld.context.api.ContextualInstance;
 
 import javax.enterprise.context.spi.Contextual;
@@ -39,4 +41,10 @@ public interface WeldCreationalContext<T> extends CreationalContext<T> {
 
     void release();
 
+    /**
+     * A map allowing arbitrary objects to be associated with the instance being created for later use during instance
+     * destruction. The map is initialized lazily. If the bean instance being created is a candidate for passivation, every
+     * object stored in the map must be serializable.
+     */
+    Map<Object, Object> getContextMap();
 }

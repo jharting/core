@@ -30,6 +30,7 @@ import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
+import javax.enterprise.inject.spi.InjectionPoint;
 import javax.inject.Inject;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -48,6 +49,7 @@ public class DisposalMethod<X, T> extends AbstractReceiverBean<X, T, Method> {
 
     protected MethodInjectionPoint<T, ? super X> disposalMethodInjectionPoint;
     private WeldParameter<?, ? super X> disposesParameter;
+    private boolean injectionPointParameter;
 
     public static <X, T> DisposalMethod<X, T> of(BeanManagerImpl manager, WeldMethod<T, ? super X> method, AbstractClassBean<X> declaringBean, ServiceRegistry services) {
         return new DisposalMethod<X, T>(manager, method, declaringBean, services);
@@ -67,6 +69,16 @@ public class DisposalMethod<X, T> extends AbstractReceiverBean<X, T, Method> {
         this.disposesParameter = getWeldAnnotated().getWeldParameters(Disposes.class).get(0);
     }
 
+    private void initInjectionPointParameter() {
+        for (Class<?> type : getWeldAnnotated().getParameterTypesAsArray()) {
+            if (InjectionPoint.class.equals(type)) {
+                injectionPointParameter = true;
+                return;
+            }
+        }
+        injectionPointParameter = false;
+    }
+
     public WeldParameter<?, ? super X> getDisposesParameter() {
         return disposesParameter;
     }
@@ -76,6 +88,7 @@ public class DisposalMethod<X, T> extends AbstractReceiverBean<X, T, Method> {
         super.initialize(environment);
         checkDisposalMethod();
         initDisposesParameter();
+        initInjectionPointParameter();
     }
 
     protected void initType() {
@@ -234,5 +247,7 @@ public class DisposalMethod<X, T> extends AbstractReceiverBean<X, T, Method> {
         return "Disposer method [" + getDisposesParameter().getDeclaringCallable() + "]";
     }
 
-
+    public boolean hasInjectionPointParameter() {
+        return injectionPointParameter;
+    }
 }

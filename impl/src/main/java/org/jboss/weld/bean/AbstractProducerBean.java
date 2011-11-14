@@ -21,6 +21,7 @@ import com.google.common.collect.MapMaker;
 import org.jboss.weld.Container;
 import org.jboss.weld.bootstrap.BeanDeployerEnvironment;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
+import org.jboss.weld.context.WeldCreationalContext;
 import org.jboss.weld.exceptions.DefinitionException;
 import org.jboss.weld.exceptions.IllegalProductException;
 import org.jboss.weld.exceptions.WeldException;
@@ -105,6 +106,8 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
 
     private DisposalMethod<X, ?> disposalMethodBean;
 
+    private CurrentInjectionPoint currentInjectionPoint;
+
     /**
      * Constructor
      *
@@ -180,6 +183,7 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
         checkProducerReturnType();
         initPassivationCapable();
         initDisposalMethod(environment);
+        currentInjectionPoint = Container.instance().services().get(CurrentInjectionPoint.class);
     }
 
     private void initPassivationCapable() {
@@ -226,7 +230,7 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
             if (passivating && !instanceSerializable) {
                 throw new IllegalProductException(NON_SERIALIZABLE_PRODUCT_ERROR, getProducer());
             }
-            InjectionPoint injectionPoint = Container.instance().services().get(CurrentInjectionPoint.class).peek();
+            InjectionPoint injectionPoint = currentInjectionPoint.peek();
             if (injectionPoint != null && injectionPoint.getBean() != null) {
                 if (!instanceSerializable && Beans.isPassivatingScope(injectionPoint.getBean(), beanManager)) {
                     if (injectionPoint.getMember() instanceof Field) {
@@ -300,6 +304,10 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
      * @returns The instance
      */
     public T create(final CreationalContext<T> creationalContext) {
+        if (hasDisposalMethodWithInjectionPointParameter()) {
+            storeInjectionPoint(creationalContext);
+        }
+
         try {
             T instance = getProducer().produce(creationalContext);
             checkReturnValue(instance);
@@ -311,13 +319,52 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
         }
     }
 
-    public void destroy(T instance, CreationalContext<T> creationalContext) {
+    private void storeInjectionPoint(final CreationalContext<T> creationalContext) {
+        if (!(creationalContext instanceof WeldCreationalContext<?>)) {
+            throw new IllegalArgumentException("Cannot store InjectionPoint instance in an unknown CreationalContext subclass " + creationalContext.getClass());
+        }
+        InjectionPoint ip = currentInjectionPoint.peek();
+        WeldCreationalContext<?> ctx = (WeldCreationalContext<?>) creationalContext;
+        // check that we can safely store the InjectionPoint
+        if (Beans.isPassivatingScope(ip.getBean(), beanManager) && !(isTypeSerializable(ip.getClass()))) {
+            throw new IllegalArgumentException("The injection point " + ip + " required by a disposer method " + getDisposalMethod() + " is not serializable.");
+        }
+        ctx.getContextMap().put(InjectionPoint.class.getCanonicalName(), ip);
+    }
+
+    public void destroy(T instance, CreationalContext<T> ctx) {
+        if (hasDisposalMethodWithInjectionPointParameter()) {
+            loadInjectionPointAndDestroyInstance(instance, ctx);
+        } else {
+            destroyInstance(instance, ctx);
+        }
+    }
+
+    protected void destroyInstance(T instance, CreationalContext<T> creationalContext) {
         try {
             getProducer().dispose(instance);
         } finally {
             if (getDeclaringBean().isDependent()) {
                 creationalContext.release();
             }
+        }
+    }
+
+    protected void loadInjectionPointAndDestroyInstance(T instance, CreationalContext<T> creationalContext) {
+        if (!(creationalContext instanceof WeldCreationalContext<?>)) {
+            throw new IllegalArgumentException("Cannot load InjectionPoint instance in an unknown CreationalContext subclass " + creationalContext.getClass());
+        }
+        WeldCreationalContext<T> ctx = cast(creationalContext);
+        Object ip = ctx.getContextMap().get(InjectionPoint.class.getCanonicalName());
+        if (ip == null || !(ip instanceof InjectionPoint)) {
+            throw new IllegalStateException("Unable to restore InjectionPoint instance.");
+        }
+        currentInjectionPoint.push(Reflections.<InjectionPoint>cast(ip));
+
+        try {
+            destroyInstance(instance, ctx);
+        } finally {
+            currentInjectionPoint.pop();
         }
     }
 
@@ -358,5 +405,9 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
         public Set<InjectionPoint> getInjectionPoints() {
             return cast(getWeldInjectionPoints());
         }
+    }
+
+    private boolean hasDisposalMethodWithInjectionPointParameter() {
+        return disposalMethodBean != null && disposalMethodBean.hasInjectionPointParameter();
     }
 }

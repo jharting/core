@@ -42,6 +42,8 @@ public class CreationalContextImpl<T> implements CreationalContext<T>, WeldCreat
 
     private final List<ContextualInstance<?>> parentDependentInstances;
 
+    private Map<Object, Object> contextMap;
+
     public CreationalContextImpl(Contextual<T> contextual) {
         this(contextual, new HashMap<Contextual<?>, Object>(), Collections.synchronizedList(new ArrayList<ContextualInstance<?>>()));
     }
@@ -86,4 +88,10 @@ public class CreationalContextImpl<T> implements CreationalContext<T>, WeldCreat
         beanInstance.getContextual().destroy(beanInstance.getInstance(), beanInstance.getCreationalContext());
     }
 
+    public Map<Object, Object> getContextMap() {
+        if (contextMap == null) {
+            contextMap = new HashMap<Object, Object>();
+        }
+        return contextMap;
+    }
 }
