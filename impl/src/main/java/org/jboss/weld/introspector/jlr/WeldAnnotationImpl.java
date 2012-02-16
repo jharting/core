@@ -16,23 +16,25 @@
  */
 package org.jboss.weld.introspector.jlr;
 
-import com.google.common.collect.Multimaps;
-import com.google.common.collect.SetMultimap;
-import org.jboss.weld.introspector.TypeClosureLazyValueHolder;
-import org.jboss.weld.introspector.WeldAnnotation;
-import org.jboss.weld.introspector.WeldMethod;
-import org.jboss.weld.resources.ClassTransformer;
-import org.jboss.weld.util.collections.HashSetSupplier;
-import org.jboss.weld.util.reflection.SecureReflections;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
+
+import org.jboss.weld.introspector.TypeClosureLazyValueHolder;
+import org.jboss.weld.introspector.WeldAnnotation;
+import org.jboss.weld.introspector.WeldMethod;
+import org.jboss.weld.introspector.jlr.temp.Annotations;
+import org.jboss.weld.resources.ClassTransformer;
+import org.jboss.weld.util.LazyValueHolder;
+import org.jboss.weld.util.collections.HashSetSupplier;
+import org.jboss.weld.util.reflection.SecureReflections;
+
+import com.google.common.collect.Multimaps;
+import com.google.common.collect.SetMultimap;
 
 /**
  * Represents an annotated annotation
@@ -52,14 +54,7 @@ public class WeldAnnotationImpl<T extends Annotation> extends WeldClassImpl<T> i
     private final Set<WeldMethod<?, ?>> members;
 
     public static <A extends Annotation> WeldAnnotation<A> of(Class<A> annotationType, ClassTransformer classTransformer) {
-        Map<Class<? extends Annotation>, Annotation> annotationMap = new HashMap<Class<? extends Annotation>, Annotation>();
-        annotationMap.putAll(buildAnnotationMap(annotationType.getAnnotations()));
-        annotationMap.putAll(buildAnnotationMap(classTransformer.getTypeStore().get(annotationType)));
-
-        Map<Class<? extends Annotation>, Annotation> declaredAnnotationMap = new HashMap<Class<? extends Annotation>, Annotation>();
-        declaredAnnotationMap.putAll(buildAnnotationMap(annotationType.getDeclaredAnnotations()));
-        declaredAnnotationMap.putAll(buildAnnotationMap(classTransformer.getTypeStore().get(annotationType)));
-        return new WeldAnnotationImpl<A>(annotationType, annotationMap, declaredAnnotationMap, classTransformer);
+        return new WeldAnnotationImpl<A>(annotationType, Annotations.ofAnnotation(annotationType, false, classTransformer), Annotations.ofAnnotation(annotationType, true, classTransformer), classTransformer);
     }
 
     /**
@@ -69,8 +64,8 @@ public class WeldAnnotationImpl<T extends Annotation> extends WeldClassImpl<T> i
      *
      * @param annotationType The annotation type
      */
-    protected WeldAnnotationImpl(Class<T> annotationType, Map<Class<? extends Annotation>, Annotation> annotationMap, Map<Class<? extends Annotation>, Annotation> declaredAnnotationMap, ClassTransformer classTransformer) {
-        super(annotationType, annotationType, null, new TypeClosureLazyValueHolder(annotationType), annotationMap, declaredAnnotationMap, classTransformer);
+    protected WeldAnnotationImpl(Class<T> annotationType, LazyValueHolder<Annotations> annotations, LazyValueHolder<Annotations> declaredAnnotations, ClassTransformer classTransformer) {
+        super(annotationType, annotationType, null, new TypeClosureLazyValueHolder(annotationType), annotations, declaredAnnotations, classTransformer);
         this.clazz = annotationType;
         members = new HashSet<WeldMethod<?, ?>>();
         annotatedMembers = Multimaps.newSetMultimap(new HashMap<Class<? extends Annotation>, Collection<WeldMethod<?, ?>>>(), HashSetSupplier.<WeldMethod<?, ?>>instance());

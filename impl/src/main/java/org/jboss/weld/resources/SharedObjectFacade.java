@@ -17,6 +17,8 @@
 package org.jboss.weld.resources;
 
 import org.jboss.weld.Container;
+import org.jboss.weld.introspector.jlr.temp.Annotations;
+import org.jboss.weld.util.LazyValueHolder;
 import org.jboss.weld.util.collections.ArraySetMultimap;
 import org.jboss.weld.util.reflection.HierarchyDiscovery;
 
@@ -57,6 +59,14 @@ public class SharedObjectFacade {
             return Container.instance().services().get(SharedObjectCache.class).getSharedMultimap(map);
         }
         return map;
+    }
+
+    public static LazyValueHolder<Annotations> wrap(LazyValueHolder<Annotations> annotationHolder) {
+        SharedObjectCache cache = getSharedObjectCache();
+        if (cache != null) {
+            return Container.instance().services().get(SharedObjectCache.class).getAnnotationHolder(annotationHolder);
+        }
+        return annotationHolder;
     }
 
     public static Set<Type> getTypeClosure(Type type) {

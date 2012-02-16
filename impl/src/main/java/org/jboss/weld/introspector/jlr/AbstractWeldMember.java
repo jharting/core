@@ -16,18 +16,16 @@
  */
 package org.jboss.weld.introspector.jlr;
 
-import org.jboss.weld.introspector.WeldClass;
-import org.jboss.weld.introspector.WeldMember;
-import org.jboss.weld.resources.ClassTransformer;
-import org.jboss.weld.util.LazyValueHolder;
-import org.jboss.weld.util.reflection.Reflections;
-
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Member;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
-import java.util.Map;
 import java.util.Set;
+
+import org.jboss.weld.introspector.WeldClass;
+import org.jboss.weld.introspector.WeldMember;
+import org.jboss.weld.introspector.jlr.temp.Annotations;
+import org.jboss.weld.util.LazyValueHolder;
+import org.jboss.weld.util.reflection.Reflections;
 
 /**
  * Represents an abstract annotated memeber (field, method or constructor)
@@ -49,8 +47,8 @@ public abstract class AbstractWeldMember<T, X, S extends Member> extends Abstrac
      *
      * @param annotationMap The annotation map
      */
-    protected AbstractWeldMember(Map<Class<? extends Annotation>, Annotation> annotationMap, Map<Class<? extends Annotation>, Annotation> declaredAnnotationMap, ClassTransformer classTransformer, Member member, Class<T> rawType, Type type, LazyValueHolder<Set<Type>> typeClosure, WeldClass<X> declaringType) {
-        super(annotationMap, declaredAnnotationMap, classTransformer, rawType, type, typeClosure);
+    protected AbstractWeldMember(LazyValueHolder<Annotations> annotations, LazyValueHolder<Annotations> declaredAnnotations, Member member, Class<T> rawType, Type type, LazyValueHolder<Set<Type>> typeClosure, WeldClass<X> declaringType) {
+        super(annotations, rawType, type, typeClosure);
         this.declaringType = declaringType;
     }
 

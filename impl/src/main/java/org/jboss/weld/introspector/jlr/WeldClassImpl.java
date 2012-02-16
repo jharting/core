@@ -16,31 +16,6 @@
  */
 package org.jboss.weld.introspector.jlr;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Sets;
-import org.jboss.weld.introspector.ConstructorSignature;
-import org.jboss.weld.introspector.DiscoveredExternalAnnotatedType;
-import org.jboss.weld.introspector.ExternalAnnotatedType;
-import org.jboss.weld.introspector.MethodSignature;
-import org.jboss.weld.introspector.TypeClosureLazyValueHolder;
-import org.jboss.weld.introspector.WeldClass;
-import org.jboss.weld.introspector.WeldConstructor;
-import org.jboss.weld.introspector.WeldField;
-import org.jboss.weld.introspector.WeldMethod;
-import org.jboss.weld.resources.ClassTransformer;
-import org.jboss.weld.resources.SharedObjectFacade;
-import org.jboss.weld.util.LazyValueHolder;
-import org.jboss.weld.util.collections.ArraySet;
-import org.jboss.weld.util.collections.ArraySetMultimap;
-import org.jboss.weld.util.reflection.Formats;
-import org.jboss.weld.util.reflection.Reflections;
-import org.jboss.weld.util.reflection.SecureReflections;
-
-import javax.enterprise.inject.spi.AnnotatedConstructor;
-import javax.enterprise.inject.spi.AnnotatedField;
-import javax.enterprise.inject.spi.AnnotatedMethod;
-import javax.enterprise.inject.spi.AnnotatedParameter;
-import javax.enterprise.inject.spi.AnnotatedType;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -57,6 +32,32 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.enterprise.inject.spi.AnnotatedConstructor;
+import javax.enterprise.inject.spi.AnnotatedField;
+import javax.enterprise.inject.spi.AnnotatedMethod;
+import javax.enterprise.inject.spi.AnnotatedParameter;
+import javax.enterprise.inject.spi.AnnotatedType;
+
+import org.jboss.weld.introspector.ConstructorSignature;
+import org.jboss.weld.introspector.DiscoveredExternalAnnotatedType;
+import org.jboss.weld.introspector.ExternalAnnotatedType;
+import org.jboss.weld.introspector.MethodSignature;
+import org.jboss.weld.introspector.TypeClosureLazyValueHolder;
+import org.jboss.weld.introspector.WeldClass;
+import org.jboss.weld.introspector.WeldConstructor;
+import org.jboss.weld.introspector.WeldField;
+import org.jboss.weld.introspector.WeldMethod;
+import org.jboss.weld.introspector.jlr.temp.Annotations;
+import org.jboss.weld.resources.ClassTransformer;
+import org.jboss.weld.util.LazyValueHolder;
+import org.jboss.weld.util.collections.ArraySet;
+import org.jboss.weld.util.reflection.Formats;
+import org.jboss.weld.util.reflection.Reflections;
+import org.jboss.weld.util.reflection.SecureReflections;
+
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Sets;
 
 /**
  * Represents an annotated class
@@ -102,24 +103,25 @@ public class WeldClassImpl<T> extends AbstractWeldAnnotated<T, Class<T>> impleme
 
     // The meta-annotation map (annotation type -> set of annotations containing
     // meta-annotation) of the item
-    private final ArraySetMultimap<Class<? extends Annotation>, Annotation> declaredMetaAnnotationMap;
+//    private final ArraySetMultimap<Class<? extends Annotation>, Annotation> declaredMetaAnnotationMap;
+    private final LazyValueHolder<Annotations> declaredAnnotations;
 
     private final boolean discovered;
 
     public static <T> WeldClass<T> of(Class<T> clazz, ClassTransformer classTransformer) {
-        return new WeldClassImpl<T>(clazz, clazz, null, new TypeClosureLazyValueHolder(clazz), buildAnnotationMap(clazz.getAnnotations()), buildAnnotationMap(clazz.getDeclaredAnnotations()), classTransformer);
+        return new WeldClassImpl<T>(clazz, clazz, null, new TypeClosureLazyValueHolder(clazz), Annotations.of(clazz.getAnnotations(), false, classTransformer), Annotations.of(clazz.getDeclaredAnnotations(), true, classTransformer), classTransformer);
     }
 
     public static <T> WeldClass<T> of(AnnotatedType<T> annotatedType, ClassTransformer classTransformer) {
-        return new WeldClassImpl<T>(annotatedType.getJavaClass(), annotatedType.getBaseType(), annotatedType, new TypeClosureLazyValueHolder(annotatedType.getTypeClosure()), buildAnnotationMap(annotatedType.getAnnotations()), buildAnnotationMap(annotatedType.getAnnotations()), classTransformer);
+        return new WeldClassImpl<T>(annotatedType.getJavaClass(), annotatedType.getBaseType(), annotatedType, new TypeClosureLazyValueHolder(annotatedType.getTypeClosure()), Annotations.of(annotatedType.getAnnotations(), false, classTransformer), Annotations.of(annotatedType.getAnnotations(), true, classTransformer), classTransformer);
     }
 
     public static <T> WeldClass<T> of(Class<T> rawType, Type type, ClassTransformer classTransformer) {
-        return new WeldClassImpl<T>(rawType, type, null, new TypeClosureLazyValueHolder(type), buildAnnotationMap(rawType.getAnnotations()), buildAnnotationMap(rawType.getDeclaredAnnotations()), classTransformer);
+        return new WeldClassImpl<T>(rawType, type, null, new TypeClosureLazyValueHolder(type), Annotations.of(rawType.getAnnotations(), false, classTransformer), Annotations.of(rawType.getDeclaredAnnotations(), true, classTransformer), classTransformer);
     }
 
-    protected WeldClassImpl(Class<T> rawType, Type type, AnnotatedType<T> annotatedType, LazyValueHolder<Set<Type>> typeClosure, Map<Class<? extends Annotation>, Annotation> annotationMap, Map<Class<? extends Annotation>, Annotation> declaredAnnotationMap, ClassTransformer classTransformer) {
-        super(annotationMap, declaredAnnotationMap, classTransformer, rawType, type, typeClosure);
+    protected WeldClassImpl(Class<T> rawType, Type type, AnnotatedType<T> annotatedType, LazyValueHolder<Set<Type>> typeClosure, LazyValueHolder<Annotations> annotations, LazyValueHolder<Annotations> declaredAnnotations, ClassTransformer classTransformer) {
+        super(annotations, rawType, type, typeClosure);
 
         boolean modified;
         if (annotatedType instanceof DiscoveredExternalAnnotatedType) {
@@ -285,14 +287,14 @@ public class WeldClassImpl<T> extends AbstractWeldAnnotated<T, Class<T>> impleme
         this.declaredAnnotatedMethods.trimToSize();
         this.declaredMethodsByAnnotatedParameters.trimToSize();
 
-        ArraySetMultimap<Class<? extends Annotation>, Annotation> declaredMetaAnnotationMap = new ArraySetMultimap<Class<? extends Annotation>, Annotation>();
-        for (Annotation declaredAnnotation : declaredAnnotationMap.values()) {
-            addMetaAnnotations(declaredMetaAnnotationMap, declaredAnnotation, declaredAnnotation.annotationType().getAnnotations(), true);
-            addMetaAnnotations(declaredMetaAnnotationMap, declaredAnnotation, classTransformer.getTypeStore().get(declaredAnnotation.annotationType()), true);
-            declaredMetaAnnotationMap.putSingleElement(declaredAnnotation.annotationType(), declaredAnnotation);
-        }
-        declaredMetaAnnotationMap.trimToSize();
-        this.declaredMetaAnnotationMap = SharedObjectFacade.wrap(declaredMetaAnnotationMap);
+//        ArraySetMultimap<Class<? extends Annotation>, Annotation> declaredMetaAnnotationMap = new ArraySetMultimap<Class<? extends Annotation>, Annotation>();
+//        for (Annotation declaredAnnotation : declaredAnnotationMap.values()) {
+//            addMetaAnnotations(declaredMetaAnnotationMap, declaredAnnotation, declaredAnnotation.annotationType().getAnnotations(), true);
+//            addMetaAnnotations(declaredMetaAnnotationMap, declaredAnnotation, classTransformer.getTypeStore().get(declaredAnnotation.annotationType()), true);
+//            declaredMetaAnnotationMap.putSingleElement(declaredAnnotation.annotationType(), declaredAnnotation);
+//        }
+//        declaredMetaAnnotationMap.trimToSize();
+        this.declaredAnnotations = declaredAnnotations;
     }
 
     private <X> WeldClass<X> getDeclaringWeldClass(Member member, ClassTransformer transformer) {
@@ -605,7 +607,8 @@ public class WeldClassImpl<T> extends AbstractWeldAnnotated<T, Class<T>> impleme
     }
 
     public Set<Annotation> getDeclaredMetaAnnotations(Class<? extends Annotation> metaAnnotationType) {
-        return Collections.unmodifiableSet(new ArraySet<Annotation>(declaredMetaAnnotationMap.get(metaAnnotationType)));
+        // TODO cache instances
+        return Collections.unmodifiableSet(new ArraySet<Annotation>(declaredAnnotations.get().getMetaAnnotationMap().get(metaAnnotationType)));
     }
 
     public boolean isDiscovered() {

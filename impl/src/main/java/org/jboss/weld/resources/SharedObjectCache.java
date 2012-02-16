@@ -16,17 +16,20 @@
  */
 package org.jboss.weld.resources;
 
-import com.google.common.base.Function;
-import com.google.common.collect.MapMaker;
-import org.jboss.weld.bootstrap.api.Service;
-import org.jboss.weld.util.collections.ArraySetMultimap;
-import org.jboss.weld.util.reflection.HierarchyDiscovery;
-import org.jboss.weld.util.reflection.Reflections;
-
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+
+import org.jboss.weld.bootstrap.api.Service;
+import org.jboss.weld.introspector.jlr.temp.Annotations;
+import org.jboss.weld.util.LazyValueHolder;
+import org.jboss.weld.util.collections.ArraySetMultimap;
+import org.jboss.weld.util.reflection.HierarchyDiscovery;
+import org.jboss.weld.util.reflection.Reflections;
+
+import com.google.common.base.Function;
+import com.google.common.collect.MapMaker;
 
 /**
  * Allows classes to share Maps/Sets to conserve memory.
@@ -59,6 +62,8 @@ public class SharedObjectCache implements Service {
         }
     });
 
+    private final Map<LazyValueHolder<Annotations>, LazyValueHolder<Annotations>> annotationHolders = new MapMaker().makeComputingMap(new Annotations.AnnotationsHolderFunction());
+
     public <T> Set<T> getSharedSet(Set<T> set) {
         return Reflections.cast(sharedSets.get(set));
     }
@@ -75,9 +80,17 @@ public class SharedObjectCache implements Service {
         return typeClosures.get(type);
     }
 
+    public LazyValueHolder<Annotations> getAnnotationHolder(LazyValueHolder<Annotations> annotationHolder) {
+        return annotationHolders.get(annotationHolder);
+    }
+
     public void cleanup() {
         sharedSets.clear();
         sharedMaps.clear();
         sharedMultiMaps.clear();
+        annotationHolders.clear();
+//        for (LazyValueHolder<Annotations> annotations : annotationHolders.values()) {
+//            annotations.clear();
+//        }
     }
 }
