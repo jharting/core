@@ -89,8 +89,11 @@ public class SharedObjectCache implements Service {
         sharedMaps.clear();
         sharedMultiMaps.clear();
         annotationHolders.clear();
-//        for (LazyValueHolder<Annotations> annotations : annotationHolders.values()) {
-//            annotations.clear();
-//        }
+    }
+
+    public void cleanupAfterBootstrap() {
+        for (LazyValueHolder<Annotations> holder : annotationHolders.values()) {
+            holder.clear();
+        }
     }
 }

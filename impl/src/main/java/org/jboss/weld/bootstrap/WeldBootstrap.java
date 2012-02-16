@@ -428,6 +428,10 @@ public class WeldBootstrap implements Bootstrap {
         for (BeanDeployment deployment : beanDeployments.values()) {
             deployment.getBeanManager().getServices().get(EnumService.class).inject();
         }
+
+        // TODO move to appropriate location
+        Container.instance().services().get(SharedObjectCache.class).cleanupAfterBootstrap();
+
         return this;
     }
 
