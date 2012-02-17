@@ -56,7 +56,7 @@ public interface WeldClass<T> extends WeldAnnotated<T, Class<T>>, AnnotatedType<
      * @param fieldName the field name
      * @return the field
      */
-    <F> WeldField<F, ?> getDeclaredWeldField(String fieldName);
+    <F> WeldField<F, ? super T> getDeclaredWeldField(String fieldName);
 
     /**
      * Gets all fields which are annotated with the given annotation type on this
@@ -66,7 +66,7 @@ public interface WeldClass<T> extends WeldAnnotated<T, Class<T>>, AnnotatedType<
      * @return A set of abstracted fields with the given annotation. Returns an
      *         empty set if there are no matches
      */
-    Collection<WeldField<?, ?>> getWeldFields(Class<? extends Annotation> annotationType);
+    Collection<WeldField<?, ? super T>> getWeldFields(Class<? extends Annotation> annotationType);
 
     /**
      * Gets all fields declared on this class only.

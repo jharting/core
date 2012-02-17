@@ -57,7 +57,7 @@ public abstract class ForwardingWeldClass<T> extends ForwardingWeldAnnotated<T, 
         return delegate().getWeldConstructors();
     }
 
-    public Collection<WeldField<?, ?>> getWeldFields(Class<? extends Annotation> annotationType) {
+    public Collection<WeldField<?, ? super T>> getWeldFields(Class<? extends Annotation> annotationType) {
         return delegate().getWeldFields(annotationType);
     }
 
@@ -140,7 +140,7 @@ public abstract class ForwardingWeldClass<T> extends ForwardingWeldAnnotated<T, 
         return delegate().getDeclaredWeldMethod(method);
     }
 
-    public <F> WeldField<F, ?> getDeclaredWeldField(String fieldName) {
+    public <F> WeldField<F, ? super T> getDeclaredWeldField(String fieldName) {
         return delegate().getDeclaredWeldField(fieldName);
     }
 

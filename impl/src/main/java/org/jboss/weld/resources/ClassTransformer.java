@@ -188,4 +188,7 @@ public class ClassTransformer implements Service {
         this.classes.clear();
     }
 
+    public void cleanupAfterBoot() {
+        // TODO
+    }
 }
