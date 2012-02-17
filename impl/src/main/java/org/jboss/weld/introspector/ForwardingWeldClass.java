@@ -175,4 +175,9 @@ public abstract class ForwardingWeldClass<T> extends ForwardingWeldAnnotated<T, 
     public boolean isDiscovered() {
         return delegate().isDiscovered();
     }
+
+    @Override
+    public void clear() {
+        delegate().clear();
+    }
 }
