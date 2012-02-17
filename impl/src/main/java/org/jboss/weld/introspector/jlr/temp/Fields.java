@@ -23,6 +23,7 @@ package org.jboss.weld.introspector.jlr.temp;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
@@ -148,9 +149,9 @@ public class Fields<T> {
 
     public Collection<WeldField<?, ? super T>> getWeldFields(Class<? extends Annotation> annotationType) {
         if (annotatedFields == null) {
-            Set<WeldField<?, ? super T>> superclassFields = Reflections.<Set<WeldField<?, ? super T>>>cast(weldClass.getWeldSuperclass().getWeldFields(annotationType));
-            Set<WeldField<?, ? super T>> declaredFields = Reflections.<Set<WeldField<?, ? super T>>>cast(getDeclaredWeldFields(annotationType));
-            return Sets.union(superclassFields, declaredFields);
+            ArrayList<WeldField<?, ? super T>> aggregatedFields = new ArrayList<WeldField<?, ? super T>>(getDeclaredWeldFields(annotationType));
+            aggregatedFields.addAll(weldClass.getWeldSuperclass().getWeldFields(annotationType));
+            return Collections.unmodifiableList(aggregatedFields);
         } else {
             return annotatedFields.get(annotationType);
         }
