@@ -68,6 +68,8 @@ public class Fields<T> {
     // The map from annotation type to abstracted field with annotation
     private final Multimap<Class<? extends Annotation>, WeldField<?, ? super T>> declaredAnnotatedFields;
 
+    private final WeldClass<T> weldClass;
+
     private Fields() {
         this.fields = Collections.emptySet();
         this.declaredFields = fields;
@@ -75,9 +77,11 @@ public class Fields<T> {
         annotatedFieldsTemp.trimToSize();
         this.annotatedFields = Multimaps.unmodifiableMultimap(annotatedFieldsTemp);
         this.declaredAnnotatedFields = annotatedFields;
+        this.weldClass = null;
     }
 
     protected Fields(WeldClass<T> weldClass, ClassTransformer classTransformer) {
+        this.weldClass = weldClass;
         ArraySet<WeldField<?, ? super T>> declaredFieldsTemp = new ArraySet<WeldField<?, ? super T>>();
         ArrayListMultimap<Class<? extends Annotation>, WeldField<?, ? super T>> declaredAnnotatedFieldsTemp = ArrayListMultimap.create();
 
@@ -104,6 +108,7 @@ public class Fields<T> {
     }
 
     protected Fields(WeldClass<T> weldClass, AnnotatedType<T> annotatedType, ClassTransformer classTransformer) {
+        this.weldClass = weldClass;
         ArraySet<WeldField<?, ? super T>> fieldsTemp = new ArraySet<WeldField<?, ? super T>>();
         ArraySet<WeldField<?, ? super T>> declaredFieldsTemp = new ArraySet<WeldField<?, ? super T>>();
         ArrayListMultimap<Class<? extends Annotation>, WeldField<?, ? super T>> annotatedFieldsTemp = ArrayListMultimap.create();
@@ -143,8 +148,9 @@ public class Fields<T> {
 
     public Collection<WeldField<?, ? super T>> getWeldFields(Class<? extends Annotation> annotationType) {
         if (annotatedFields == null) {
-            return Sets.union(set1, set2)
-            return Collections.emptySet(); // FIXME
+            Set<WeldField<?, ? super T>> superclassFields = Reflections.<Set<WeldField<?, ? super T>>>cast(weldClass.getWeldSuperclass().getWeldFields(annotationType));
+            Set<WeldField<?, ? super T>> declaredFields = Reflections.<Set<WeldField<?, ? super T>>>cast(getDeclaredWeldFields(annotationType));
+            return Sets.union(superclassFields, declaredFields);
         } else {
             return annotatedFields.get(annotationType);
         }
