@@ -195,5 +195,8 @@ public class ClassTransformer implements Service {
         for (WeldClass<?> clazz : annotatedTypes.values()) {
             clazz.clear();
         }
+        for (WeldClass<?> clazz : annotations.values()) {
+            clazz.clear();
+        }
     }
 }
