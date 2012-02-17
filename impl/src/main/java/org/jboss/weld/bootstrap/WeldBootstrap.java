@@ -430,7 +430,7 @@ public class WeldBootstrap implements Bootstrap {
         }
 
         // TODO move to appropriate location
-//        Container.instance().services().get(SharedObjectCache.class).cleanupAfterBootstrap();
+        Container.instance().services().get(SharedObjectCache.class).cleanupAfterBootstrap();
 
         return this;
     }
