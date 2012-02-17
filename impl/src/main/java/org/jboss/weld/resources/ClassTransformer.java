@@ -189,6 +189,11 @@ public class ClassTransformer implements Service {
     }
 
     public void cleanupAfterBoot() {
-        // TODO
+        for (WeldClass<?> clazz : classes.values()) {
+            clazz.clear();
+        }
+        for (WeldClass<?> clazz : annotatedTypes.values()) {
+            clazz.clear();
+        }
     }
 }

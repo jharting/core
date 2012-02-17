@@ -99,7 +99,7 @@ public class Fields<T> {
             this.annotatedFields = declaredAnnotatedFields;
         } else {
             this.fields = Sets.union(declaredFields, superclassFields);
-            this.annotatedFields = null;
+            this.annotatedFields = null; // FIXME
         }
     }
 
@@ -143,6 +143,7 @@ public class Fields<T> {
 
     public Collection<WeldField<?, ? super T>> getWeldFields(Class<? extends Annotation> annotationType) {
         if (annotatedFields == null) {
+            return Sets.union(set1, set2)
             return Collections.emptySet(); // FIXME
         } else {
             return annotatedFields.get(annotationType);

@@ -561,4 +561,8 @@ public class WeldClassImpl<T> extends AbstractWeldAnnotated<T, Class<T>> impleme
         return discovered;
     }
 
+    public void clear() {
+        // TODO super.clear() to clear annotations
+        fields.clear();
+    }
 }
