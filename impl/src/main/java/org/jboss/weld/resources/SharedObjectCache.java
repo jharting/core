@@ -18,10 +18,13 @@ package org.jboss.weld.resources;
 
 import java.lang.reflect.Type;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.jboss.weld.bootstrap.api.Service;
+import org.jboss.weld.introspector.ConstructorSignature;
+import org.jboss.weld.introspector.jlr.ConstructorSignatureImpl;
 import org.jboss.weld.introspector.jlr.temp.Annotations;
 import org.jboss.weld.util.LazyValueHolder;
 import org.jboss.weld.util.collections.ArraySetMultimap;
@@ -64,6 +67,21 @@ public class SharedObjectCache implements Service {
 
     private final Map<LazyValueHolder<Annotations>, LazyValueHolder<Annotations>> annotationHolders = new MapMaker().makeComputingMap(new Annotations.AnnotationsHolderFunction());
 
+    private final Map<List<String>, List<String>> parameterTypes = new MapMaker().makeComputingMap(new Function<List<String>, List<String>>() {
+        @Override
+        public List<String> apply(List<String> from) {
+            return Collections.unmodifiableList(from);
+        }
+    });
+
+    // TODO move to ClassTransformer?
+    private final Map<List<String>, ConstructorSignature> constructorSignatures = new MapMaker().makeComputingMap(new Function<List<String>, ConstructorSignature>() {
+        @Override
+        public ConstructorSignature apply(List<String> from) {
+            return new ConstructorSignatureImpl(parameterTypes.get(from));
+        }
+    });
+
     public <T> Set<T> getSharedSet(Set<T> set) {
         return Reflections.cast(sharedSets.get(set));
     }
@@ -84,6 +102,14 @@ public class SharedObjectCache implements Service {
         return annotationHolders.get(annotationHolder);
     }
 
+    public List<String> getParameterTypes(List<String> types) {
+        return parameterTypes.get(types);
+    }
+
+    public ConstructorSignature getConstructorSignature(List<String> types) {
+        return constructorSignatures.get(types);
+    }
+
     public void cleanup() {
         sharedSets.clear();
         sharedMaps.clear();
@@ -92,6 +118,8 @@ public class SharedObjectCache implements Service {
             holder.clear();
         }
         annotationHolders.clear();
+        parameterTypes.clear();
+        constructorSignatures.clear();
     }
 
     public void cleanupAfterBootstrap() {

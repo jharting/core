@@ -17,9 +17,10 @@
 package org.jboss.weld.introspector;
 
 import java.io.Serializable;
+import java.util.List;
 
 public interface ConstructorSignature extends Serializable {
 
-    String[] getParameterTypes();
+    List<String> getParameterTypes();
 
 }

@@ -17,11 +17,12 @@
 package org.jboss.weld.introspector;
 
 import java.io.Serializable;
+import java.util.List;
 
 public interface MethodSignature extends Serializable {
 
     String getMethodName();
 
-    String[] getParameterTypes();
+    List<String> getParameterTypes();
 
 }

@@ -45,7 +45,7 @@ public class InternalEjbDescriptor<T> extends ForwardingEjbDescriptor<T> impleme
         removeMethodSignatures = new ArrayList<MethodSignature>();
         if (ejbDescriptor.getRemoveMethods() != null) {
             for (Method method : ejbDescriptor.getRemoveMethods()) {
-                removeMethodSignatures.add(new MethodSignatureImpl(method));
+                removeMethodSignatures.add(MethodSignatureImpl.of(method));
             }
         }
     }

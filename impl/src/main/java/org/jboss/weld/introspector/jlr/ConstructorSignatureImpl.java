@@ -16,43 +16,64 @@
  */
 package org.jboss.weld.introspector.jlr;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.jboss.weld.introspector.ConstructorSignature;
 import org.jboss.weld.introspector.WeldConstructor;
-import org.jboss.weld.util.collections.Arrays2;
-
-import java.util.Arrays;
+import org.jboss.weld.resources.SharedObjectCache;
+import org.jboss.weld.resources.SharedObjectFacade;
 
 public class ConstructorSignatureImpl implements ConstructorSignature {
 
-    private static final long serialVersionUID = -9111642596078876778L;
-
-    private final String[] parameterTypes;
-
-    public ConstructorSignatureImpl(WeldConstructor<?> method) {
-        this.parameterTypes = new String[method.getWeldParameters().size()];
+    public static ConstructorSignature of(WeldConstructor<?> method) {
+        ArrayList<String> parameterTypes = new ArrayList<String>(method.getWeldParameters().size());
         for (int i = 0; i < method.getWeldParameters().size(); i++) {
-            parameterTypes[i] = method.getWeldParameters().get(i).getJavaClass().getName();
+            parameterTypes.add(method.getWeldParameters().get(i).getJavaClass().getName());
         }
+        parameterTypes.trimToSize();
 
+        SharedObjectCache cache = SharedObjectFacade.getSharedObjectCache();
+        if (cache == null) {
+            // test run
+            return new ConstructorSignatureImpl(parameterTypes);
+        } else {
+            return cache.getConstructorSignature(parameterTypes);
+        }
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof ConstructorSignature) {
-            ConstructorSignature that = (ConstructorSignature) obj;
-            return Arrays.equals(this.getParameterTypes(), that.getParameterTypes());
-        } else {
-            return false;
-        }
+    private static final long serialVersionUID = -9111642596078876778L;
+
+    private final List<String> parameterTypes;
+
+    public ConstructorSignatureImpl(List<String> parameterTypes) {
+        this.parameterTypes = parameterTypes;
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(parameterTypes);
+        return parameterTypes.hashCode();
     }
 
-    public String[] getParameterTypes() {
-        return Arrays2.copyOf(parameterTypes, parameterTypes.length);
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        ConstructorSignatureImpl other = (ConstructorSignatureImpl) obj;
+        if (parameterTypes == null) {
+            if (other.parameterTypes != null)
+                return false;
+        } else if (!parameterTypes.equals(other.parameterTypes))
+            return false;
+        return true;
+    }
+
+    public List<String> getParameterTypes() {
+        return parameterTypes;
     }
 
 }

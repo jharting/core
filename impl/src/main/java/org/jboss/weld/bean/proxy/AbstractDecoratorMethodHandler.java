@@ -64,7 +64,7 @@ public class AbstractDecoratorMethodHandler implements MethodHandler {
         }
         // if method is abstract, invoke the corresponding method on the delegate
         if (Reflections.isAbstract(thisMethod)) {
-            Method method = ((AnnotatedMethod<?>) delegateClass.getWeldMethod(new MethodSignatureImpl(thisMethod))).getJavaMember();
+            Method method = ((AnnotatedMethod<?>) delegateClass.getWeldMethod(MethodSignatureImpl.of(thisMethod))).getJavaMember();
             return SecureReflections.invoke(delegate, method, args);
         }
 

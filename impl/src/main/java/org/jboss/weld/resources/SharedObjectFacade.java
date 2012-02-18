@@ -23,6 +23,7 @@ import org.jboss.weld.util.collections.ArraySetMultimap;
 import org.jboss.weld.util.reflection.HierarchyDiscovery;
 
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -69,6 +70,14 @@ public class SharedObjectFacade {
         return annotationHolder;
     }
 
+    public static List<String> wrapParameterTypes(List<String> types) {
+        SharedObjectCache cache = getSharedObjectCache();
+        if (cache != null) {
+            return Container.instance().services().get(SharedObjectCache.class).getParameterTypes(types);
+        }
+        return types;
+    }
+
     public static Set<Type> getTypeClosure(Type type) {
         SharedObjectCache cache = getSharedObjectCache();
         if (cache != null) {
@@ -78,7 +87,7 @@ public class SharedObjectFacade {
     }
 
     // this may return null in a test environment
-    private static SharedObjectCache getSharedObjectCache() {
+    public static SharedObjectCache getSharedObjectCache() {
         try {
             return Container.instance().services().get(SharedObjectCache.class);
         } catch (IllegalStateException e) {

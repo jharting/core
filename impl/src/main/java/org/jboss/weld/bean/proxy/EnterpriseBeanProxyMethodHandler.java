@@ -100,7 +100,7 @@ public class EnterpriseBeanProxyMethodHandler<T> implements MethodHandler, Seria
 
         if (!clientCanCallRemoveMethods) {
             // TODO we can certainly optimize this search algorithm!
-            MethodSignature methodSignature = new MethodSignatureImpl(method);
+            MethodSignature methodSignature = MethodSignatureImpl.of(method);
             if (removeMethodSignatures.contains(methodSignature)) {
                 throw new UnsupportedOperationException(INVALID_REMOVE_METHOD_INVOCATION, method);
             }

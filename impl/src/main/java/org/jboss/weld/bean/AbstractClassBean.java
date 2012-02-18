@@ -16,8 +16,16 @@
  */
 package org.jboss.weld.bean;
 
+import static org.jboss.weld.logging.messages.BeanMessage.CONFLICTING_INTERCEPTOR_BINDINGS;
+import static org.jboss.weld.logging.messages.BeanMessage.FINAL_BEAN_CLASS_WITH_INTERCEPTORS_NOT_ALLOWED;
+import static org.jboss.weld.logging.messages.BeanMessage.FINAL_INTERCEPTED_BEAN_METHOD_NOT_ALLOWED;
+import static org.jboss.weld.logging.messages.BeanMessage.INVOCATION_ERROR;
+import static org.jboss.weld.logging.messages.BeanMessage.PARAMETER_ANNOTATION_NOT_ALLOWED_ON_CONSTRUCTOR;
+import static org.jboss.weld.logging.messages.BeanMessage.PROXY_INSTANTIATION_FAILED;
+import static org.jboss.weld.logging.messages.BeanMessage.SPECIALIZING_BEAN_MUST_EXTEND_A_BEAN;
+import static org.jboss.weld.util.reflection.Reflections.cast;
+
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -25,6 +33,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javassist.util.proxy.ProxyObject;
 
 import javax.enterprise.context.Dependent;
 import javax.enterprise.context.spi.CreationalContext;
@@ -39,7 +49,6 @@ import javax.enterprise.inject.spi.InterceptionType;
 import javax.enterprise.inject.spi.Interceptor;
 import javax.enterprise.inject.spi.PassivationCapable;
 
-import javassist.util.proxy.ProxyObject;
 import org.jboss.weld.Container;
 import org.jboss.weld.bean.interceptor.SerializableContextualInterceptorReference;
 import org.jboss.weld.bean.interceptor.WeldInterceptorClassMetadata;
@@ -77,15 +86,6 @@ import org.jboss.weld.serialization.spi.helpers.SerializableContextual;
 import org.jboss.weld.util.Beans;
 import org.jboss.weld.util.reflection.Reflections;
 import org.jboss.weld.util.reflection.SecureReflections;
-
-import static org.jboss.weld.logging.messages.BeanMessage.CONFLICTING_INTERCEPTOR_BINDINGS;
-import static org.jboss.weld.logging.messages.BeanMessage.FINAL_BEAN_CLASS_WITH_INTERCEPTORS_NOT_ALLOWED;
-import static org.jboss.weld.logging.messages.BeanMessage.FINAL_INTERCEPTED_BEAN_METHOD_NOT_ALLOWED;
-import static org.jboss.weld.logging.messages.BeanMessage.INVOCATION_ERROR;
-import static org.jboss.weld.logging.messages.BeanMessage.PARAMETER_ANNOTATION_NOT_ALLOWED_ON_CONSTRUCTOR;
-import static org.jboss.weld.logging.messages.BeanMessage.PROXY_INSTANTIATION_FAILED;
-import static org.jboss.weld.logging.messages.BeanMessage.SPECIALIZING_BEAN_MUST_EXTEND_A_BEAN;
-import static org.jboss.weld.util.reflection.Reflections.cast;
 
 /**
  * An abstract bean representation common for class-based beans
@@ -636,7 +636,7 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
     protected Class<T> createEnhancedSubclass() {
         Set<MethodSignature> enhancedMethodSignatures = new HashSet<MethodSignature>();
         for (WeldMethod<?, ?> method : Beans.getInterceptableMethods(this.getWeldAnnotated())) {
-            enhancedMethodSignatures.add(new MethodSignatureImpl(method));
+            enhancedMethodSignatures.add(MethodSignatureImpl.of(method));
         }
         return new InterceptedSubclassFactory<T>(getType(), getTypes(), this, enhancedMethodSignatures).getProxyClass();
     }

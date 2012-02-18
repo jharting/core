@@ -47,9 +47,9 @@ public class Decorators {
         List<WeldMethod<?, ?>> decoratedMethods = Decorators.getDecoratedMethods(beanManager, decoratedTypes);
         Map<MethodSignature, WeldMethod<?, ?>> decoratorMethods = new HashMap<MethodSignature, WeldMethod<?, ?>>();
         for (WeldMethod<?, ?> method : decoratorClass.getWeldMethods()) {
-            MethodSignatureImpl methodSignature = new MethodSignatureImpl(method);
+            MethodSignature methodSignature = MethodSignatureImpl.of(method);
             for (WeldMethod<?, ?> decoratedMethod : decoratedMethods) {
-                if (new MethodSignatureImpl(decoratedMethod).equals(methodSignature)) {
+                if (MethodSignatureImpl.of(decoratedMethod).equals(methodSignature)) {
                     decoratorMethods.put(methodSignature, method);
                 }
             }
@@ -82,7 +82,7 @@ public class Decorators {
 
     public static <T> WeldMethod<?, ?> findDecoratorMethod(WeldDecorator<T> decorator, Map<MethodSignature, WeldMethod<?, ?>> decoratorMethods, Method method) {
         // try the signature first, might be simpler
-        MethodSignature key = new MethodSignatureImpl(method);
+        MethodSignature key = MethodSignatureImpl.of(method);
         WeldMethod<?, ?> weldMethod = decoratorMethods.get(key);
         if (weldMethod != null) {
             return weldMethod;

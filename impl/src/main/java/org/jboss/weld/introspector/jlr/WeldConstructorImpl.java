@@ -134,7 +134,7 @@ public class WeldConstructorImpl<T> extends AbstractWeldCallable<T, T, Construct
             }
 
         }
-        this.signature = new ConstructorSignatureImpl(this);
+        this.signature = ConstructorSignatureImpl.of(this);
     }
 
     /**

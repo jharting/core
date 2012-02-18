@@ -353,17 +353,17 @@ public class SessionBean<T> extends AbstractClassBean<T> {
             Set<MethodSignature> businessMethodSignatures = new HashSet<MethodSignature>();
             for (BusinessInterfaceDescriptor<?> businessInterfaceDescriptor : ejbDescriptor.getLocalBusinessInterfaces()) {
                 for (Method m : businessInterfaceDescriptor.getInterface().getDeclaredMethods()) {
-                    businessMethodSignatures.add(new MethodSignatureImpl(m));
+                    businessMethodSignatures.add(MethodSignatureImpl.of(m));
                 }
             }
             for (BusinessInterfaceDescriptor<?> businessInterfaceDescriptor : ejbDescriptor.getRemoteBusinessInterfaces()) {
                 for (Method m : businessInterfaceDescriptor.getInterface().getDeclaredMethods()) {
-                    businessMethodSignatures.add(new MethodSignatureImpl(m));
+                    businessMethodSignatures.add(MethodSignatureImpl.of(m));
                 }
             }
 
             for (WeldMethod<?, ? super T> observerMethod : observerMethods) {
-                if (!observerMethod.isStatic() && !businessMethodSignatures.contains(new MethodSignatureImpl(observerMethod))) {
+                if (!observerMethod.isStatic() && !businessMethodSignatures.contains(MethodSignatureImpl.of(observerMethod))) {
                     throw new DefinitionException(OBSERVER_METHOD_MUST_BE_STATIC_OR_BUSINESS, observerMethod, getWeldAnnotated());
                 }
             }

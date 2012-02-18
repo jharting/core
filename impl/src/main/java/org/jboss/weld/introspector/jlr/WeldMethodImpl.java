@@ -123,7 +123,7 @@ public class WeldMethodImpl<T, X> extends AbstractWeldCallable<T, X, Method> imp
         } else {
             this.propertyName = propertyName;
         }
-        this.signature = new MethodSignatureImpl(this);
+        this.signature = MethodSignatureImpl.of(this);
 
     }
 

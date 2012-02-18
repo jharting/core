@@ -103,7 +103,7 @@ public class InterceptedSubclassFactory<T> extends ProxyFactory<T> {
             Class<?> cls = getBeanType();
             while (cls != null) {
                 for (Method method : cls.getDeclaredMethods()) {
-                    if (!Modifier.isFinal(method.getModifiers()) && enhancedMethodSignatures.contains(new MethodSignatureImpl(method))) {
+                    if (!Modifier.isFinal(method.getModifiers()) && enhancedMethodSignatures.contains(MethodSignatureImpl.of(method))) {
                         try {
                             MethodInformation methodInfo = new RuntimeMethodInformation(method);
                             MethodInformation delegatingMethodInfo = new StaticMethodInformation(method.getName() + SUPER_DELEGATE_SUFFIX, methodInfo.getParameterTypes(), methodInfo.getReturnType(), proxyClassType.getName());
@@ -120,7 +120,7 @@ public class InterceptedSubclassFactory<T> extends ProxyFactory<T> {
             }
             for (Class<?> c : getAdditionalInterfaces()) {
                 for (Method method : c.getMethods()) {
-                    if(enhancedMethodSignatures.contains(new MethodSignatureImpl(method))) {
+                    if(enhancedMethodSignatures.contains(MethodSignatureImpl.of(method))) {
                         try {
                             MethodInformation methodInformation = new RuntimeMethodInformation(method);
                             proxyClassType.addMethod(MethodUtils.makeMethod(methodInformation, method.getExceptionTypes(), createSpecialMethodBody(proxyClassType, methodInformation), proxyClassType.getConstPool()));

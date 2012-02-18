@@ -16,66 +16,96 @@
  */
 package org.jboss.weld.introspector.jlr;
 
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.jboss.weld.introspector.MethodSignature;
 import org.jboss.weld.introspector.WeldMethod;
-import org.jboss.weld.util.collections.Arrays2;
-
-import java.lang.reflect.Method;
-import java.util.Arrays;
+import org.jboss.weld.resources.SharedObjectCache;
+import org.jboss.weld.resources.SharedObjectFacade;
 
 public class MethodSignatureImpl implements MethodSignature {
+
+    public static MethodSignature of(WeldMethod<?, ?> method) {
+        ArrayList<String> parameterTypes = new ArrayList<String>(method.getWeldParameters().size());
+        for (int i = 0; i < method.getWeldParameters().size(); i++) {
+            parameterTypes.add(method.getWeldParameters().get(i).getJavaClass().getName());
+        }
+        parameterTypes.trimToSize();
+        return of(method.getName(), parameterTypes);
+    }
+
+    public static MethodSignature of(Method method) {
+        ArrayList<String> parameterTypes = new ArrayList<String>(method.getParameterTypes().length);
+        for (int i = 0; i < method.getParameterTypes().length; i++) {
+            parameterTypes.add(method.getParameterTypes()[i].getName());
+        }
+        parameterTypes.trimToSize();
+        return of(method.getName(), parameterTypes);
+    }
+
+    private static MethodSignature of(String name, List<String> parameterTypes) {
+        SharedObjectCache cache = SharedObjectFacade.getSharedObjectCache();
+        if (cache == null) {
+            return new MethodSignatureImpl(name, parameterTypes);
+        } else {
+            return new MethodSignatureImpl(name, cache.getParameterTypes(parameterTypes));
+        }
+    }
 
     private static final long serialVersionUID = 870948075030895317L;
 
     private final String methodName;
-    private final String[] parameterTypes;
+    private final List<String> parameterTypes;
 
-    public MethodSignatureImpl(WeldMethod<?, ?> method) {
-        this.methodName = method.getName();
-        this.parameterTypes = new String[method.getWeldParameters().size()];
-        for (int i = 0; i < method.getWeldParameters().size(); i++) {
-            parameterTypes[i] = method.getWeldParameters().get(i).getJavaClass().getName();
-        }
-    }
-
-    public MethodSignatureImpl(Method method) {
-        this.methodName = method.getName();
-        this.parameterTypes = new String[method.getParameterTypes().length];
-        for (int i = 0; i < method.getParameterTypes().length; i++) {
-            parameterTypes[i] = method.getParameterTypes()[i].getName();
-        }
-
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof MethodSignatureImpl) {
-            MethodSignature that = (MethodSignature) obj;
-            return this.getMethodName().equals(that.getMethodName()) && Arrays.equals(this.getParameterTypes(), that.getParameterTypes());
-        } else {
-            return false;
-        }
+    public MethodSignatureImpl(String methodName, List<String> parameterTypes) {
+        this.methodName = methodName;
+        this.parameterTypes = parameterTypes;
     }
 
     @Override
     public int hashCode() {
-        int hashCode = 17;
-        hashCode += methodName.hashCode() * 5;
-        hashCode += Arrays.hashCode(parameterTypes) * 7;
-        return hashCode;
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((methodName == null) ? 0 : methodName.hashCode());
+        result = prime * result + ((parameterTypes == null) ? 0 : parameterTypes.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        MethodSignatureImpl other = (MethodSignatureImpl) obj;
+        if (methodName == null) {
+            if (other.methodName != null)
+                return false;
+        } else if (!methodName.equals(other.methodName))
+            return false;
+        if (parameterTypes == null) {
+            if (other.parameterTypes != null)
+                return false;
+        } else if (!parameterTypes.equals(other.parameterTypes))
+            return false;
+        return true;
     }
 
     public String getMethodName() {
         return methodName;
     }
 
-    public String[] getParameterTypes() {
-        return Arrays2.copyOf(parameterTypes, parameterTypes.length);
+    public List<String> getParameterTypes() {
+        return parameterTypes;
     }
 
     @Override
     public String toString() {
-        return new StringBuffer().append("method ").append(getMethodName()).append(Arrays.toString(getParameterTypes()).replace('[', '(').replace(']', ')')).toString();
+        return new StringBuffer().append("method ").append(getMethodName()).append(getParameterTypes()).toString();
     }
 
 }
