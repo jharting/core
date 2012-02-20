@@ -134,7 +134,7 @@ public class BuiltInBeanPassivationCapableTest {
         InjectionPoint injectionPoint = Dog.getInjectionPoint();
         InjectionPoint injectionPoint1 = Utils.deserialize(Utils.serialize(injectionPoint));
         Assert.assertTrue(checkInjectionPoint(injectionPoint1, MethodInjectionPointConsumer.class));
-        Assert.assertTrue(checkEquality(injectionPoint, injectionPoint1));
+        Assert.assertEquals(injectionPoint, injectionPoint1);
     }
 
     @Test

@@ -122,7 +122,7 @@ public interface WeldClass<T> extends WeldAnnotated<T, Class<T>>, AnnotatedType<
      * @return A set of abstracted methods with the given annotation. Returns an
      *         empty set if there are no matches
      */
-    Collection<WeldMethod<?, ?>> getWeldMethods(Class<? extends Annotation> annotationType);
+    Collection<WeldMethod<?, ? super T>> getWeldMethods(Class<? extends Annotation> annotationType);
 
     /**
      * Gets all methods annotated with annotationType

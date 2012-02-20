@@ -104,7 +104,7 @@ public class Fields<T> {
             this.annotatedFields = declaredAnnotatedFields;
         } else {
             this.fields = Sets.union(declaredFields, superclassFields);
-            this.annotatedFields = null; // FIXME
+            this.annotatedFields = null;
         }
     }
 
