@@ -21,6 +21,7 @@ import static org.jboss.weld.util.reflection.Reflections.cast;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,6 +32,7 @@ import java.util.Set;
 import javax.enterprise.event.Event;
 import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.New;
+import javax.enterprise.inject.spi.Extension;
 
 import org.jboss.weld.bean.AbstractBean;
 import org.jboss.weld.bean.AbstractClassBean;
@@ -62,6 +64,9 @@ import org.jboss.weld.util.reflection.Reflections;
 
 public class BeanDeployerEnvironment {
 
+    private final Set<WeldClass<?>> weldClasses;
+    private final Map<WeldClass<?>, Extension> weldClassSource;
+    private final Set<Class<?>> vetoedClasses;
     private final Map<WeldClass<?>, AbstractClassBean<?>> classBeanMap;
     private final Map<WeldMethodKey<?, ?>, ProducerMethod<?, ?>> producerMethodBeanMap;
     private final Set<RIBean<?>> beans;
@@ -77,19 +82,94 @@ public class BeanDeployerEnvironment {
     private final Map<InternalEjbDescriptor<?>, WeldClass<?>> newSessionBeanDescriptorsFromInjectionPoint;
 
     public BeanDeployerEnvironment(EjbDescriptors ejbDescriptors, BeanManagerImpl manager) {
-        this.classBeanMap = new HashMap<WeldClass<?>, AbstractClassBean<?>>();
-        this.producerMethodBeanMap = new HashMap<WeldMethodKey<?, ?>, ProducerMethod<?, ?>>();
-        this.allDisposalBeans = new ArrayList<DisposalMethod<?, ?>>();
-        this.resolvedDisposalBeans = new HashSet<DisposalMethod<?, ?>>();
-        this.beans = new HashSet<RIBean<?>>();
-        this.decorators = new HashSet<DecoratorImpl<?>>();
-        this.interceptors = new HashSet<InterceptorImpl<?>>();
-        this.observers = new HashSet<ObserverMethodImpl<?, ?>>();
+        this(
+                new HashSet<WeldClass<?>>(),
+                new HashMap<WeldClass<?>, Extension>(),
+                new HashSet<Class<?>>(),
+                new HashMap<WeldClass<?>, AbstractClassBean<?>>(),
+                new HashMap<WeldMethodKey<?, ?>, ProducerMethod<?, ?>>(),
+                new HashSet<RIBean<?>>(),
+                new HashSet<ObserverMethodImpl<?, ?>>(),
+                new ArrayList<DisposalMethod<?, ?>>(),
+                new HashSet<DisposalMethod<?, ?>>(),
+                new HashSet<DecoratorImpl<?>>(),
+                new HashSet<InterceptorImpl<?>>(),
+                ejbDescriptors,
+                new HashSet<WeldClass<?>>(),
+                new HashMap<InternalEjbDescriptor<?>, WeldClass<?>>(),
+                manager);
+    }
+
+    protected BeanDeployerEnvironment(
+            Set<WeldClass<?>> weldClasses,
+            Map<WeldClass<?>, Extension> weldClassSource,
+            Set<Class<?>> vetoedClasses,
+            Map<WeldClass<?>, AbstractClassBean<?>> classBeanMap,
+            Map<WeldMethodKey<?, ?>, ProducerMethod<?, ?>> producerMethodBeanMap,
+            Set<RIBean<?>> beans,
+            Set<ObserverMethodImpl<?, ?>> observers,
+            List<DisposalMethod<?, ?>> allDisposalBeans,
+            Set<DisposalMethod<?, ?>> resolvedDisposalBeans,
+            Set<DecoratorImpl<?>> decorators,
+            Set<InterceptorImpl<?>> interceptors,
+            EjbDescriptors ejbDescriptors,
+            Set<WeldClass<?>> newManagedBeanClasses,
+            Map<InternalEjbDescriptor<?>, WeldClass<?>> newSessionBeanDescriptorsFromInjectionPoint,
+            BeanManagerImpl manager) {
+        this.weldClasses = weldClasses;
+        this.weldClassSource = weldClassSource;
+        this.vetoedClasses = vetoedClasses;
+        this.classBeanMap = classBeanMap;
+        this.producerMethodBeanMap = producerMethodBeanMap;
+        this.beans = beans;
+        this.observers = observers;
+        this.allDisposalBeans = allDisposalBeans;
+        this.resolvedDisposalBeans = resolvedDisposalBeans;
+        this.decorators = decorators;
+        this.interceptors = interceptors;
         this.ejbDescriptors = ejbDescriptors;
         this.disposalMethodResolver = new TypeSafeDisposerResolver(manager, allDisposalBeans);
         this.classTransformer = manager.getServices().get(ClassTransformer.class);
-        this.newManagedBeanClasses = new HashSet<WeldClass<?>>();
-        this.newSessionBeanDescriptorsFromInjectionPoint = new HashMap<InternalEjbDescriptor<?>, WeldClass<?>>();
+        this.newManagedBeanClasses = newManagedBeanClasses;
+        this.newSessionBeanDescriptorsFromInjectionPoint = newSessionBeanDescriptorsFromInjectionPoint;
+    }
+
+    public void addClass(WeldClass<?> weldClass) {
+        weldClasses.add(weldClass);
+    }
+
+    public void addClasses(Collection<WeldClass<?>> classes) {
+        weldClasses.addAll(classes);
+    }
+
+    public void addSyntheticClass(WeldClass<?> weldClass, Extension extension) {
+        addClass(weldClass);
+        weldClassSource.put(weldClass, extension);
+    }
+
+    public Set<WeldClass<?>> getClasses() {
+        return Collections.unmodifiableSet(weldClasses);
+    }
+
+    public Extension getSource(WeldClass<?> weldClass) {
+        return weldClassSource.get(weldClass);
+    }
+
+    public void vetoClass(WeldClass<?> weldClass) {
+        weldClasses.remove(weldClass);
+        if (weldClass.isDiscovered()) {
+            vetoedClasses.add(weldClass.getJavaClass());
+        }
+    }
+
+    public void vetoClasses(Collection<WeldClass<?>> classes) {
+        for (WeldClass<?> clazz : classes) {
+            vetoClass(clazz);
+        }
+    }
+
+    public boolean isVetoed(Class<?> clazz) {
+        return vetoedClasses.contains(clazz);
     }
 
     public Set<WeldClass<?>> getNewManagedBeanClasses() {
@@ -303,4 +383,20 @@ public class BeanDeployerEnvironment {
         return Collections.unmodifiableMap(producerMethodBeanMap);
     }
 
+    public void cleanup() {
+        this.weldClasses.clear();
+        this.weldClassSource.clear();
+        this.vetoedClasses.clear();
+        this.classBeanMap.clear();
+        this.producerMethodBeanMap.clear();
+        this.allDisposalBeans.clear();
+        this.resolvedDisposalBeans.clear();
+        this.beans.clear();
+        this.decorators.clear();
+        this.interceptors.clear();
+        this.observers.clear();
+        this.disposalMethodResolver.clear();
+        this.newManagedBeanClasses.clear();
+        this.newSessionBeanDescriptorsFromInjectionPoint.clear();
+    }
 }

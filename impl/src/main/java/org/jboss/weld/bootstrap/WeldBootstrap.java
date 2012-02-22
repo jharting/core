@@ -362,7 +362,6 @@ public class WeldBootstrap implements Bootstrap {
             for (BeanDeployment deployment : beanDeployments.values()) {
                 deployment.getBeanDeployer().processProducerMethods();
                 deployment.getBeanDeployer().createNewBeans();
-                deployment.getBeanDeployer().cleanup();
             }
 
             for (Entry<BeanDeploymentArchive, BeanDeployment> entry : beanDeployments.entrySet()) {
@@ -427,6 +426,7 @@ public class WeldBootstrap implements Bootstrap {
         }
         for (BeanDeployment deployment : beanDeployments.values()) {
             deployment.getBeanManager().getServices().get(EnumService.class).inject();
+            deployment.getBeanDeployer().cleanup();
         }
         return this;
     }
