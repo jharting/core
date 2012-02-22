@@ -114,10 +114,14 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
                 xlog.catching(INFO, e);
             }
             if (weldClass != null) {
-                classes.add(weldClass);
+                addClass(weldClass);
             }
         }
         return this;
+    }
+
+    public void addClass(WeldClass<?> weldClass) {
+        classes.add(weldClass);
     }
 
     public BeanDeployer addSyntheticClass(AnnotatedType<?> clazz, Extension extension) {

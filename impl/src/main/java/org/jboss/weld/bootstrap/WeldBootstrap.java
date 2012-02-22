@@ -293,6 +293,7 @@ public class WeldBootstrap implements Bootstrap {
         services.add(MetaAnnotationStore.class, new MetaAnnotationStore(classTransformer));
         services.add(ContextualStore.class, new ContextualStoreImpl());
         services.add(CurrentInjectionPoint.class, new CurrentInjectionPoint());
+        services.add(BootstrapExecutorService.class, new BootstrapExecutorService());
         return services;
     }
 

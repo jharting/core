@@ -28,7 +28,6 @@ import java.util.Set;
 
 import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanAttributes;
 
 import org.jboss.weld.bean.AbstractBean;
