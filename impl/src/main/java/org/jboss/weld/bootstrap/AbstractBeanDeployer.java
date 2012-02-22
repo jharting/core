@@ -28,7 +28,6 @@ import java.util.Set;
 
 import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanAttributes;
 
 import org.jboss.weld.bean.AbstractBean;
@@ -237,21 +236,13 @@ public class AbstractBeanDeployer<E extends BeanDeployerEnvironment> {
     protected <T> void createDecorator(WeldClass<T> weldClass) {
         BeanAttributes<T> attributes = BeanAttributesFactory.forManagedBean(weldClass, getManager());
         DecoratorImpl<T> bean = DecoratorImpl.of(attributes, weldClass, manager, services);
-        // fire ProcessBeanAttributes for decorator
-        boolean vetoed = fireProcessBeanAttributes(bean);
-        if (!vetoed) {
-            getEnvironment().addDecorator(bean);
-        }
+        getEnvironment().addDecorator(bean);
     }
 
     protected <T> void createInterceptor(WeldClass<T> weldClass) {
         BeanAttributes<T> attributes = BeanAttributesFactory.forManagedBean(weldClass, getManager());
         InterceptorImpl<T> bean = InterceptorImpl.of(attributes, weldClass, manager, services);
-        // fire ProcessBeanAttributes for decorator
-        boolean vetoed = fireProcessBeanAttributes(bean);
-        if (!vetoed) {
-            getEnvironment().addInterceptor(bean);
-        }
+        getEnvironment().addInterceptor(bean);
     }
 
     protected <T> SessionBean<T> createSessionBean(InternalEjbDescriptor<T> descriptor) {

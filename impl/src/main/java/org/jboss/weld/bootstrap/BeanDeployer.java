@@ -37,7 +37,6 @@ import org.jboss.weld.bean.AbstractBean;
 import org.jboss.weld.bean.AbstractClassBean;
 import org.jboss.weld.bean.ProducerMethod;
 import org.jboss.weld.bean.attributes.BeanAttributesFactory;
-import org.jboss.weld.bootstrap.BeanDeployerEnvironment.WeldMethodKey;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
 import org.jboss.weld.bootstrap.events.ProcessAnnotatedTypeFactory;
 import org.jboss.weld.bootstrap.events.ProcessAnnotatedTypeImpl;
@@ -76,12 +75,12 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
     private final ResourceLoader resourceLoader;
     private final ClassTransformer classTransformer;
 
-    /**
-     * @param manager
-     * @param ejbDescriptors
-     */
     public BeanDeployer(BeanManagerImpl manager, EjbDescriptors ejbDescriptors, ServiceRegistry services) {
-        super(manager, services, new BeanDeployerEnvironment(ejbDescriptors, manager));
+        this(manager, ejbDescriptors, services, BeanDeployerEnvironment.newEnvironment(ejbDescriptors, manager));
+    }
+
+    public BeanDeployer(BeanManagerImpl manager, EjbDescriptors ejbDescriptors, ServiceRegistry services, BeanDeployerEnvironment environment) {
+        super(manager, services, environment);
         this.resourceLoader = manager.getServices().get(ResourceLoader.class);
         this.classTransformer = Container.instance().services().get(ClassTransformer.class);
     }
@@ -138,6 +137,7 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
             event.fire();
             // process the result
             if (event.isVeto()) {
+                getEnvironment().vetoClass(weldClass);
                 classesToBeRemoved.add(weldClass);
             } else {
                 boolean dirty = event.isDirty();
@@ -159,38 +159,33 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
                     classesToBeAdded.add(weldClass); // add a replacement for the removed class
                 }
                 if (!dirty && vetoed) {
+                    getEnvironment().vetoClass(weldClass);
                     classesToBeRemoved.add(weldClass);
                 }
             }
         }
-        getEnvironment().vetoClasses(classesToBeRemoved);
+        getEnvironment().removeClasses(classesToBeRemoved);
         getEnvironment().addClasses(classesToBeAdded);
     }
 
-    public void createClassBeans() {
-        Multimap<Class<?>, WeldClass<?>> otherWeldClasses = HashMultimap.create();
+    public void processEnums() {
         EnumService enumService = getManager().getServices().get(EnumService.class);
-
         for (WeldClass<?> clazz : getEnvironment().getClasses()) {
             if (Reflections.isEnum(clazz.getJavaClass())) {
                 enumService.addEnumClass(Reflections.<WeldClass<Enum<?>>> cast(clazz));
-            }
-            boolean managedBeanOrDecorator = !getEnvironment().getEjbDescriptors().contains(clazz.getJavaClass()) && Beans.isTypeManagedBeanOrDecoratorOrInterceptor(clazz);
-            if (managedBeanOrDecorator && clazz.isAnnotationPresent(Decorator.class)) {
-                validateDecorator(clazz);
-                createDecorator(clazz);
-            } else if (managedBeanOrDecorator && clazz.isAnnotationPresent(Interceptor.class)) {
-                validateInterceptor(clazz);
-                createInterceptor(clazz);
-            } else if (managedBeanOrDecorator && !clazz.isAbstract()) {
-                createManagedBean(clazz);
-            } else {
-                otherWeldClasses.put(clazz.getJavaClass(), clazz);
             }
         }
         // add @New injection points from enums
         for (EnumInjectionTarget<?> enumInjectionTarget : enumService.getEnumInjectionTargets()) {
             getEnvironment().addNewBeansFromInjectionPoints(enumInjectionTarget.getNewInjectionPoints());
+        }
+    }
+
+    public void createClassBeans() {
+        Multimap<Class<?>, WeldClass<?>> otherWeldClasses = HashMultimap.create();
+
+        for (WeldClass<?> clazz : getEnvironment().getClasses()) {
+            createClassBean(clazz, otherWeldClasses);
         }
         // create session beans
         for (InternalEjbDescriptor<?> ejbDescriptor : getEnvironment().getEjbDescriptors()) {
@@ -209,16 +204,38 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
         }
     }
 
+    protected void createClassBean(WeldClass<?> weldClass, Multimap<Class<?>, WeldClass<?>> otherWeldClasses) {
+        boolean managedBeanOrDecorator = !getEnvironment().getEjbDescriptors().contains(weldClass.getJavaClass()) && Beans.isTypeManagedBeanOrDecoratorOrInterceptor(weldClass);
+        if (managedBeanOrDecorator && weldClass.isAnnotationPresent(Decorator.class)) {
+            validateDecorator(weldClass);
+            createDecorator(weldClass);
+        } else if (managedBeanOrDecorator && weldClass.isAnnotationPresent(Interceptor.class)) {
+            validateInterceptor(weldClass);
+            createInterceptor(weldClass);
+        } else if (managedBeanOrDecorator && !weldClass.isAbstract()) {
+            createManagedBean(weldClass);
+        } else {
+            otherWeldClasses.put(weldClass.getJavaClass(), weldClass);
+        }
+    }
+
     /**
      * Fires {@link ProcessBeanAttributes} for each enabled bean and updates the environment based on the events.
      */
-    public void processBeans() {
-        for (Entry<WeldClass<?>, AbstractClassBean<?>> entry : getEnvironment().getClassBeanMap().entrySet()) {
-            // process specialization
-            entry.getValue().preInitialize();
-        }
+    public void processClassBeanAttributes() {
+        preInitializeBeans(getEnvironment().getClassBeanMap().values());
+        preInitializeBeans(getEnvironment().getDecorators());
+        preInitializeBeans(getEnvironment().getInterceptors());
 
         processBeanAttributes(getEnvironment().getClassBeanMap().values());
+        processBeanAttributes(getEnvironment().getDecorators());
+        processBeanAttributes(getEnvironment().getInterceptors());
+    }
+
+    private void preInitializeBeans(Collection<? extends AbstractBean<?, ?>> beans) {
+        for (AbstractBean<?, ?> bean : beans) {
+            bean.preInitialize();
+        }
     }
 
     private void processBeanAttributes(Collection<? extends AbstractBean<?, ?>> beans) {
@@ -246,7 +263,7 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
                 previouslySpecializedBeans.add(bean.getSpecializedBean());
             }
             if (bean instanceof AbstractClassBean<?>) {
-                getEnvironment().removeClass((WeldClass<?>) bean.getWeldAnnotated());
+                getEnvironment().vetoClassBean((AbstractClassBean<?>) bean);
             }
             if (bean instanceof ProducerMethod<?, ?>) {
                 getEnvironment().removeProducerMethod((ProducerMethod<?, ?>) bean);
@@ -262,12 +279,9 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
         }
     }
 
-    public void processProducerMethods() {
+    public void processProducerMethodAttributes() {
         // process BeanAttributes for producer methods
-        for (Entry<WeldMethodKey<?, ?>, ProducerMethod<?, ?>> entry : getEnvironment().getProducerMethodBeanMap().entrySet()) {
-            // process specialization
-            entry.getValue().preInitialize();
-        }
+        preInitializeBeans(getEnvironment().getProducerMethodBeanMap().values());
         processBeanAttributes(getEnvironment().getProducerMethodBeanMap().values());
     }
 
@@ -281,13 +295,13 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
         }
     }
 
-    private void validateInterceptor(WeldClass<?> weldClass) {
+    protected void validateInterceptor(WeldClass<?> weldClass) {
         if (weldClass.isAnnotationPresent(Decorator.class)) {
             throw new DeploymentException(BEAN_IS_BOTH_INTERCEPTOR_AND_DECORATOR, weldClass.getName());
         }
     }
 
-    private void validateDecorator(WeldClass<?> weldClass) {
+    protected void validateDecorator(WeldClass<?> weldClass) {
         if (weldClass.isAnnotationPresent(Interceptor.class)) {
             throw new DefinitionException(BEAN_IS_BOTH_INTERCEPTOR_AND_DECORATOR, weldClass.getName());
         }

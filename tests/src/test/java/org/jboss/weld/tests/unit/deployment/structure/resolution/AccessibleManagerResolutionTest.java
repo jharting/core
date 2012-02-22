@@ -60,7 +60,7 @@ public class AccessibleManagerResolutionTest {
         RIBean<?> bean = ManagedBean.of(BeanAttributesFactory.forManagedBean(clazz, manager), clazz, manager, services);
         manager.addBean(bean);
         manager.getBeanResolver().clear();
-        BeanDeployerEnvironment environment = new BeanDeployerEnvironment(new EjbDescriptors(), manager);
+        BeanDeployerEnvironment environment = BeanDeployerEnvironment.newEnvironment(new EjbDescriptors(), manager);
         bean.initialize(environment);
     }
 

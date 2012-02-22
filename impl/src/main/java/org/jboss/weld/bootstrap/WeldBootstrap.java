@@ -293,6 +293,7 @@ public class WeldBootstrap implements Bootstrap {
         services.add(MetaAnnotationStore.class, new MetaAnnotationStore(classTransformer));
         services.add(ContextualStore.class, new ContextualStoreImpl());
         services.add(CurrentInjectionPoint.class, new CurrentInjectionPoint());
+        services.add(ThreadPoolService.class, new ThreadPoolService());
         return services;
     }
 
@@ -356,11 +357,11 @@ public class WeldBootstrap implements Bootstrap {
             }
             // we must use separate loops, otherwise cyclic specialization would not work
             for (BeanDeployment deployment : beanDeployments.values()) {
-                deployment.getBeanDeployer().processBeans();
+                deployment.getBeanDeployer().processClassBeanAttributes();
                 deployment.getBeanDeployer().createProducersAndObservers();
             }
             for (BeanDeployment deployment : beanDeployments.values()) {
-                deployment.getBeanDeployer().processProducerMethods();
+                deployment.getBeanDeployer().processProducerMethodAttributes();
                 deployment.getBeanDeployer().createNewBeans();
             }
 

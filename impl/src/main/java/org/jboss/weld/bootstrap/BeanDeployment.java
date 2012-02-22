@@ -120,7 +120,12 @@ public class BeanDeployment {
             // bean is an EJB!
             ejbDescriptors.addAll(beanDeploymentArchive.getEjbs());
         }
-        beanDeployer = new BeanDeployer(beanManager, ejbDescriptors, deploymentServices);
+
+        if (services.contains(ThreadPoolService.class)) {
+            beanDeployer = new ConcurrentBeanDeployer(beanManager, ejbDescriptors, deploymentServices);
+        } else {
+            beanDeployer = new BeanDeployer(beanManager, ejbDescriptors, deploymentServices);
+        }
 
         // Must at the Manager bean straight away, as it can be injected during startup!
         beanManager.addBean(new BeanManagerBean(beanManager));
@@ -230,6 +235,7 @@ public class BeanDeployment {
         closure.addEnvironment(beanDeployer.getEnvironment());
 
         // TODO Register the context beans
+        beanDeployer.processEnums();
         beanDeployer.createClassBeans();
 
     }

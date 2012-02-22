@@ -20,14 +20,13 @@ import static org.jboss.weld.util.reflection.Reflections.cast;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.enterprise.event.Event;
 import javax.enterprise.inject.Instance;
@@ -62,7 +61,35 @@ import org.jboss.weld.resources.ClassTransformer;
 import org.jboss.weld.util.AnnotatedTypes;
 import org.jboss.weld.util.reflection.Reflections;
 
+import com.google.common.collect.Sets;
+
 public class BeanDeployerEnvironment {
+
+    public static BeanDeployerEnvironment newEnvironment(EjbDescriptors ejbDescriptors, BeanManagerImpl manager) {
+        return new BeanDeployerEnvironment(ejbDescriptors, manager);
+    }
+
+    /**
+     * Creates a new threadsafe BeanDeployerEnvironment instance. These instances are used by {@link ConcurrentBeanDeployer} during bootstrap.
+     */
+    public static BeanDeployerEnvironment newConcurrentEnvironment(EjbDescriptors ejbDescriptors, BeanManagerImpl manager) {
+        return new BeanDeployerEnvironment(
+                Sets.newSetFromMap(new ConcurrentHashMap<WeldClass<?>, Boolean>()),
+                new ConcurrentHashMap<WeldClass<?>, Extension>(),
+                Sets.newSetFromMap(new ConcurrentHashMap<Class<?>, Boolean>()),
+                new ConcurrentHashMap<WeldClass<?>, AbstractClassBean<?>>(),
+                new ConcurrentHashMap<WeldMethodKey<?, ?>, ProducerMethod<?, ?>>(),
+                Sets.newSetFromMap(new ConcurrentHashMap<RIBean<?>, Boolean>()),
+                Sets.newSetFromMap(new ConcurrentHashMap<ObserverMethodImpl<?, ?>, Boolean>()),
+                Sets.newSetFromMap(new ConcurrentHashMap<DisposalMethod<?, ?>, Boolean>()),
+                Sets.newSetFromMap(new ConcurrentHashMap<DisposalMethod<?, ?>, Boolean>()),
+                Sets.newSetFromMap(new ConcurrentHashMap<DecoratorImpl<?>, Boolean>()),
+                Sets.newSetFromMap(new ConcurrentHashMap<InterceptorImpl<?>, Boolean>()),
+                ejbDescriptors,
+                Sets.newSetFromMap(new ConcurrentHashMap<WeldClass<?>, Boolean>()),
+                new ConcurrentHashMap<InternalEjbDescriptor<?>, WeldClass<?>>(),
+                manager);
+    }
 
     private final Set<WeldClass<?>> weldClasses;
     private final Map<WeldClass<?>, Extension> weldClassSource;
@@ -71,7 +98,7 @@ public class BeanDeployerEnvironment {
     private final Map<WeldMethodKey<?, ?>, ProducerMethod<?, ?>> producerMethodBeanMap;
     private final Set<RIBean<?>> beans;
     private final Set<ObserverMethodImpl<?, ?>> observers;
-    private final List<DisposalMethod<?, ?>> allDisposalBeans;
+    private final Set<DisposalMethod<?, ?>> allDisposalBeans;
     private final Set<DisposalMethod<?, ?>> resolvedDisposalBeans;
     private final Set<DecoratorImpl<?>> decorators;
     private final Set<InterceptorImpl<?>> interceptors;
@@ -81,25 +108,6 @@ public class BeanDeployerEnvironment {
     private final Set<WeldClass<?>> newManagedBeanClasses;
     private final Map<InternalEjbDescriptor<?>, WeldClass<?>> newSessionBeanDescriptorsFromInjectionPoint;
 
-    public BeanDeployerEnvironment(EjbDescriptors ejbDescriptors, BeanManagerImpl manager) {
-        this(
-                new HashSet<WeldClass<?>>(),
-                new HashMap<WeldClass<?>, Extension>(),
-                new HashSet<Class<?>>(),
-                new HashMap<WeldClass<?>, AbstractClassBean<?>>(),
-                new HashMap<WeldMethodKey<?, ?>, ProducerMethod<?, ?>>(),
-                new HashSet<RIBean<?>>(),
-                new HashSet<ObserverMethodImpl<?, ?>>(),
-                new ArrayList<DisposalMethod<?, ?>>(),
-                new HashSet<DisposalMethod<?, ?>>(),
-                new HashSet<DecoratorImpl<?>>(),
-                new HashSet<InterceptorImpl<?>>(),
-                ejbDescriptors,
-                new HashSet<WeldClass<?>>(),
-                new HashMap<InternalEjbDescriptor<?>, WeldClass<?>>(),
-                manager);
-    }
-
     protected BeanDeployerEnvironment(
             Set<WeldClass<?>> weldClasses,
             Map<WeldClass<?>, Extension> weldClassSource,
@@ -108,7 +116,7 @@ public class BeanDeployerEnvironment {
             Map<WeldMethodKey<?, ?>, ProducerMethod<?, ?>> producerMethodBeanMap,
             Set<RIBean<?>> beans,
             Set<ObserverMethodImpl<?, ?>> observers,
-            List<DisposalMethod<?, ?>> allDisposalBeans,
+            Set<DisposalMethod<?, ?>> allDisposalBeans,
             Set<DisposalMethod<?, ?>> resolvedDisposalBeans,
             Set<DecoratorImpl<?>> decorators,
             Set<InterceptorImpl<?>> interceptors,
@@ -134,6 +142,25 @@ public class BeanDeployerEnvironment {
         this.newSessionBeanDescriptorsFromInjectionPoint = newSessionBeanDescriptorsFromInjectionPoint;
     }
 
+    protected BeanDeployerEnvironment(EjbDescriptors ejbDescriptors, BeanManagerImpl manager) {
+        this(
+                new HashSet<WeldClass<?>>(),
+                new HashMap<WeldClass<?>, Extension>(),
+                new HashSet<Class<?>>(),
+                new HashMap<WeldClass<?>, AbstractClassBean<?>>(),
+                new HashMap<WeldMethodKey<?, ?>, ProducerMethod<?, ?>>(),
+                new HashSet<RIBean<?>>(),
+                new HashSet<ObserverMethodImpl<?, ?>>(),
+                new HashSet<DisposalMethod<?, ?>>(),
+                new HashSet<DisposalMethod<?, ?>>(),
+                new HashSet<DecoratorImpl<?>>(),
+                new HashSet<InterceptorImpl<?>>(),
+                ejbDescriptors,
+                new HashSet<WeldClass<?>>(),
+                new HashMap<InternalEjbDescriptor<?>, WeldClass<?>>(),
+                manager);
+    }
+
     public void addClass(WeldClass<?> weldClass) {
         weldClasses.add(weldClass);
     }
@@ -155,16 +182,19 @@ public class BeanDeployerEnvironment {
         return weldClassSource.get(weldClass);
     }
 
-    public void vetoClass(WeldClass<?> weldClass) {
+    public void removeClass(WeldClass<?> weldClass) {
         weldClasses.remove(weldClass);
-        if (weldClass.isDiscovered()) {
-            vetoedClasses.add(weldClass.getJavaClass());
+    }
+
+    public void removeClasses(Collection<WeldClass<?>> classes) {
+        for (WeldClass<?> clazz : classes) {
+            removeClass(clazz);
         }
     }
 
-    public void vetoClasses(Collection<WeldClass<?>> classes) {
-        for (WeldClass<?> clazz : classes) {
-            vetoClass(clazz);
+    public void vetoClass(WeldClass<?> weldClass) {
+        if (weldClass.isDiscovered()) {
+            vetoedClasses.add(weldClass.getJavaClass());
         }
     }
 
@@ -359,8 +389,8 @@ public class BeanDeployerEnvironment {
         }
     }
 
-    public void removeClass(WeldClass<?> weldClass) {
-        AbstractClassBean<?> bean = classBeanMap.remove(weldClass);
+    public void vetoClassBean(AbstractClassBean<?> bean) {
+        classBeanMap.remove(bean.getWeldAnnotated());
         beans.remove(bean);
         if (bean instanceof InterceptorImpl<?>) {
             interceptors.remove(bean);
