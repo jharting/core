@@ -283,7 +283,6 @@ public class WeldBootstrap implements Bootstrap {
         // Temporary workaround to provide context for building annotated class
         // TODO expose AnnotatedClass on SPI and allow container to provide impl
         // of this via ResourceLoader
-        services.add(Validator.class, new Validator());
         TypeStore typeStore = new TypeStore();
         services.add(TypeStore.class, typeStore);
         ClassTransformer classTransformer = new ClassTransformer(typeStore);
@@ -293,7 +292,14 @@ public class WeldBootstrap implements Bootstrap {
         services.add(MetaAnnotationStore.class, new MetaAnnotationStore(classTransformer));
         services.add(ContextualStore.class, new ContextualStoreImpl());
         services.add(CurrentInjectionPoint.class, new CurrentInjectionPoint());
+        // TODO make it possible to suppress concurrent bootstrap
         services.add(ThreadPoolService.class, new ThreadPoolService());
+        ThreadPoolService executor = services.get(ThreadPoolService.class);
+        if (executor == null) {
+            services.add(Validator.class, new Validator());
+        } else {
+            services.add(Validator.class, new ConcurrentValidator(executor));
+        }
         return services;
     }
 
@@ -361,7 +367,7 @@ public class WeldBootstrap implements Bootstrap {
                 deployment.getBeanDeployer().createProducersAndObservers();
             }
             for (BeanDeployment deployment : beanDeployments.values()) {
-                deployment.getBeanDeployer().processProducerMethodAttributes();
+                deployment.getBeanDeployer().processProducerAttributes();
                 deployment.getBeanDeployer().createNewBeans();
             }
 

@@ -26,8 +26,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.jboss.weld.bean.AbstractClassBean;
+import org.jboss.weld.bootstrap.ThreadPoolService.LoopDecompositionTask;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
 import org.jboss.weld.ejb.EjbDescriptors;
 import org.jboss.weld.ejb.InternalEjbDescriptor;
@@ -58,14 +60,18 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
 
     @Override
     public BeanDeployer addClasses(Iterable<String> c) {
-        final Queue<String> classNames = new LinkedBlockingQueue<String>();
-        for (String clazz : c) {
-            classNames.add(clazz);
-        }
+        final Queue<String> classNames = new ConcurrentLinkedQueue<String>();
+        Iterables.addAll(classNames, c);
 
         List<Runnable> tasks = new LinkedList<Runnable>();
         for (int i = 0; i < executor.WORKERS; i++) {
-            tasks.add(new WeldClassLoadingTask(classNames));
+            tasks.add(new LoopDecompositionTask<String>(classNames) {
+
+                @Override
+                protected void doWork(String className) {
+                    addClass(className);
+                }
+            });
         }
         executor.executeAndWait(tasks);
         return this;
@@ -75,91 +81,62 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
     public void createClassBeans() {
         final Multimap<Class<?>, WeldClass<?>> otherWeldClasses = Multimaps.newSetMultimap(new ConcurrentHashMap<Class<?>, Collection<WeldClass<?>>>(),
                 new ConcurrentHashSetSupplier<WeldClass<?>>());
-        final Queue<WeldClass<?>> classes = new LinkedBlockingQueue<WeldClass<?>>(getEnvironment().getClasses());
+        final Queue<WeldClass<?>> classes = new ConcurrentLinkedQueue<WeldClass<?>>(getEnvironment().getClasses());
 
         // create managed beans, decorators and interceptors
         List<Runnable> tasks = new LinkedList<Runnable>();
         for (int i = 0; i < executor.WORKERS; i++) {
-            tasks.add(new ClassBeanCreationTask(classes, otherWeldClasses));
+            tasks.add(new LoopDecompositionTask<WeldClass<?>>(classes) {
+
+                @Override
+                protected void doWork(WeldClass<?> weldClass) {
+                    createClassBean(weldClass, otherWeldClasses);
+                }
+            });
         }
         executor.executeAndWait(tasks);
 
         // create session beans
-        final Queue<InternalEjbDescriptor<?>> ejbDescriptors = new LinkedBlockingQueue<InternalEjbDescriptor<?>>();
+        final Queue<InternalEjbDescriptor<?>> ejbDescriptors = new ConcurrentLinkedQueue<InternalEjbDescriptor<?>>();
         Iterables.addAll(ejbDescriptors, getEnvironment().getEjbDescriptors());
         List<Runnable> ejbTasks = new LinkedList<Runnable>();
         for (int i = 0; i < executor.WORKERS; i++) {
-            ejbTasks.add(new SessionBeanCreationTask(ejbDescriptors, otherWeldClasses));
+            ejbTasks.add(new LoopDecompositionTask<InternalEjbDescriptor<?>>(ejbDescriptors) {
+
+                @Override
+                protected void doWork(InternalEjbDescriptor<?> descriptor) {
+                    if (getEnvironment().isVetoed(descriptor.getBeanClass())) {
+                        return;
+                    }
+                    if (descriptor.isSingleton() || descriptor.isStateful() || descriptor.isStateless()) {
+                        if (otherWeldClasses.containsKey(descriptor.getBeanClass())) {
+                            for (WeldClass<?> c : otherWeldClasses.get(descriptor.getBeanClass())) {
+                                createSessionBean(descriptor, Reflections.<WeldClass> cast(c));
+                            }
+                        } else {
+                            createSessionBean(descriptor);
+                        }
+                    }
+                }
+            });
         }
         executor.executeAndWait(ejbTasks);
     }
 
-    private class WeldClassLoadingTask implements Runnable {
-        private final Queue<String> classNames;
+    @Override
+    public void createProducersAndObservers() {
+        Queue<AbstractClassBean<?>> beans = new ConcurrentLinkedQueue<AbstractClassBean<?>>(getEnvironment().getClassBeanMap().values());
 
-        public WeldClassLoadingTask(Queue<String> classNames) {
-            this.classNames = classNames;
-        }
+        List<Runnable> tasks = new LinkedList<Runnable>();
+        for (int i = 0; i < executor.WORKERS; i++) {
+            tasks.add(new LoopDecompositionTask<AbstractClassBean<?>>(beans) {
 
-        @Override
-        public void run() {
-            String className = classNames.poll();
-            Thread thread = Thread.currentThread();
-            while (className != null && !thread.isInterrupted()) {
-                addClass(className);
-                className = classNames.poll();
-            }
-        }
-    }
-
-    private class ClassBeanCreationTask implements Runnable {
-        private final Queue<WeldClass<?>> classes;
-        private final Multimap<Class<?>, WeldClass<?>> otherWeldClasses;
-
-        public ClassBeanCreationTask(Queue<WeldClass<?>> classes, Multimap<Class<?>, WeldClass<?>> otherWeldClasses) {
-            this.classes = classes;
-            this.otherWeldClasses = otherWeldClasses;
-        }
-
-        @Override
-        public void run() {
-            WeldClass<?> weldClass = classes.poll();
-            Thread thread = Thread.currentThread();
-            while (weldClass != null && !thread.isInterrupted()) {
-                createClassBean(weldClass, otherWeldClasses);
-                weldClass = classes.poll();
-            }
-        }
-    }
-
-    private class SessionBeanCreationTask implements Runnable {
-        private final Queue<InternalEjbDescriptor<?>> ejbDescriptors;
-        private final Multimap<Class<?>, WeldClass<?>> otherWeldClasses;
-
-        public SessionBeanCreationTask(Queue<InternalEjbDescriptor<?>> ejbDescriptors, Multimap<Class<?>, WeldClass<?>> otherWeldClasses) {
-            this.ejbDescriptors = ejbDescriptors;
-            this.otherWeldClasses = otherWeldClasses;
-        }
-
-        @Override
-        public void run() {
-            InternalEjbDescriptor<?> ejbDescriptor = ejbDescriptors.poll();
-            Thread thread = Thread.currentThread();
-            while (ejbDescriptor != null && !thread.isInterrupted()) {
-                if (getEnvironment().isVetoed(ejbDescriptor.getBeanClass())) {
-                    continue;
+                @Override
+                protected void doWork(AbstractClassBean<?> bean) {
+                    createObserversProducersDisposers(bean);
                 }
-                if (ejbDescriptor.isSingleton() || ejbDescriptor.isStateful() || ejbDescriptor.isStateless()) {
-                    if (otherWeldClasses.containsKey(ejbDescriptor.getBeanClass())) {
-                        for (WeldClass<?> c : otherWeldClasses.get(ejbDescriptor.getBeanClass())) {
-                            createSessionBean(ejbDescriptor, Reflections.<WeldClass> cast(c));
-                        }
-                    } else {
-                        createSessionBean(ejbDescriptor);
-                    }
-                }
-                ejbDescriptor = ejbDescriptors.poll();
-            }
+            });
         }
+        executor.executeAndWait(tasks);
     }
 }

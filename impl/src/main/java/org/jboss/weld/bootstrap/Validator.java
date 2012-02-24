@@ -140,7 +140,7 @@ public class Validator implements Service {
 
     private static final LocLogger log = loggerFactory().getLogger(BOOTSTRAP);
 
-    private void validateBean(Bean<?> bean, BeanManagerImpl beanManager) {
+    protected void validateGeneralBean(Bean<?> bean, BeanManagerImpl beanManager) {
         for (InjectionPoint ij : bean.getInjectionPoints()) {
             validateInjectionPoint(ij, beanManager);
         }
@@ -161,15 +161,15 @@ public class Validator implements Service {
      * @param beanManager      the current manager
      * @param specializedBeans the existing specialized beans
      */
-    private void validateRIBean(RIBean<?> bean, BeanManagerImpl beanManager, Collection<RIBean<?>> specializedBeans) {
-        validateBean(bean, beanManager);
+    protected void validateRIBean(RIBean<?> bean, BeanManagerImpl beanManager, Collection<RIBean<?>> specializedBeans) {
+        validateGeneralBean(bean, beanManager);
         if (!(bean instanceof NewManagedBean<?>) && !(bean instanceof NewSessionBean<?>)) {
             RIBean<?> abstractBean = bean;
             if (abstractBean.isSpecializing()) {
-                if (specializedBeans.contains(abstractBean.getSpecializedBean())) {
+                boolean added = specializedBeans.add(abstractBean.getSpecializedBean());
+                if (!added) {
                     throw new InconsistentSpecializationException(BEAN_SPECIALIZED_TOO_MANY_TIMES, bean);
                 }
-                specializedBeans.add(abstractBean.getSpecializedBean());
             }
             if ((bean instanceof AbstractClassBean<?>)) {
                 AbstractClassBean<?> classBean = (AbstractClassBean<?>) bean;
@@ -368,9 +368,9 @@ public class Validator implements Service {
     }
 
     public void validateDeployment(BeanManagerImpl manager, BeanDeployerEnvironment environment) {
-        validateDecorators(manager.getDecorators(), new ArrayList<RIBean<?>>(), manager);
+        validateDecorators(manager.getDecorators(), manager);
         validateInterceptors(manager.getInterceptors());
-        validateBeans(manager.getBeans(), new ArrayList<RIBean<?>>(), manager);
+        validateBeans(manager.getBeans(), manager);
         validateEnabledDecoratorClasses(manager);
         validateEnabledInterceptorClasses(manager);
         validateEnabledAlternatives(manager);
@@ -379,81 +379,95 @@ public class Validator implements Service {
         validateBeanNames(manager);
     }
 
-    public void validateBeans(Collection<? extends Bean<?>> beans, Collection<RIBean<?>> specializedBeans, BeanManagerImpl manager) {
+    public void validateBeans(Collection<? extends Bean<?>> beans, BeanManagerImpl manager) {
         final List<RuntimeException> problems = new ArrayList<RuntimeException>();
+        final Set<RIBean<?>> specializedBeans = new HashSet<RIBean<?>>();
 
         for (Bean<?> bean : beans) {
-            try {
-                if (bean instanceof RIBean<?>) {
-                    validateRIBean((RIBean<?>) bean, manager, specializedBeans);
-                } else {
-                    validateBean(bean, manager);
-                }
-            } catch (RuntimeException e) {
-                problems.add(e);
-            }
+            validateBean(bean, specializedBeans, manager, problems);
         }
         if (!problems.isEmpty()) {
             if (problems.size() == 1) {
                 throw problems.get(0);
             } else {
-                throw new DeploymentException((List) problems);
+                throw new DeploymentException(problems);
             }
+        }
+    }
+
+    protected void validateBean(Bean<?> bean, Collection<RIBean<?>> specializedBeans, BeanManagerImpl manager, List<RuntimeException> problems) {
+        try {
+            if (bean instanceof RIBean<?>) {
+                validateRIBean((RIBean<?>) bean, manager, specializedBeans);
+            } else {
+                validateGeneralBean(bean, manager);
+            }
+        } catch (RuntimeException e) {
+            problems.add(e);
         }
     }
 
     public void validateInterceptors(Collection<? extends Interceptor<?>> interceptors) {
         for (Interceptor<?> interceptor : interceptors) {
-            // TODO: confirm that producer methods, fields and disposers can be
-            // only found on Weld interceptors?
-            if (interceptor instanceof InterceptorImpl<?>) {
-                WeldClass<?> annotated = ((InterceptorImpl<?>) interceptor).getWeldAnnotated();
-                while (annotated != null && annotated.getJavaClass() != Object.class) {
-                    if (!annotated.getDeclaredWeldMethods(Produces.class).isEmpty()) {
-                        throw new DefinitionException(INTERCEPTORS_CANNOT_HAVE_PRODUCER_METHODS, interceptor);
-                    }
-                    if (!annotated.getDeclaredWeldFields(Produces.class).isEmpty()) {
-                        throw new DefinitionException(INTERCEPTORS_CANNOT_HAVE_PRODUCER_FIELDS, interceptor);
-                    }
-                    if (!annotated.getDeclaredWeldMethodsWithAnnotatedParameters(Disposes.class).isEmpty()) {
-                        throw new DefinitionException(INTERCEPTORS_CANNOT_HAVE_DISPOSER_METHODS, interceptor);
-                    }
-                    if (!annotated.getDeclaredWeldMethodsWithAnnotatedParameters(Observes.class).isEmpty()) {
-                        throw new DefinitionException(INTERCEPTORS_CANNOT_HAVE_OBSERVER_METHODS, interceptor);
-                    }
-                    annotated = annotated.getWeldSuperclass();
+            validateInterceptor(interceptor);
+        }
+    }
+
+    protected void validateInterceptor(Interceptor<?> interceptor) {
+        // TODO: confirm that producer methods, fields and disposers can be
+        // only found on Weld interceptors?
+        if (interceptor instanceof InterceptorImpl<?>) {
+            WeldClass<?> annotated = ((InterceptorImpl<?>) interceptor).getWeldAnnotated();
+            while (annotated != null && annotated.getJavaClass() != Object.class) {
+                if (!annotated.getDeclaredWeldMethods(Produces.class).isEmpty()) {
+                    throw new DefinitionException(INTERCEPTORS_CANNOT_HAVE_PRODUCER_METHODS, interceptor);
                 }
+                if (!annotated.getDeclaredWeldFields(Produces.class).isEmpty()) {
+                    throw new DefinitionException(INTERCEPTORS_CANNOT_HAVE_PRODUCER_FIELDS, interceptor);
+                }
+                if (!annotated.getDeclaredWeldMethodsWithAnnotatedParameters(Disposes.class).isEmpty()) {
+                    throw new DefinitionException(INTERCEPTORS_CANNOT_HAVE_DISPOSER_METHODS, interceptor);
+                }
+                if (!annotated.getDeclaredWeldMethodsWithAnnotatedParameters(Observes.class).isEmpty()) {
+                    throw new DefinitionException(INTERCEPTORS_CANNOT_HAVE_OBSERVER_METHODS, interceptor);
+                }
+                annotated = annotated.getWeldSuperclass();
             }
         }
     }
 
-    public void validateDecorators(Collection<? extends Decorator<?>> beans, Collection<RIBean<?>> specializedBeans, BeanManagerImpl manager) {
-        for (Bean<?> bean : beans) {
-            if (bean instanceof RIBean<?>) {
-                validateRIBean((RIBean<?>) bean, manager, specializedBeans);
+    public void validateDecorators(Collection<? extends Decorator<?>> decorators, BeanManagerImpl manager) {
+        Set<RIBean<?>> specializedBeans = new HashSet<RIBean<?>>();
+        for (Decorator<?> decorator : decorators) {
+            validateDecorator(decorator, specializedBeans, manager);
+        }
+    }
 
-                if (bean instanceof WeldDecorator<?>) {
-                    WeldClass<?> annotatated = ((WeldDecorator<?>) bean).getWeldAnnotated();
-                    while (annotatated != null && annotatated.getJavaClass() != Object.class) {
-                        if (!annotatated.getDeclaredWeldMethods(Produces.class).isEmpty()) {
-                            throw new DefinitionException(DECORATORS_CANNOT_HAVE_PRODUCER_METHODS, bean);
-                        }
-                        if (!annotatated.getDeclaredWeldFields(Produces.class).isEmpty()) {
-                            throw new DefinitionException(DECORATORS_CANNOT_HAVE_PRODUCER_FIELDS, bean);
-                        }
-                        if (!annotatated.getDeclaredWeldMethodsWithAnnotatedParameters(Disposes.class).isEmpty()) {
-                            throw new DefinitionException(DECORATORS_CANNOT_HAVE_DISPOSER_METHODS, bean);
-                        }
-                        if (!annotatated.getDeclaredWeldMethodsWithAnnotatedParameters(Observes.class).isEmpty()) {
-                            throw new DefinitionException(DECORATORS_CANNOT_HAVE_OBSERVER_METHODS, bean);
-                        }
-                        annotatated = annotatated.getWeldSuperclass();
+    protected void validateDecorator(Decorator<?> decorator, Collection<RIBean<?>> specializedBeans, BeanManagerImpl manager) {
+        if (decorator instanceof RIBean<?>) {
+            validateRIBean((RIBean<?>) decorator, manager, specializedBeans);
+
+            if (decorator instanceof WeldDecorator<?>) {
+                WeldClass<?> annotatated = ((WeldDecorator<?>) decorator).getWeldAnnotated();
+                while (annotatated != null && annotatated.getJavaClass() != Object.class) {
+                    if (!annotatated.getDeclaredWeldMethods(Produces.class).isEmpty()) {
+                        throw new DefinitionException(DECORATORS_CANNOT_HAVE_PRODUCER_METHODS, decorator);
                     }
+                    if (!annotatated.getDeclaredWeldFields(Produces.class).isEmpty()) {
+                        throw new DefinitionException(DECORATORS_CANNOT_HAVE_PRODUCER_FIELDS, decorator);
+                    }
+                    if (!annotatated.getDeclaredWeldMethodsWithAnnotatedParameters(Disposes.class).isEmpty()) {
+                        throw new DefinitionException(DECORATORS_CANNOT_HAVE_DISPOSER_METHODS, decorator);
+                    }
+                    if (!annotatated.getDeclaredWeldMethodsWithAnnotatedParameters(Observes.class).isEmpty()) {
+                        throw new DefinitionException(DECORATORS_CANNOT_HAVE_OBSERVER_METHODS, decorator);
+                    }
+                    annotatated = annotatated.getWeldSuperclass();
                 }
-
-            } else {
-                validateBean(bean, manager);
             }
+
+        } else {
+            validateGeneralBean(decorator, manager);
         }
     }
 

@@ -24,11 +24,11 @@ package org.jboss.weld.bootstrap;
 import java.util.Collection;
 import java.util.Queue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
@@ -93,7 +93,7 @@ public class ThreadPoolService implements Service {
      * @param tasks tasks to be executed in the thread pool.
      */
     public void executeAndWait(Collection<? extends Runnable> tasks) {
-        Queue<RuntimeException> exceptions = new LinkedBlockingQueue<RuntimeException>();
+        Queue<RuntimeException> exceptions = new ConcurrentLinkedQueue<RuntimeException>();
         CountDownLatch latch = new CountDownLatch(tasks.size());
         for (Runnable task : tasks) {
             execute(new BootstrapTask(latch, exceptions, task));
@@ -139,5 +139,32 @@ public class ThreadPoolService implements Service {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    /**
+     * Used for decomposition of loops in which independent tasks are processed sequentially.
+     *
+     * A number of {@link LoopDecompositionTask}s may operate on a shared concurrent queue. The queue is polled for items and
+     * for each item the {@link #doWork(Object)} method is invoked. Execution terminates once the queue is empty.
+     *
+     * @author Jozef Hartinger
+     *
+     */
+    public abstract static class LoopDecompositionTask<T> implements Runnable {
+        private Queue<T> queue;
+
+        public LoopDecompositionTask(Queue<T> queue) {
+            this.queue = queue;
+        }
+
+        @Override
+        public void run() {
+            Thread thread = Thread.currentThread();
+            for (T i = queue.poll(); i != null && !thread.isInterrupted(); i = queue.poll()) {
+                doWork(i);
+            }
+        }
+
+        protected abstract void doWork(T item);
     }
 }

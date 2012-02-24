@@ -35,7 +35,6 @@ import javax.interceptor.Interceptor;
 import org.jboss.weld.Container;
 import org.jboss.weld.bean.AbstractBean;
 import org.jboss.weld.bean.AbstractClassBean;
-import org.jboss.weld.bean.ProducerMethod;
 import org.jboss.weld.bean.attributes.BeanAttributesFactory;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
 import org.jboss.weld.bootstrap.events.ProcessAnnotatedTypeFactory;
@@ -262,12 +261,7 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
                 BeansClosure.getClosure(getManager()).removeSpecialized(bean.getSpecializedBean());
                 previouslySpecializedBeans.add(bean.getSpecializedBean());
             }
-            if (bean instanceof AbstractClassBean<?>) {
-                getEnvironment().vetoClassBean((AbstractClassBean<?>) bean);
-            }
-            if (bean instanceof ProducerMethod<?, ?>) {
-                getEnvironment().removeProducerMethod((ProducerMethod<?, ?>) bean);
-            }
+            getEnvironment().vetoBean(bean);
         }
         // if a specializing bean was vetoed, let's process the specializing bean now
         processBeanAttributes(previouslySpecializedBeans);
@@ -279,7 +273,8 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
         }
     }
 
-    public void processProducerMethodAttributes() {
+    public void processProducerAttributes() {
+        processBeanAttributes(getEnvironment().getProducerFields());
         // process BeanAttributes for producer methods
         preInitializeBeans(getEnvironment().getProducerMethodBeanMap().values());
         processBeanAttributes(getEnvironment().getProducerMethodBeanMap().values());

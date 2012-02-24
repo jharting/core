@@ -198,10 +198,7 @@ public class AbstractBeanDeployer<E extends BeanDeployerEnvironment> {
         } else {
             bean = ProducerField.of(attributes, field, declaringBean, manager, services);
         }
-        boolean vetoed = fireProcessBeanAttributes(bean);
-        if (!vetoed) {
-            getEnvironment().addProducerField(bean);
-        }
+        getEnvironment().addProducerField(bean);
     }
 
     protected <X> void createProducerFields(AbstractClassBean<X> declaringBean, WeldClass<X> annotatedClass) {

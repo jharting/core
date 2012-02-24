@@ -78,6 +78,7 @@ public class BeanDeployerEnvironment {
                 new ConcurrentHashMap<WeldClass<?>, Extension>(),
                 Sets.newSetFromMap(new ConcurrentHashMap<Class<?>, Boolean>()),
                 new ConcurrentHashMap<WeldClass<?>, AbstractClassBean<?>>(),
+                Sets.newSetFromMap(new ConcurrentHashMap<ProducerField<?, ?>, Boolean>()),
                 new ConcurrentHashMap<WeldMethodKey<?, ?>, ProducerMethod<?, ?>>(),
                 Sets.newSetFromMap(new ConcurrentHashMap<RIBean<?>, Boolean>()),
                 Sets.newSetFromMap(new ConcurrentHashMap<ObserverMethodImpl<?, ?>, Boolean>()),
@@ -96,6 +97,7 @@ public class BeanDeployerEnvironment {
     private final Set<Class<?>> vetoedClasses;
     private final Map<WeldClass<?>, AbstractClassBean<?>> classBeanMap;
     private final Map<WeldMethodKey<?, ?>, ProducerMethod<?, ?>> producerMethodBeanMap;
+    private final Set<ProducerField<?, ?>> producerFields;
     private final Set<RIBean<?>> beans;
     private final Set<ObserverMethodImpl<?, ?>> observers;
     private final Set<DisposalMethod<?, ?>> allDisposalBeans;
@@ -113,6 +115,7 @@ public class BeanDeployerEnvironment {
             Map<WeldClass<?>, Extension> weldClassSource,
             Set<Class<?>> vetoedClasses,
             Map<WeldClass<?>, AbstractClassBean<?>> classBeanMap,
+            Set<ProducerField<?, ?>> producerFields,
             Map<WeldMethodKey<?, ?>, ProducerMethod<?, ?>> producerMethodBeanMap,
             Set<RIBean<?>> beans,
             Set<ObserverMethodImpl<?, ?>> observers,
@@ -128,6 +131,7 @@ public class BeanDeployerEnvironment {
         this.weldClassSource = weldClassSource;
         this.vetoedClasses = vetoedClasses;
         this.classBeanMap = classBeanMap;
+        this.producerFields = producerFields;
         this.producerMethodBeanMap = producerMethodBeanMap;
         this.beans = beans;
         this.observers = observers;
@@ -148,6 +152,7 @@ public class BeanDeployerEnvironment {
                 new HashMap<WeldClass<?>, Extension>(),
                 new HashSet<Class<?>>(),
                 new HashMap<WeldClass<?>, AbstractClassBean<?>>(),
+                new HashSet<ProducerField<?, ?>>(),
                 new HashMap<WeldMethodKey<?, ?>, ProducerMethod<?, ?>>(),
                 new HashSet<RIBean<?>>(),
                 new HashSet<ObserverMethodImpl<?, ?>>(),
@@ -233,6 +238,7 @@ public class BeanDeployerEnvironment {
     }
 
     public void addProducerField(ProducerField<?, ?> bean) {
+        producerFields.add(bean);
         addAbstractBean(bean);
     }
 
@@ -389,20 +395,23 @@ public class BeanDeployerEnvironment {
         }
     }
 
-    public void vetoClassBean(AbstractClassBean<?> bean) {
-        classBeanMap.remove(bean.getWeldAnnotated());
+    public void vetoBean(AbstractBean<?, ?> bean) {
         beans.remove(bean);
-        if (bean instanceof InterceptorImpl<?>) {
-            interceptors.remove(bean);
+        if (bean instanceof AbstractClassBean<?>) {
+            classBeanMap.remove(bean.getWeldAnnotated());
+            if (bean instanceof InterceptorImpl<?>) {
+                interceptors.remove(bean);
+            }
+            if (bean instanceof DecoratorImpl<?>) {
+                decorators.remove(bean);
+            }
         }
-        if (bean instanceof DecoratorImpl<?>) {
-            decorators.remove(bean);
+        if (bean instanceof ProducerMethod<?, ?>) {
+            producerMethodBeanMap.remove(WeldMethodKey.of(Reflections.<ProducerMethod<?, ?>>cast(bean).getWeldAnnotated()));
         }
-    }
-
-    public void removeProducerMethod(ProducerMethod<?, ?> method) {
-        beans.remove(method);
-        producerMethodBeanMap.remove(WeldMethodKey.of(method.getWeldAnnotated()));
+        if (bean instanceof ProducerField<?, ?>) {
+            producerFields.remove(bean);
+        }
     }
 
     public Map<WeldClass<?>, AbstractClassBean<?>> getClassBeanMap() {
@@ -411,6 +420,10 @@ public class BeanDeployerEnvironment {
 
     public Map<WeldMethodKey<?, ?>, ProducerMethod<?, ?>> getProducerMethodBeanMap() {
         return Collections.unmodifiableMap(producerMethodBeanMap);
+    }
+
+    public Set<ProducerField<?, ?>> getProducerFields() {
+        return Collections.unmodifiableSet(producerFields);
     }
 
     public void cleanup() {
