@@ -243,7 +243,7 @@ public class ProxyFactory<T> {
     }
 
     /**
-     * Produces or returns the existing proxy class.
+     * Produces or returns the existing proxy class. The operation is thread-safe.
      *
      * @return always the class of the proxy
      */
@@ -258,18 +258,30 @@ public class ProxyFactory<T> {
         }
         Class<T> proxyClass = null;
         log.trace("Retrieving/generating proxy class " + proxyClassName);
-        try {
-            // First check to see if we already have this proxy class
-            proxyClass = cast(classLoader.loadClass(proxyClassName));
-        } catch (ClassNotFoundException e) {
-            // Create the proxy class for this instance
-            try {
-                proxyClass = createProxyClass(proxyClassName);
-            } catch (Exception e1) {
-                throw new WeldException(e1);
+
+        proxyClass = getCachedProxyClass(proxyClassName);
+        if (proxyClass == null) {
+            synchronized(proxiedBeanType) {
+                proxyClass = getCachedProxyClass(proxyClassName);
+                if (proxyClass == null) {
+                    try {
+                        proxyClass = createProxyClass(proxyClassName);
+                    } catch (Exception e1) {
+                        throw new WeldException(e1);
+                    }
+                }
             }
         }
         return proxyClass;
+    }
+
+    protected Class<T> getCachedProxyClass(String proxyClassName) {
+        try {
+            // Check to see if we already have this proxy class
+            return cast(classLoader.loadClass(proxyClassName));
+        } catch (ClassNotFoundException e) {
+            return null;
+        }
     }
 
     /**

@@ -69,7 +69,6 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
     private ArraySet<WeldInjectionPoint<?, ?>> injectionPoints;
     private ArraySet<WeldInjectionPoint<?, ?>> delegateInjectionPoints;
     private ArraySet<WeldInjectionPoint<?, ?>> newInjectionPoints;
-    protected BeanManagerImpl beanManager;
     private final ServiceRegistry services;
     private boolean initialized;
     private boolean preInitialized;
@@ -82,7 +81,6 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
      */
     public AbstractBean(BeanAttributes<T> attributes, String idSuffix, BeanManagerImpl beanManager, ServiceRegistry services) {
         super(attributes, idSuffix, beanManager);
-        this.beanManager = beanManager;
         this.injectionPoints = new ArraySet<WeldInjectionPoint<?, ?>>();
         this.delegateInjectionPoints = new ArraySet<WeldInjectionPoint<?, ?>>();
         this.newInjectionPoints = new ArraySet<WeldInjectionPoint<?, ?>>();

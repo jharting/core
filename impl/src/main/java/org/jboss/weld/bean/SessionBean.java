@@ -95,7 +95,7 @@ import static org.jboss.weld.util.reflection.Reflections.cast;
 
 public class SessionBean<T> extends AbstractClassBean<T> {
     // The EJB descriptor
-    private InternalEjbDescriptor<T> ejbDescriptor;
+    private final InternalEjbDescriptor<T> ejbDescriptor;
 
     private Class<T> proxyClass;
 

@@ -36,7 +36,7 @@ import org.jboss.weld.manager.BeanManagerImpl;
  */
 public abstract class RIBean<T> extends CommonBean<T> implements PassivationCapable {
 
-    private final BeanManagerImpl beanManager;
+    protected final BeanManagerImpl beanManager;
 
     protected RIBean(BeanAttributes<T> attributes, String idSuffix, BeanManagerImpl beanManager) {
         super(attributes, idSuffix, beanManager);
