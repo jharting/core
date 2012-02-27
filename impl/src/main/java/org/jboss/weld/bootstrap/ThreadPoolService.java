@@ -159,10 +159,24 @@ public class ThreadPoolService implements Service {
 
         @Override
         public void run() {
+            init();
             Thread thread = Thread.currentThread();
             for (T i = queue.poll(); i != null && !thread.isInterrupted(); i = queue.poll()) {
                 doWork(i);
             }
+            cleanup();
+        }
+
+        /**
+         * Called before the compulation begins.
+         */
+        protected void init() {
+        }
+
+        /**
+         * Called after the computation finishes.
+         */
+        protected void cleanup() {
         }
 
         protected abstract void doWork(T item);

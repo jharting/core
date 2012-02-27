@@ -251,17 +251,9 @@ public class BeanDeployment {
     }
 
     public void afterBeanDiscovery(Environment environment) {
-        doAfterBeanDiscovery(beanManager.getBeans());
-        doAfterBeanDiscovery(beanManager.getDecorators());
-        doAfterBeanDiscovery(beanManager.getInterceptors());
-    }
-
-    private void doAfterBeanDiscovery(List<? extends Bean<?>> beanList) {
-        for (Bean<?> bean : beanList) {
-            if (bean instanceof RIBean<?>) {
-                ((RIBean<?>) bean).initializeAfterBeanDiscovery();
-            }
-        }
+        beanDeployer.doAfterBeanDiscovery(beanManager.getBeans());
+        beanDeployer.doAfterBeanDiscovery(beanManager.getDecorators());
+        beanDeployer.doAfterBeanDiscovery(beanManager.getInterceptors());
     }
 
     public EnabledBuilder getEnabledBuilder() {

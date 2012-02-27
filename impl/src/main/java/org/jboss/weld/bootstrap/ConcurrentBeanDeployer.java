@@ -28,7 +28,10 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import javax.enterprise.inject.spi.Bean;
+
 import org.jboss.weld.bean.AbstractClassBean;
+import org.jboss.weld.bean.RIBean;
 import org.jboss.weld.bootstrap.ThreadPoolService.LoopDecompositionTask;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
 import org.jboss.weld.ejb.EjbDescriptors;
@@ -137,6 +140,26 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
                 }
             });
         }
+        executor.executeAndWait(tasks);
+    }
+
+    @Override
+    public void doAfterBeanDiscovery(List<? extends Bean<?>> beanList) {
+        Queue<Bean<?>> queue = new ConcurrentLinkedQueue<Bean<?>>(beanList);
+
+        List<Runnable> tasks = new LinkedList<Runnable>();
+        for (int i = 0; i < executor.WORKERS; i++) {
+            tasks.add(new LoopDecompositionTask<Bean<?>>(queue) {
+
+                @Override
+                protected void doWork(Bean<?> bean) {
+                    if (bean instanceof RIBean<?>) {
+                        ((RIBean<?>) bean).initializeAfterBeanDiscovery();
+                    }
+                }
+            });
+        }
+
         executor.executeAndWait(tasks);
     }
 }

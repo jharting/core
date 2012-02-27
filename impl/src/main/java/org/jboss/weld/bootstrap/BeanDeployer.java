@@ -23,11 +23,13 @@ import static org.slf4j.ext.XLogger.Level.INFO;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.decorator.Decorator;
 import javax.enterprise.inject.spi.AnnotatedType;
+import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.ProcessBeanAttributes;
 import javax.interceptor.Interceptor;
@@ -35,6 +37,7 @@ import javax.interceptor.Interceptor;
 import org.jboss.weld.Container;
 import org.jboss.weld.bean.AbstractBean;
 import org.jboss.weld.bean.AbstractClassBean;
+import org.jboss.weld.bean.RIBean;
 import org.jboss.weld.bean.attributes.BeanAttributesFactory;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
 import org.jboss.weld.bootstrap.events.ProcessAnnotatedTypeFactory;
@@ -299,6 +302,14 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
     protected void validateDecorator(WeldClass<?> weldClass) {
         if (weldClass.isAnnotationPresent(Interceptor.class)) {
             throw new DefinitionException(BEAN_IS_BOTH_INTERCEPTOR_AND_DECORATOR, weldClass.getName());
+        }
+    }
+
+    public void doAfterBeanDiscovery(List<? extends Bean<?>> beanList) {
+        for (Bean<?> bean : beanList) {
+            if (bean instanceof RIBean<?>) {
+                ((RIBean<?>) bean).initializeAfterBeanDiscovery();
+            }
         }
     }
 
