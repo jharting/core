@@ -98,9 +98,10 @@ public class WeldConstructorImpl<T> extends AbstractWeldCallable<T, T, Construct
         // prefix'd
         int nesting = Reflections.getNesting(declaringClass.getJavaClass());
         if (annotatedConstructor == null) {
+            Annotation[][] parameterAnnotations = constructor.getParameterAnnotations();
             for (int i = 0; i < constructor.getParameterTypes().length; i++) {
                 int gi = i - nesting;
-                if (constructor.getParameterAnnotations()[i].length > 0) {
+                if (parameterAnnotations[i].length > 0) {
                     Class<? extends Object> clazz = constructor.getParameterTypes()[i];
                     Type parameterType;
                     if (constructor.getGenericParameterTypes().length > gi && gi >= 0) {
@@ -108,7 +109,7 @@ public class WeldConstructorImpl<T> extends AbstractWeldCallable<T, T, Construct
                     } else {
                         parameterType = clazz;
                     }
-                    WeldParameter<?, T> parameter = WeldParameterImpl.of(constructor.getParameterAnnotations()[i], clazz, parameterType, this, i, classTransformer);
+                    WeldParameter<?, T> parameter = WeldParameterImpl.of(parameterAnnotations[i], clazz, parameterType, this, i, classTransformer);
                     this.parameters.add(parameter);
                 } else {
                     Class<? extends Object> clazz = constructor.getParameterTypes()[i];
