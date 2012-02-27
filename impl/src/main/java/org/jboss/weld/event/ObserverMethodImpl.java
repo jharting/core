@@ -241,7 +241,7 @@ public class ObserverMethodImpl<T, X> implements ObserverMethod<T> {
 
     }
 
-    private void sendEvent(T event, Object receiver, CreationalContext<?> creationalContext) {
+    protected void sendEvent(T event, Object receiver, CreationalContext<?> creationalContext) {
         try {
             preNotify(event, receiver);
             if (receiver == null) {
