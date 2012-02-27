@@ -201,6 +201,7 @@ public class BeanDeployerEnvironment {
         if (weldClass.isDiscovered()) {
             vetoedClasses.add(weldClass.getJavaClass());
         }
+        removeClass(weldClass);
     }
 
     public boolean isVetoed(Class<?> clazz) {

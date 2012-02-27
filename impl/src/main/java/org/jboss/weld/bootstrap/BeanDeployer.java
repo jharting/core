@@ -75,7 +75,7 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
     private transient XLogger xlog = loggerFactory().getXLogger(Category.CLASS_LOADING);
 
     private final ResourceLoader resourceLoader;
-    private final ClassTransformer classTransformer;
+    protected final ClassTransformer classTransformer;
 
     public BeanDeployer(BeanManagerImpl manager, EjbDescriptors ejbDescriptors, ServiceRegistry services) {
         this(manager, ejbDescriptors, services, BeanDeployerEnvironment.newEnvironment(ejbDescriptors, manager));
@@ -240,7 +240,7 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
         }
     }
 
-    private void processBeanAttributes(Collection<? extends AbstractBean<?, ?>> beans) {
+    protected void processBeanAttributes(Collection<? extends AbstractBean<?, ?>> beans) {
         if (beans.isEmpty()) {
             return; // exit recursion
         }
