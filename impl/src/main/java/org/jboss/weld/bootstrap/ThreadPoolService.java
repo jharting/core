@@ -31,6 +31,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jboss.weld.bootstrap.api.Service;
 
@@ -46,10 +47,16 @@ public class ThreadPoolService implements Service {
      * Use deamon threads so that Weld does not hang e.g. in a SE environment.
      */
     private static class DeamonThreadFactory implements ThreadFactory {
+
+        private final AtomicInteger threadNumber = new AtomicInteger(1);
+        private static final String THREAD_NAME_PREFIX = "weld-worker-";
+        private final ThreadFactory delegate = Executors.defaultThreadFactory();
+
         @Override
         public Thread newThread(Runnable r) {
-            Thread thread = new Thread(r);
+            Thread thread = delegate.newThread(r);
             thread.setDaemon(true);
+            thread.setName(THREAD_NAME_PREFIX + threadNumber.getAndIncrement());
             return thread;
         }
     }
