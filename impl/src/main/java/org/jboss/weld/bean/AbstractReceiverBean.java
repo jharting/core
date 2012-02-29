@@ -46,11 +46,6 @@ public abstract class AbstractReceiverBean<X, T, S extends Member> extends Abstr
         this.declaringBean = declaringBean;
     }
 
-    @Override
-    public void initialize(BeanDeployerEnvironment environment) {
-        super.initialize(environment);
-    }
-
     /**
      * Gets the receiver of the product
      *

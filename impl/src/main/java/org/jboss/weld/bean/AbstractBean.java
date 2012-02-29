@@ -70,7 +70,6 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
     private ArraySet<WeldInjectionPoint<?, ?>> delegateInjectionPoints;
     private ArraySet<WeldInjectionPoint<?, ?>> newInjectionPoints;
     private final ServiceRegistry services;
-    private boolean initialized;
     private boolean preInitialized;
     private boolean proxyRequired;
 
@@ -116,9 +115,8 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
      * Initializes the bean and its metadata
      */
     @Override
-    public void initialize(BeanDeployerEnvironment environment) {
+    public void internalInitialize(BeanDeployerEnvironment environment) {
         preInitialize();
-        initialized = true;
         log.trace(CREATING_BEAN, getType());
         checkDelegateInjectionPoints();
         if (getScope() != null) {
@@ -264,10 +262,6 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
     @Override
     public boolean isSpecializing() {
         return getWeldAnnotated().isAnnotationPresent(Specializes.class);
-    }
-
-    protected boolean isInitialized() {
-        return initialized;
     }
 
     @Override

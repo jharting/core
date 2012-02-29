@@ -251,6 +251,24 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
     }
 
     @Override
+    public AbstractBeanDeployer<BeanDeployerEnvironment> initializeBeans() {
+        Queue<RIBean<?>> queue = new ConcurrentLinkedQueue<RIBean<?>>(getEnvironment().getBeans());
+
+        List<Runnable> tasks = new LinkedList<Runnable>();
+        for (int i = 0; i < executor.WORKERS; i++) {
+            tasks.add(new LoopDecompositionTask<RIBean<?>>(queue) {
+
+                @Override
+                protected void doWork(RIBean<?> bean) {
+                    bean.initialize(getEnvironment());
+                }
+            });
+        }
+        executor.executeAndWait(tasks);
+        return this;
+    }
+
+    @Override
     public AbstractBeanDeployer<BeanDeployerEnvironment> fireBeanEvents() {
         Queue<RIBean<?>> queue = new ConcurrentLinkedQueue<RIBean<?>>(getEnvironment().getBeans());
 
