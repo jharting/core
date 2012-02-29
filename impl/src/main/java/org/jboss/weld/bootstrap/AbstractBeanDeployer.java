@@ -24,7 +24,6 @@ import static org.jboss.weld.logging.messages.BootstrapMessage.FOUND_INTERCEPTOR
 import static org.jboss.weld.logging.messages.BootstrapMessage.FOUND_OBSERVER_METHOD;
 
 import java.lang.reflect.Member;
-import java.util.Set;
 
 import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
@@ -115,36 +114,63 @@ public class AbstractBeanDeployer<E extends BeanDeployerEnvironment> {
         return this;
     }
 
-    public AbstractBeanDeployer<E> deploy() {
-        Set<? extends RIBean<?>> beans = getEnvironment().getBeans();
-        for (RIBean<?> bean : beans) {
+    public AbstractBeanDeployer<E> initializeBeans() {
+        for (RIBean<?> bean : getEnvironment().getBeans()) {
             bean.initialize(getEnvironment());
-            if (!(bean instanceof NewBean)) {
-                if (bean instanceof AbstractProducerBean<?, ?, ?>) {
-                    ProcessProducerImpl.fire(manager, Reflections.<AbstractProducerBean<?, ?, Member>>cast(bean));
-                } else if (bean instanceof AbstractClassBean<?>) {
-                    ProcessBeanInjectionTarget.fire(manager, (AbstractClassBean<?>) bean);
-                }
-                if (bean instanceof ManagedBean<?>) {
-                    ProcessManagedBeanImpl.fire(manager, (ManagedBean<?>) bean);
-                } else if (bean instanceof SessionBean<?>) {
-                    ProcessSessionBeanImpl.fire(manager, Reflections.<SessionBean<Object>>cast(bean));
-                } else if (bean instanceof ProducerField<?, ?>) {
-                    ProcessProducerFieldImpl.fire(manager, (ProducerField<?, ?>) bean);
-                } else if (bean instanceof ProducerMethod<?, ?>) {
-                    ProcessProducerMethodImpl.fire(manager, (ProducerMethod<?, ?>) bean);
-                } else {
-                    ProcessBeanImpl.fire(getManager(), bean);
-                }
+        }
+        return this;
+    }
+
+    public AbstractBeanDeployer<E> fireBeanEvents() {
+        for (RIBean<?> bean : getEnvironment().getBeans()) {
+            fireBeanEvents(bean);
+        }
+        return this;
+    }
+
+    public void fireBeanEvents(RIBean<?> bean) {
+        if (!(bean instanceof NewBean)) {
+            if (bean instanceof AbstractProducerBean<?, ?, ?>) {
+                ProcessProducerImpl.fire(manager, Reflections.<AbstractProducerBean<?, ?, Member>>cast(bean));
+            } else if (bean instanceof AbstractClassBean<?>) {
+                ProcessBeanInjectionTarget.fire(manager, (AbstractClassBean<?>) bean);
             }
+            if (bean instanceof ManagedBean<?>) {
+                ProcessManagedBeanImpl.fire(manager, (ManagedBean<?>) bean);
+            } else if (bean instanceof SessionBean<?>) {
+                ProcessSessionBeanImpl.fire(manager, Reflections.<SessionBean<Object>>cast(bean));
+            } else if (bean instanceof ProducerField<?, ?>) {
+                ProcessProducerFieldImpl.fire(manager, (ProducerField<?, ?>) bean);
+            } else if (bean instanceof ProducerMethod<?, ?>) {
+                ProcessProducerMethodImpl.fire(manager, (ProducerMethod<?, ?>) bean);
+            } else {
+                ProcessBeanImpl.fire(getManager(), bean);
+            }
+        }
+    }
+
+    public AbstractBeanDeployer<E> deployBeans() {
+        for (RIBean<?> bean : getEnvironment().getBeans()) {
             manager.addBean(bean);
             log.debug(FOUND_BEAN, bean);
         }
+        return this;
+    }
+
+    public AbstractBeanDeployer<E> initializeObserverMethods() {
+        for (ObserverMethodImpl<?, ?> observer : getEnvironment().getObservers()) {
+            if (Observers.isObserverMethodEnabled(observer, manager)) {
+                observer.initialize();
+            }
+        }
+        return this;
+    }
+
+    public AbstractBeanDeployer<E> deployObserverMethods() {
         // TODO -- why do observers have to be the last?
         for (ObserverMethodImpl<?, ?> observer : getEnvironment().getObservers()) {
             if (Observers.isObserverMethodEnabled(observer, manager)) {
                 log.debug(FOUND_OBSERVER_METHOD, observer);
-                observer.initialize();
                 ProcessObserverMethodImpl.fire(manager, observer);
                 manager.addObserver(observer);
             }

@@ -293,6 +293,14 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
         }
     }
 
+    public void deploy() {
+        initializeBeans();
+        fireBeanEvents();
+        deployBeans();
+        initializeObserverMethods();
+        deployObserverMethods();
+    }
+
     protected void validateInterceptor(WeldClass<?> weldClass) {
         if (weldClass.isAnnotationPresent(Decorator.class)) {
             throw new DeploymentException(BEAN_IS_BOTH_INTERCEPTOR_AND_DECORATOR, weldClass.getName());

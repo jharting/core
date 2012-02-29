@@ -100,13 +100,15 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
      */
     @Override
     public void preInitialize() {
-        if (isSpecializing() && !preInitialized) {
-            preInitialized = true;
-            preSpecialize();
-            specialize();
-            checkSpecialization();
-            postSpecialize();
-            finishSpecialization();
+        synchronized (this) {
+            if (isSpecializing() && !preInitialized) {
+                preInitialized = true;
+                preSpecialize();
+                specialize();
+                checkSpecialization();
+                postSpecialize();
+                finishSpecialization();
+            }
         }
     }
 
