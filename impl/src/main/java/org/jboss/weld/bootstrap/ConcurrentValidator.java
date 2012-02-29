@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.Decorator;
@@ -57,7 +57,7 @@ public class ConcurrentValidator extends Validator {
 
     @Override
     public void validateBeans(Collection<? extends Bean<?>> beans, final BeanManagerImpl manager) {
-        final Queue<Bean<?>> beanQueue = new LinkedBlockingQueue<Bean<?>>(beans);
+        final Queue<Bean<?>> beanQueue = new ConcurrentLinkedQueue<Bean<?>>(beans);
         final Set<RIBean<?>> specializedBeans = Sets.newSetFromMap(new ConcurrentHashMap<RIBean<?>, Boolean>());
         final List<RuntimeException> problems = Collections.synchronizedList(new LinkedList<RuntimeException>());
 
@@ -84,7 +84,7 @@ public class ConcurrentValidator extends Validator {
 
     @Override
     public void validateInterceptors(Collection<? extends Interceptor<?>> interceptors) {
-        Queue<Interceptor<?>> interceptorQueue = new LinkedBlockingQueue<Interceptor<?>>(interceptors);
+        Queue<Interceptor<?>> interceptorQueue = new ConcurrentLinkedQueue<Interceptor<?>>(interceptors);
 
         List<Runnable> tasks = new LinkedList<Runnable>();
         for (int i = 0; i < executor.WORKERS; i++) {
@@ -101,7 +101,7 @@ public class ConcurrentValidator extends Validator {
 
     @Override
     public void validateDecorators(Collection<? extends Decorator<?>> decorators, final BeanManagerImpl manager) {
-        Queue<Decorator<?>> decoratorQueue = new LinkedBlockingQueue<Decorator<?>>(decorators);
+        Queue<Decorator<?>> decoratorQueue = new ConcurrentLinkedQueue<Decorator<?>>(decorators);
         final Set<RIBean<?>> specializedBeans = Sets.newSetFromMap(new ConcurrentHashMap<RIBean<?>, Boolean>());
 
         List<Runnable> tasks = new LinkedList<Runnable>();
