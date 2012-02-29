@@ -21,6 +21,9 @@
  */
 package org.jboss.weld.bootstrap;
 
+import static org.jboss.weld.logging.Category.BOOTSTRAP;
+import static org.jboss.weld.logging.LoggerFactory.loggerFactory;
+
 import java.util.Collection;
 import java.util.Queue;
 import java.util.concurrent.Callable;
@@ -34,6 +37,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jboss.weld.bootstrap.api.Service;
+import org.jboss.weld.logging.messages.BootstrapMessage;
+import org.slf4j.cal10n.LocLogger;
 
 /**
  * A centralized thread pool used by Weld for parallel bootstrap.
@@ -61,11 +66,16 @@ public class ThreadPoolService implements Service {
         }
     }
 
+    private static final LocLogger log = loggerFactory().getLogger(BOOTSTRAP);
     // TODO make this configurable
     // TODO consider using newCachedThreadPool instead
     public final int WORKERS = Runtime.getRuntime().availableProcessors() + 1;
     private static final int TERMINATION_TIMEOUT = 5;
     private final ExecutorService executor = Executors.newFixedThreadPool(WORKERS, new DeamonThreadFactory());
+
+    public ThreadPoolService() {
+        log.info(BootstrapMessage.THREADS_IN_USE, WORKERS);
+    }
 
     public void execute(Runnable command) {
         executor.execute(command);
