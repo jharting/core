@@ -55,65 +55,65 @@ public class ConcurrentValidator extends Validator {
         this.executor = executor;
     }
 
-    @Override
-    public void validateBeans(Collection<? extends Bean<?>> beans, final BeanManagerImpl manager) {
-        final Queue<Bean<?>> beanQueue = new ConcurrentLinkedQueue<Bean<?>>(beans);
-        final Set<RIBean<?>> specializedBeans = Sets.newSetFromMap(new ConcurrentHashMap<RIBean<?>, Boolean>());
-        final List<RuntimeException> problems = Collections.synchronizedList(new LinkedList<RuntimeException>());
+//    @Override
+//    public void validateBeans(Collection<? extends Bean<?>> beans, final BeanManagerImpl manager) {
+//        final Queue<Bean<?>> beanQueue = new ConcurrentLinkedQueue<Bean<?>>(beans);
+//        final Set<RIBean<?>> specializedBeans = Sets.newSetFromMap(new ConcurrentHashMap<RIBean<?>, Boolean>());
+//        final List<RuntimeException> problems = Collections.synchronizedList(new LinkedList<RuntimeException>());
+//
+//        List<LoopDecompositionTask<Bean<?>>> tasks = new LinkedList<LoopDecompositionTask<Bean<?>>>();
+//        for (int i = 0; i < executor.WORKERS; i++) {
+//            tasks.add(new LoopDecompositionTask<Bean<?>>(beanQueue) {
+//                @Override
+//                protected void doWork(Bean<?> bean) {
+//                    validateBean(bean, specializedBeans, manager, problems);
+//                }
+//            });
+//        }
+//
+//        executor.executeAndWait(tasks);
+//
+//        if (!problems.isEmpty()) {
+//            if (problems.size() == 1) {
+//                throw problems.get(0);
+//            } else {
+//                throw new DeploymentException(problems);
+//            }
+//        }
+//    }
 
-        List<LoopDecompositionTask<Bean<?>>> tasks = new LinkedList<LoopDecompositionTask<Bean<?>>>();
-        for (int i = 0; i < executor.WORKERS; i++) {
-            tasks.add(new LoopDecompositionTask<Bean<?>>(beanQueue) {
-                @Override
-                protected void doWork(Bean<?> bean) {
-                    validateBean(bean, specializedBeans, manager, problems);
-                }
-            });
-        }
+//    @Override
+//    public void validateInterceptors(Collection<? extends Interceptor<?>> interceptors) {
+//        Queue<Interceptor<?>> interceptorQueue = new ConcurrentLinkedQueue<Interceptor<?>>(interceptors);
+//
+//        List<Runnable> tasks = new LinkedList<Runnable>();
+//        for (int i = 0; i < executor.WORKERS; i++) {
+//            tasks.add(new LoopDecompositionTask<Interceptor<?>>(interceptorQueue) {
+//                @Override
+//                protected void doWork(Interceptor<?> interceptor) {
+//                    validateInterceptor(interceptor);
+//                }
+//            });
+//        }
+//
+//        executor.executeAndWait(tasks);
+//    }
 
-        executor.executeAndWait(tasks);
-
-        if (!problems.isEmpty()) {
-            if (problems.size() == 1) {
-                throw problems.get(0);
-            } else {
-                throw new DeploymentException(problems);
-            }
-        }
-    }
-
-    @Override
-    public void validateInterceptors(Collection<? extends Interceptor<?>> interceptors) {
-        Queue<Interceptor<?>> interceptorQueue = new ConcurrentLinkedQueue<Interceptor<?>>(interceptors);
-
-        List<Runnable> tasks = new LinkedList<Runnable>();
-        for (int i = 0; i < executor.WORKERS; i++) {
-            tasks.add(new LoopDecompositionTask<Interceptor<?>>(interceptorQueue) {
-                @Override
-                protected void doWork(Interceptor<?> interceptor) {
-                    validateInterceptor(interceptor);
-                }
-            });
-        }
-
-        executor.executeAndWait(tasks);
-    }
-
-    @Override
-    public void validateDecorators(Collection<? extends Decorator<?>> decorators, final BeanManagerImpl manager) {
-        Queue<Decorator<?>> decoratorQueue = new ConcurrentLinkedQueue<Decorator<?>>(decorators);
-        final Set<RIBean<?>> specializedBeans = Sets.newSetFromMap(new ConcurrentHashMap<RIBean<?>, Boolean>());
-
-        List<Runnable> tasks = new LinkedList<Runnable>();
-        for (int i = 0; i < executor.WORKERS; i++) {
-            tasks.add(new LoopDecompositionTask<Decorator<?>>(decoratorQueue) {
-                @Override
-                protected void doWork(Decorator<?> decorator) {
-                    validateDecorator(decorator, specializedBeans, manager);
-                }
-            });
-        }
-
-        executor.executeAndWait(tasks);
-    }
+//    @Override
+//    public void validateDecorators(Collection<? extends Decorator<?>> decorators, final BeanManagerImpl manager) {
+//        Queue<Decorator<?>> decoratorQueue = new ConcurrentLinkedQueue<Decorator<?>>(decorators);
+//        final Set<RIBean<?>> specializedBeans = Sets.newSetFromMap(new ConcurrentHashMap<RIBean<?>, Boolean>());
+//
+//        List<Runnable> tasks = new LinkedList<Runnable>();
+//        for (int i = 0; i < executor.WORKERS; i++) {
+//            tasks.add(new LoopDecompositionTask<Decorator<?>>(decoratorQueue) {
+//                @Override
+//                protected void doWork(Decorator<?> decorator) {
+//                    validateDecorator(decorator, specializedBeans, manager);
+//                }
+//            });
+//        }
+//
+//        executor.executeAndWait(tasks);
+//    }
 }
