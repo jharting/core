@@ -22,21 +22,16 @@
 package org.jboss.weld.bootstrap;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.Bean;
 
-import org.jboss.weld.bean.AbstractBean;
 import org.jboss.weld.bean.AbstractClassBean;
 import org.jboss.weld.bean.RIBean;
-import org.jboss.weld.bootstrap.ThreadPoolService.LoopDecompositionTask;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
 import org.jboss.weld.bootstrap.events.ProcessAnnotatedTypeFactory;
 import org.jboss.weld.bootstrap.events.ProcessAnnotatedTypeImpl;
@@ -47,20 +42,18 @@ import org.jboss.weld.introspector.ExternalAnnotatedType;
 import org.jboss.weld.introspector.WeldClass;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.util.Beans;
-import org.jboss.weld.util.BeansClosure;
 import org.jboss.weld.util.collections.ConcurrentHashSetSupplier;
 import org.jboss.weld.util.reflection.Reflections;
 
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 
 /**
  * BeanDeployer that processes some of the deployment tasks in parallel. A threadsafe instance of
  * {@link BeanDeployerEnvironment} is used.
- * 
+ *
  * @author Jozef Hartinger
- * 
+ *
  */
 public class ConcurrentBeanDeployer extends BeanDeployer {
 
@@ -85,38 +78,20 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
             });
         }
 
-        try {
-            executor.invokeAll(tasks);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        // final Queue<String> classNames = new ConcurrentLinkedQueue<String>();
-        // Iterables.addAll(classNames, c);
-        //
-        // List<Runnable> tasks = new LinkedList<Runnable>();
-        // for (int i = 0; i < executor.WORKERS; i++) {
-        // tasks.add(new LoopDecompositionTask<String>(classNames) {
-        //
-        // @Override
-        // protected void doWork(String className) {
-        // addClass(className);
-        // }
-        // });
-        // }
-//        executor.executeAndWait(tasks);
+        executor.invokeAllAndCheckForExceptions(tasks);
         return this;
     }
 
     @Override
     public void processAnnotatedTypes() {
-        Queue<WeldClass<?>> classes = new ConcurrentLinkedQueue<WeldClass<?>>(getEnvironment().getClasses());
+        List<Callable<Void>> tasks = new LinkedList<Callable<Void>>();
 
-        List<Runnable> tasks = new LinkedList<Runnable>();
-        for (int i = 0; i < executor.WORKERS; i++) {
-            tasks.add(new LoopDecompositionTask<WeldClass<?>>(classes) {
+        for (final WeldClass<?> clazz : getEnvironment().getClasses()) {
+            tasks.add(new Callable<Void>() {
 
                 @Override
-                protected void doWork(WeldClass<?> weldClass) {
+                public Void call() throws Exception {
+                    WeldClass<?> weldClass = clazz;
                     // fire event
                     boolean synthetic = getEnvironment().getSource(weldClass) != null;
                     ProcessAnnotatedTypeImpl<?> event;
@@ -152,42 +127,40 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
                             getEnvironment().vetoClass(weldClass);
                         }
                     }
+                    return null;
                 }
             });
         }
-        executor.executeAndWait(tasks);
+
+        executor.invokeAllAndCheckForExceptions(tasks);
     }
 
     @Override
     public void createClassBeans() {
         final Multimap<Class<?>, WeldClass<?>> otherWeldClasses = Multimaps.newSetMultimap(new ConcurrentHashMap<Class<?>, Collection<WeldClass<?>>>(),
                 new ConcurrentHashSetSupplier<WeldClass<?>>());
-        final Queue<WeldClass<?>> classes = new ConcurrentLinkedQueue<WeldClass<?>>(getEnvironment().getClasses());
 
-        // create managed beans, decorators and interceptors
-        List<Runnable> tasks = new LinkedList<Runnable>();
-        for (int i = 0; i < executor.WORKERS; i++) {
-            tasks.add(new LoopDecompositionTask<WeldClass<?>>(classes) {
-
+        List<Callable<Void>> tasks = new LinkedList<Callable<Void>>();
+        for (final WeldClass<?> weldClass : getEnvironment().getClasses()) {
+            tasks.add(new Callable<Void>() {
                 @Override
-                protected void doWork(WeldClass<?> weldClass) {
+                public Void call() throws Exception {
                     createClassBean(weldClass, otherWeldClasses);
+                    return null;
                 }
             });
         }
-        executor.executeAndWait(tasks);
 
-        // create session beans
-        final Queue<InternalEjbDescriptor<?>> ejbDescriptors = new ConcurrentLinkedQueue<InternalEjbDescriptor<?>>();
-        Iterables.addAll(ejbDescriptors, getEnvironment().getEjbDescriptors());
-        List<Runnable> ejbTasks = new LinkedList<Runnable>();
-        for (int i = 0; i < executor.WORKERS; i++) {
-            ejbTasks.add(new LoopDecompositionTask<InternalEjbDescriptor<?>>(ejbDescriptors) {
+        executor.invokeAllAndCheckForExceptions(tasks);
+
+        List<Callable<Void>> ejbTasks = new LinkedList<Callable<Void>>();
+        for (final InternalEjbDescriptor<?> descriptor : getEnvironment().getEjbDescriptors()) {
+            ejbTasks.add(new Callable<Void>() {
 
                 @Override
-                protected void doWork(InternalEjbDescriptor<?> descriptor) {
+                public Void call() throws Exception {
                     if (getEnvironment().isVetoed(descriptor.getBeanClass())) {
-                        return;
+                        return null;
                     }
                     if (descriptor.isSingleton() || descriptor.isStateful() || descriptor.isStateless()) {
                         if (otherWeldClasses.containsKey(descriptor.getBeanClass())) {
@@ -198,109 +171,77 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
                             createSessionBean(descriptor);
                         }
                     }
+                    return null;
                 }
             });
         }
-        executor.executeAndWait(ejbTasks);
-    }
-
-    @Override
-    protected void processBeanAttributes(Collection<? extends AbstractBean<?, ?>> beans) {
-        final Queue<AbstractBean<?, ?>> queue = new ConcurrentLinkedQueue<AbstractBean<?, ?>>(beans);
-
-        List<Runnable> tasks = new LinkedList<Runnable>();
-        for (int i = 0; i < executor.WORKERS; i++) {
-            tasks.add(new LoopDecompositionTask<AbstractBean<?, ?>>(queue) {
-
-                @Override
-                protected void doWork(AbstractBean<?, ?> bean) {
-                    boolean vetoed = fireProcessBeanAttributes(bean);
-                    if (vetoed) {
-                        if (bean.isSpecializing()) {
-                            BeansClosure.getClosure(getManager()).removeSpecialized(bean.getSpecializedBean());
-                            queue.add(bean.getSpecializedBean());
-                        }
-                        getEnvironment().vetoBean(bean);
-                    } else {
-                        // now that we know that the bean won't be vetoed, it's the right time to register @New injection points
-                        getEnvironment().addNewBeansFromInjectionPoints(bean);
-                    }
-                }
-            });
-        }
-        executor.executeAndWait(tasks);
+        executor.invokeAllAndCheckForExceptions(ejbTasks);
     }
 
     @Override
     public void createProducersAndObservers() {
-        Queue<AbstractClassBean<?>> beans = new ConcurrentLinkedQueue<AbstractClassBean<?>>(getEnvironment().getClassBeanMap().values());
-
-        List<Runnable> tasks = new LinkedList<Runnable>();
-        for (int i = 0; i < executor.WORKERS; i++) {
-            tasks.add(new LoopDecompositionTask<AbstractClassBean<?>>(beans) {
-
+        List<Callable<Void>> tasks = new LinkedList<Callable<Void>>();
+        for (final AbstractClassBean<?> bean : getEnvironment().getClassBeanMap().values()) {
+            tasks.add(new Callable<Void>() {
                 @Override
-                protected void doWork(AbstractClassBean<?> bean) {
+                public Void call() throws Exception {
                     createObserversProducersDisposers(bean);
+                    return null;
                 }
             });
         }
-        executor.executeAndWait(tasks);
+        executor.invokeAllAndCheckForExceptions(tasks);
     }
 
     @Override
     public void doAfterBeanDiscovery(List<? extends Bean<?>> beanList) {
-        Queue<Bean<?>> queue = new ConcurrentLinkedQueue<Bean<?>>(beanList);
-
-        List<Runnable> tasks = new LinkedList<Runnable>();
-        for (int i = 0; i < executor.WORKERS; i++) {
-            tasks.add(new LoopDecompositionTask<Bean<?>>(queue) {
+        List<Callable<Void>> tasks = new LinkedList<Callable<Void>>();
+        for (final Bean<?> bean : beanList) {
+            tasks.add(new Callable<Void>() {
 
                 @Override
-                protected void doWork(Bean<?> bean) {
+                public Void call() throws Exception {
                     if (bean instanceof RIBean<?>) {
                         ((RIBean<?>) bean).initializeAfterBeanDiscovery();
                     }
+                    return null;
                 }
             });
         }
-
-        executor.executeAndWait(tasks);
+        executor.invokeAllAndCheckForExceptions(tasks);
     }
 
     @Override
     public AbstractBeanDeployer<BeanDeployerEnvironment> initializeBeans() {
-        Queue<RIBean<?>> queue = new ConcurrentLinkedQueue<RIBean<?>>(getEnvironment().getBeans());
-
-        List<Runnable> tasks = new LinkedList<Runnable>();
-        for (int i = 0; i < executor.WORKERS; i++) {
-            tasks.add(new LoopDecompositionTask<RIBean<?>>(queue) {
+        List<Callable<Void>> tasks = new LinkedList<Callable<Void>>();
+        for (final RIBean<?> bean : getEnvironment().getBeans()) {
+            tasks.add(new Callable<Void>() {
 
                 @Override
-                protected void doWork(RIBean<?> bean) {
+                public Void call() throws Exception {
                     bean.initialize(getEnvironment());
+                    return null;
                 }
             });
         }
-        executor.executeAndWait(tasks);
+        executor.invokeAllAndCheckForExceptions(tasks);
         return this;
     }
 
     @Override
     public AbstractBeanDeployer<BeanDeployerEnvironment> fireBeanEvents() {
-        Queue<RIBean<?>> queue = new ConcurrentLinkedQueue<RIBean<?>>(getEnvironment().getBeans());
-
-        List<Runnable> tasks = new LinkedList<Runnable>();
-        for (int i = 0; i < executor.WORKERS; i++) {
-            tasks.add(new LoopDecompositionTask<RIBean<?>>(queue) {
+        List<Callable<Void>> tasks = new LinkedList<Callable<Void>>();
+        for (final RIBean<?> bean : getEnvironment().getBeans()) {
+            tasks.add(new Callable<Void>() {
 
                 @Override
-                protected void doWork(RIBean<?> bean) {
+                public Void call() throws Exception {
                     fireBeanEvents(bean);
+                    return null;
                 }
             });
         }
-        executor.executeAndWait(tasks);
+        executor.invokeAllAndCheckForExceptions(tasks);
         return this;
     }
 }

@@ -293,7 +293,7 @@ public class WeldBootstrap implements Bootstrap {
         services.add(ContextualStore.class, new ContextualStoreImpl());
         services.add(CurrentInjectionPoint.class, new CurrentInjectionPoint());
         // TODO make it possible to suppress concurrent bootstrap
-        services.add(ThreadPoolService.class, new ThreadPoolService());
+        services.add(ThreadPoolService.class, new ProfiledThreadPoolService());
         ThreadPoolService executor = services.get(ThreadPoolService.class);
         if (executor == null) {
             services.add(Validator.class, new Validator());

@@ -26,10 +26,7 @@ import static org.jboss.weld.logging.LoggerFactory.loggerFactory;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Queue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -38,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jboss.weld.bootstrap.api.Service;
+import org.jboss.weld.exceptions.DeploymentException;
 import org.jboss.weld.logging.messages.BootstrapMessage;
 import org.slf4j.cal10n.LocLogger;
 
@@ -68,34 +66,54 @@ public class ThreadPoolService implements Service {
     }
 
     private static final LocLogger log = loggerFactory().getLogger(BOOTSTRAP);
-    // TODO make this configurable
-    // TODO consider using newCachedThreadPool instead
-    public final int WORKERS = Runtime.getRuntime().availableProcessors() + 1;
     private static final int TERMINATION_TIMEOUT = 5;
-    private final ExecutorService executor = Executors.newFixedThreadPool(WORKERS, new DeamonThreadFactory());
+    private static final String THREAD_POOL_SIZE_VARIABLE_NAME = "WELD_THREAD_POOL_SIZE";
+    public static final int SIZE;
+
+    static {
+        String value = System.getenv(THREAD_POOL_SIZE_VARIABLE_NAME);
+        int size = Runtime.getRuntime().availableProcessors() + 1;
+        if (value != null) {
+            try {
+                size = Integer.parseInt(value);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        SIZE = size;
+        log.info(BootstrapMessage.THREADS_IN_USE, SIZE);
+    }
+
+    private final ExecutorService executor;
 
     public ThreadPoolService() {
-        log.info(BootstrapMessage.THREADS_IN_USE, WORKERS);
-    }
-
-    public void execute(Runnable command) {
-        executor.execute(command);
-    }
-
-    public <T> Future<T> submit(Callable<T> task) {
-        return executor.submit(task);
-    }
-
-    public <T> Future<T> submit(Runnable task, T result) {
-        return executor.submit(task, result);
-    }
-
-    public Future<?> submit(Runnable task) {
-        return executor.submit(task);
+        this.executor = Executors.newFixedThreadPool(SIZE, new DeamonThreadFactory());
     }
 
     public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks) throws InterruptedException {
         return executor.invokeAll(tasks);
+    }
+
+    /**
+     * Executes the given tasks and blocks until they all finish. If a task throws an exception, the exception is rethrown by
+     * this method. If multiple tasks throw exceptions, there is no guarantee about which of the exceptions is rethrown by this
+     * method.
+     */
+    public void invokeAllAndCheckForExceptions(Collection<? extends Callable<Void>> tasks) {
+        try {
+            List<Future<Void>> results = executor.invokeAll(tasks);
+            for (Future<Void> result : results) {
+                try {
+                    result.get();
+                } catch (RuntimeException e) {
+                    throw e;
+                } catch (Throwable e) {
+                    throw new DeploymentException(e);
+                }
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } finally {
+        }
     }
 
     public boolean isShutdown() {
@@ -106,53 +124,6 @@ public class ThreadPoolService implements Service {
         return executor.isTerminated();
     }
 
-    /**
-     * Submits the given tasks for execution in the given thread pool. The method call blocks until all the tasks have finished.
-     *
-     * A task may throw an exception. If multiple tasks throw an exception, the exception that occured first is rethrown once
-     * all the tasks are finished.
-     *
-     * @param tasks tasks to be executed in the thread pool.
-     */
-    public void executeAndWait(Collection<? extends Runnable> tasks) {
-        Queue<RuntimeException> exceptions = new ConcurrentLinkedQueue<RuntimeException>();
-        CountDownLatch latch = new CountDownLatch(tasks.size());
-        for (Runnable task : tasks) {
-            execute(new BootstrapTask(latch, exceptions, task));
-        }
-        try {
-            latch.await();
-            if (!exceptions.isEmpty()) {
-                throw exceptions.peek();
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-    }
-
-    private class BootstrapTask implements Runnable {
-        private final CountDownLatch latch;
-        private final Queue<RuntimeException> exceptions;
-        private final Runnable delegate;
-
-        public BootstrapTask(CountDownLatch latch, Queue<RuntimeException> exceptions, Runnable delegate) {
-            this.latch = latch;
-            this.exceptions = exceptions;
-            this.delegate = delegate;
-        }
-
-        @Override
-        public void run() {
-            try {
-                delegate.run();
-            } catch (RuntimeException e) {
-                exceptions.add(e);
-            } finally {
-                latch.countDown();
-            }
-        }
-    }
-
     @Override
     public void cleanup() {
         executor.shutdownNow();
@@ -161,46 +132,5 @@ public class ThreadPoolService implements Service {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-    }
-
-    /**
-     * Used for decomposition of loops in which independent tasks are processed sequentially.
-     *
-     * A number of {@link LoopDecompositionTask}s may operate on a shared concurrent queue. The queue is polled for items and
-     * for each item the {@link #doWork(Object)} method is invoked. Execution terminates once the queue is empty.
-     *
-     * @author Jozef Hartinger
-     *
-     */
-    public abstract static class LoopDecompositionTask<T> implements Runnable {
-        private Queue<T> queue;
-
-        public LoopDecompositionTask(Queue<T> queue) {
-            this.queue = queue;
-        }
-
-        @Override
-        public void run() {
-            init();
-            Thread thread = Thread.currentThread();
-            for (T i = queue.poll(); i != null && !thread.isInterrupted(); i = queue.poll()) {
-                doWork(i);
-            }
-            cleanup();
-        }
-
-        /**
-         * Called before the compulation begins.
-         */
-        protected void init() {
-        }
-
-        /**
-         * Called after the computation finishes.
-         */
-        protected void cleanup() {
-        }
-
-        protected abstract void doWork(T item);
     }
 }

@@ -25,17 +25,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.Decorator;
 import javax.enterprise.inject.spi.Interceptor;
 
 import org.jboss.weld.bean.RIBean;
-import org.jboss.weld.bootstrap.ThreadPoolService.LoopDecompositionTask;
 import org.jboss.weld.exceptions.DeploymentException;
 import org.jboss.weld.manager.BeanManagerImpl;
 
@@ -57,21 +55,22 @@ public class ConcurrentValidator extends Validator {
 
     @Override
     public void validateBeans(Collection<? extends Bean<?>> beans, final BeanManagerImpl manager) {
-        final Queue<Bean<?>> beanQueue = new ConcurrentLinkedQueue<Bean<?>>(beans);
         final Set<RIBean<?>> specializedBeans = Sets.newSetFromMap(new ConcurrentHashMap<RIBean<?>, Boolean>());
         final List<RuntimeException> problems = Collections.synchronizedList(new LinkedList<RuntimeException>());
 
-        List<LoopDecompositionTask<Bean<?>>> tasks = new LinkedList<LoopDecompositionTask<Bean<?>>>();
-        for (int i = 0; i < executor.WORKERS; i++) {
-            tasks.add(new LoopDecompositionTask<Bean<?>>(beanQueue) {
+        List<Callable<Void>> tasks = new LinkedList<Callable<Void>>();
+        for (final Bean<?> bean : beans) {
+            tasks.add(new Callable<Void>() {
+
                 @Override
-                protected void doWork(Bean<?> bean) {
+                public Void call() throws Exception {
                     validateBean(bean, specializedBeans, manager, problems);
+                    return null;
                 }
             });
         }
 
-        executor.executeAndWait(tasks);
+        executor.invokeAllAndCheckForExceptions(tasks);
 
         if (!problems.isEmpty()) {
             if (problems.size() == 1) {
@@ -84,36 +83,37 @@ public class ConcurrentValidator extends Validator {
 
     @Override
     public void validateInterceptors(Collection<? extends Interceptor<?>> interceptors) {
-        Queue<Interceptor<?>> interceptorQueue = new ConcurrentLinkedQueue<Interceptor<?>>(interceptors);
+        List<Callable<Void>> tasks = new LinkedList<Callable<Void>>();
+        for (final Interceptor<?> interceptor : interceptors) {
+            tasks.add(new Callable<Void>() {
 
-        List<Runnable> tasks = new LinkedList<Runnable>();
-        for (int i = 0; i < executor.WORKERS; i++) {
-            tasks.add(new LoopDecompositionTask<Interceptor<?>>(interceptorQueue) {
                 @Override
-                protected void doWork(Interceptor<?> interceptor) {
+                public Void call() throws Exception {
                     validateInterceptor(interceptor);
+                    return null;
                 }
             });
         }
 
-        executor.executeAndWait(tasks);
+        executor.invokeAllAndCheckForExceptions(tasks);
     }
 
     @Override
     public void validateDecorators(Collection<? extends Decorator<?>> decorators, final BeanManagerImpl manager) {
-        Queue<Decorator<?>> decoratorQueue = new ConcurrentLinkedQueue<Decorator<?>>(decorators);
         final Set<RIBean<?>> specializedBeans = Sets.newSetFromMap(new ConcurrentHashMap<RIBean<?>, Boolean>());
 
-        List<Runnable> tasks = new LinkedList<Runnable>();
-        for (int i = 0; i < executor.WORKERS; i++) {
-            tasks.add(new LoopDecompositionTask<Decorator<?>>(decoratorQueue) {
+        List<Callable<Void>> tasks = new LinkedList<Callable<Void>>();
+        for (final Decorator<?> decorator : decorators) {
+            tasks.add(new Callable<Void>() {
+
                 @Override
-                protected void doWork(Decorator<?> decorator) {
+                public Void call() throws Exception {
                     validateDecorator(decorator, specializedBeans, manager);
+                    return null;
                 }
             });
         }
 
-        executor.executeAndWait(tasks);
+        executor.invokeAllAndCheckForExceptions(tasks);
     }
 }
