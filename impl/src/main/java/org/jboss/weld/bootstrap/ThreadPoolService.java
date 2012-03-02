@@ -25,6 +25,7 @@ import static org.jboss.weld.logging.Category.BOOTSTRAP;
 import static org.jboss.weld.logging.LoggerFactory.loggerFactory;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -91,6 +92,10 @@ public class ThreadPoolService implements Service {
 
     public Future<?> submit(Runnable task) {
         return executor.submit(task);
+    }
+
+    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks) throws InterruptedException {
+        return executor.invokeAll(tasks);
     }
 
     public boolean isShutdown() {

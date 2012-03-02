@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -57,9 +58,9 @@ import com.google.common.collect.Multimaps;
 /**
  * BeanDeployer that processes some of the deployment tasks in parallel. A threadsafe instance of
  * {@link BeanDeployerEnvironment} is used.
- *
+ * 
  * @author Jozef Hartinger
- *
+ * 
  */
 public class ConcurrentBeanDeployer extends BeanDeployer {
 
@@ -72,20 +73,37 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
 
     @Override
     public BeanDeployer addClasses(Iterable<String> c) {
-        final Queue<String> classNames = new ConcurrentLinkedQueue<String>();
-        Iterables.addAll(classNames, c);
+        List<Callable<Void>> tasks = new LinkedList<Callable<Void>>();
 
-        List<Runnable> tasks = new LinkedList<Runnable>();
-        for (int i = 0; i < executor.WORKERS; i++) {
-            tasks.add(new LoopDecompositionTask<String>(classNames) {
-
+        for (final String className : c) {
+            tasks.add(new Callable<Void>() {
                 @Override
-                protected void doWork(String className) {
+                public Void call() throws Exception {
                     addClass(className);
+                    return null;
                 }
             });
         }
-        executor.executeAndWait(tasks);
+
+        try {
+            executor.invokeAll(tasks);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        // final Queue<String> classNames = new ConcurrentLinkedQueue<String>();
+        // Iterables.addAll(classNames, c);
+        //
+        // List<Runnable> tasks = new LinkedList<Runnable>();
+        // for (int i = 0; i < executor.WORKERS; i++) {
+        // tasks.add(new LoopDecompositionTask<String>(classNames) {
+        //
+        // @Override
+        // protected void doWork(String className) {
+        // addClass(className);
+        // }
+        // });
+        // }
+//        executor.executeAndWait(tasks);
         return this;
     }
 
@@ -188,7 +206,7 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
 
     @Override
     protected void processBeanAttributes(Collection<? extends AbstractBean<?, ?>> beans) {
-        final Queue<AbstractBean<?, ?>> queue = new ConcurrentLinkedQueue<AbstractBean<?,?>>(beans);
+        final Queue<AbstractBean<?, ?>> queue = new ConcurrentLinkedQueue<AbstractBean<?, ?>>(beans);
 
         List<Runnable> tasks = new LinkedList<Runnable>();
         for (int i = 0; i < executor.WORKERS; i++) {
