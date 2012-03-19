@@ -299,6 +299,7 @@ public class WeldBootstrap implements Bootstrap {
             services.add(Validator.class, new Validator());
         } else {
             services.add(Validator.class, new ConcurrentValidator(executor));
+//            services.add(Validator.class, new OptimizedConcurrentValidator(executor));
         }
         return services;
     }
@@ -398,6 +399,16 @@ public class WeldBootstrap implements Bootstrap {
             log.debug(VALIDATING_BEANS);
             for (Entry<BeanDeploymentArchive, BeanDeployment> entry : beanDeployments.entrySet()) {
                 BeanManagerImpl beanManager = entry.getValue().getBeanManager();
+                beanManager.getBeanResolver().clear();
+                deployment.getServices().get(Validator.class).validateDeployment(beanManager, entry.getValue().getBeanDeployer().getEnvironment());
+                beanManager.getBeanResolver().clear();
+                deployment.getServices().get(Validator.class).validateDeployment(beanManager, entry.getValue().getBeanDeployer().getEnvironment());
+                beanManager.getBeanResolver().clear();
+                deployment.getServices().get(Validator.class).validateDeployment(beanManager, entry.getValue().getBeanDeployer().getEnvironment());
+                beanManager.getBeanResolver().clear();
+                deployment.getServices().get(Validator.class).validateDeployment(beanManager, entry.getValue().getBeanDeployer().getEnvironment());
+                beanManager.getBeanResolver().clear();
+                deployment.getServices().get(Validator.class).validateDeployment(beanManager, entry.getValue().getBeanDeployer().getEnvironment());
                 beanManager.getBeanResolver().clear();
                 deployment.getServices().get(Validator.class).validateDeployment(beanManager, entry.getValue().getBeanDeployer().getEnvironment());
                 beanManager.getServices().get(InjectionTargetValidator.class).validate();

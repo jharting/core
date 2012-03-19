@@ -81,39 +81,39 @@ public class ConcurrentValidator extends Validator {
         }
     }
 
-    @Override
-    public void validateInterceptors(Collection<? extends Interceptor<?>> interceptors) {
-        List<Callable<Void>> tasks = new LinkedList<Callable<Void>>();
-        for (final Interceptor<?> interceptor : interceptors) {
-            tasks.add(new Callable<Void>() {
+//    @Override
+//    public void validateInterceptors(Collection<? extends Interceptor<?>> interceptors) {
+//        List<Callable<Void>> tasks = new LinkedList<Callable<Void>>();
+//        for (final Interceptor<?> interceptor : interceptors) {
+//            tasks.add(new Callable<Void>() {
+//
+//                @Override
+//                public Void call() throws Exception {
+//                    validateInterceptor(interceptor);
+//                    return null;
+//                }
+//            });
+//        }
+//
+//        executor.invokeAllAndCheckForExceptions(tasks);
+//    }
 
-                @Override
-                public Void call() throws Exception {
-                    validateInterceptor(interceptor);
-                    return null;
-                }
-            });
-        }
-
-        executor.invokeAllAndCheckForExceptions(tasks);
-    }
-
-    @Override
-    public void validateDecorators(Collection<? extends Decorator<?>> decorators, final BeanManagerImpl manager) {
-        final Set<RIBean<?>> specializedBeans = Sets.newSetFromMap(new ConcurrentHashMap<RIBean<?>, Boolean>());
-
-        List<Callable<Void>> tasks = new LinkedList<Callable<Void>>();
-        for (final Decorator<?> decorator : decorators) {
-            tasks.add(new Callable<Void>() {
-
-                @Override
-                public Void call() throws Exception {
-                    validateDecorator(decorator, specializedBeans, manager);
-                    return null;
-                }
-            });
-        }
-
-        executor.invokeAllAndCheckForExceptions(tasks);
-    }
+//    @Override
+//    public void validateDecorators(Collection<? extends Decorator<?>> decorators, final BeanManagerImpl manager) {
+//        final Set<RIBean<?>> specializedBeans = Sets.newSetFromMap(new ConcurrentHashMap<RIBean<?>, Boolean>());
+//
+//        List<Callable<Void>> tasks = new LinkedList<Callable<Void>>();
+//        for (final Decorator<?> decorator : decorators) {
+//            tasks.add(new Callable<Void>() {
+//
+//                @Override
+//                public Void call() throws Exception {
+//                    validateDecorator(decorator, specializedBeans, manager);
+//                    return null;
+//                }
+//            });
+//        }
+//
+//        executor.invokeAllAndCheckForExceptions(tasks);
+//    }
 }

@@ -101,18 +101,21 @@ public class ThreadPoolService implements Service {
     public void invokeAllAndCheckForExceptions(Collection<? extends Callable<Void>> tasks) {
         try {
             List<Future<Void>> results = executor.invokeAll(tasks);
-            for (Future<Void> result : results) {
-                try {
-                    result.get();
-                } catch (RuntimeException e) {
-                    throw e;
-                } catch (Throwable e) {
-                    throw new DeploymentException(e);
-                }
-            }
+            checkForExceptions(results);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-        } finally {
+        }
+    }
+
+    protected void checkForExceptions(List<Future<Void>> futures) {
+        for (Future<Void> result : futures) {
+            try {
+                result.get();
+            } catch (RuntimeException e) {
+                throw e;
+            } catch (Throwable e) {
+                throw new DeploymentException(e);
+            }
         }
     }
 

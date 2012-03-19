@@ -16,79 +16,6 @@
  */
 package org.jboss.weld.bootstrap;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.TypeVariable;
-import java.lang.reflect.WildcardType;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-
-import javax.enterprise.context.Dependent;
-import javax.enterprise.context.NormalScope;
-import javax.enterprise.event.Event;
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.Alternative;
-import javax.enterprise.inject.Disposes;
-import javax.enterprise.inject.Instance;
-import javax.enterprise.inject.New;
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.Decorator;
-import javax.enterprise.inject.spi.InjectionPoint;
-import javax.enterprise.inject.spi.InjectionTarget;
-import javax.enterprise.inject.spi.Interceptor;
-import javax.enterprise.inject.spi.PassivationCapable;
-import javax.inject.Named;
-import javax.inject.Scope;
-
-import com.google.common.base.Supplier;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
-import com.google.common.collect.SetMultimap;
-import org.jboss.weld.bean.AbstractClassBean;
-import org.jboss.weld.bean.AbstractProducerBean;
-import org.jboss.weld.bean.DisposalMethod;
-import org.jboss.weld.bean.InterceptorImpl;
-import org.jboss.weld.bean.NewBean;
-import org.jboss.weld.bean.NewManagedBean;
-import org.jboss.weld.bean.NewSessionBean;
-import org.jboss.weld.bean.RIBean;
-import org.jboss.weld.bean.WeldDecorator;
-import org.jboss.weld.bean.builtin.AbstractBuiltInBean;
-import org.jboss.weld.bootstrap.api.Service;
-import org.jboss.weld.bootstrap.spi.Metadata;
-import org.jboss.weld.event.ObserverMethodImpl;
-import org.jboss.weld.exceptions.AmbiguousResolutionException;
-import org.jboss.weld.exceptions.DefinitionException;
-import org.jboss.weld.exceptions.DeploymentException;
-import org.jboss.weld.exceptions.IllegalProductException;
-import org.jboss.weld.exceptions.InconsistentSpecializationException;
-import org.jboss.weld.exceptions.NullableDependencyException;
-import org.jboss.weld.exceptions.UnproxyableResolutionException;
-import org.jboss.weld.exceptions.UnserializableDependencyException;
-import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
-import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
-import org.jboss.weld.interceptor.spi.model.InterceptionModel;
-import org.jboss.weld.introspector.WeldClass;
-import org.jboss.weld.literal.DecoratedLiteral;
-import org.jboss.weld.literal.InterceptedLiteral;
-import org.jboss.weld.manager.BeanManagerImpl;
-import org.jboss.weld.metadata.cache.MetaAnnotationStore;
-import org.jboss.weld.serialization.spi.helpers.SerializableContextual;
-import org.jboss.weld.util.Beans;
-import org.jboss.weld.util.Proxies;
-import org.jboss.weld.util.reflection.Formats;
-import org.jboss.weld.util.reflection.Reflections;
-import org.slf4j.cal10n.LocLogger;
-
 import static org.jboss.weld.logging.Category.BOOTSTRAP;
 import static org.jboss.weld.logging.LoggerFactory.loggerFactory;
 import static org.jboss.weld.logging.messages.ValidatorMessage.ALTERNATIVE_BEAN_CLASS_NOT_ANNOTATED;
@@ -128,6 +55,82 @@ import static org.jboss.weld.logging.messages.ValidatorMessage.PASSIVATING_BEAN_
 import static org.jboss.weld.logging.messages.ValidatorMessage.PSEUDO_SCOPED_BEAN_HAS_CIRCULAR_REFERENCES;
 import static org.jboss.weld.logging.messages.ValidatorMessage.SCOPE_ANNOTATION_ON_INJECTION_POINT;
 import static org.jboss.weld.util.reflection.Reflections.cast;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
+import javax.enterprise.context.Dependent;
+import javax.enterprise.context.NormalScope;
+import javax.enterprise.event.Event;
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.Alternative;
+import javax.enterprise.inject.Disposes;
+import javax.enterprise.inject.Instance;
+import javax.enterprise.inject.New;
+import javax.enterprise.inject.Produces;
+import javax.enterprise.inject.spi.Annotated;
+import javax.enterprise.inject.spi.Bean;
+import javax.enterprise.inject.spi.BeanManager;
+import javax.enterprise.inject.spi.Decorator;
+import javax.enterprise.inject.spi.InjectionPoint;
+import javax.enterprise.inject.spi.InjectionTarget;
+import javax.enterprise.inject.spi.Interceptor;
+import javax.enterprise.inject.spi.PassivationCapable;
+import javax.inject.Named;
+import javax.inject.Scope;
+
+import org.jboss.weld.bean.AbstractClassBean;
+import org.jboss.weld.bean.AbstractProducerBean;
+import org.jboss.weld.bean.DisposalMethod;
+import org.jboss.weld.bean.InterceptorImpl;
+import org.jboss.weld.bean.NewBean;
+import org.jboss.weld.bean.NewManagedBean;
+import org.jboss.weld.bean.NewSessionBean;
+import org.jboss.weld.bean.RIBean;
+import org.jboss.weld.bean.WeldDecorator;
+import org.jboss.weld.bean.builtin.AbstractBuiltInBean;
+import org.jboss.weld.bootstrap.api.Service;
+import org.jboss.weld.bootstrap.spi.Metadata;
+import org.jboss.weld.event.ObserverMethodImpl;
+import org.jboss.weld.exceptions.AmbiguousResolutionException;
+import org.jboss.weld.exceptions.DefinitionException;
+import org.jboss.weld.exceptions.DeploymentException;
+import org.jboss.weld.exceptions.IllegalProductException;
+import org.jboss.weld.exceptions.InconsistentSpecializationException;
+import org.jboss.weld.exceptions.NullableDependencyException;
+import org.jboss.weld.exceptions.UnproxyableResolutionException;
+import org.jboss.weld.exceptions.UnserializableDependencyException;
+import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
+import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
+import org.jboss.weld.interceptor.spi.model.InterceptionModel;
+import org.jboss.weld.introspector.WeldAnnotated;
+import org.jboss.weld.introspector.WeldClass;
+import org.jboss.weld.literal.DecoratedLiteral;
+import org.jboss.weld.literal.InterceptedLiteral;
+import org.jboss.weld.manager.BeanManagerImpl;
+import org.jboss.weld.metadata.cache.MetaAnnotationStore;
+import org.jboss.weld.serialization.spi.helpers.SerializableContextual;
+import org.jboss.weld.util.Beans;
+import org.jboss.weld.util.Proxies;
+import org.jboss.weld.util.reflection.Formats;
+import org.jboss.weld.util.reflection.Reflections;
+import org.slf4j.cal10n.LocLogger;
+
+import com.google.common.base.Supplier;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
+import com.google.common.collect.SetMultimap;
 
 /**
  * Checks a list of beans for DeploymentExceptions and their subclasses
@@ -346,11 +349,28 @@ public class Validator implements Service {
     }
 
     private void checkScopeAnnotations(InjectionPoint ij, MetaAnnotationStore metaAnnotationStore) {
-        for (Annotation annotation : ij.getAnnotated().getAnnotations()) {
-            if (hasScopeMetaAnnotation(annotation)) {
-                log.warn(SCOPE_ANNOTATION_ON_INJECTION_POINT, annotation, ij);
+        Annotated annotated = ij.getAnnotated();
+        if (annotated instanceof WeldAnnotated<?, ?>) {
+            WeldAnnotated<?, ?> weldAnnotated = (WeldAnnotated<?, ?>) annotated;
+            Set<Annotation> scopes = weldAnnotated.getMetaAnnotations(Scope.class);
+            Set<Annotation> normalScopes = weldAnnotated.getMetaAnnotations(NormalScope.class);
+            for (Annotation annotation : scopes) {
+                logScopeOnInjectionPointWarning(ij, annotation);
+            }
+            for (Annotation annotation : normalScopes) {
+                logScopeOnInjectionPointWarning(ij, annotation);
+            }
+        } else {
+            for (Annotation annotation : annotated.getAnnotations()) {
+                if (hasScopeMetaAnnotation(annotation)) {
+                    logScopeOnInjectionPointWarning(ij, annotation);
+                }
             }
         }
+    }
+
+    private void logScopeOnInjectionPointWarning(InjectionPoint ij, Annotation annotation) {
+        log.warn(SCOPE_ANNOTATION_ON_INJECTION_POINT, annotation, ij);
     }
 
     private boolean hasScopeMetaAnnotation(Annotation annotation) {

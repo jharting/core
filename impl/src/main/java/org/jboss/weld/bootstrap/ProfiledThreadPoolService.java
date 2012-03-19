@@ -39,6 +39,7 @@ public class ProfiledThreadPoolService extends ThreadPoolService {
 
     private final AtomicInteger execution = new AtomicInteger();
     private volatile long start = 0;
+    private volatile long exceptionCheckStart = 0;
     private final boolean enabled;
 
     public ProfiledThreadPoolService() {
@@ -51,6 +52,16 @@ public class ProfiledThreadPoolService extends ThreadPoolService {
                 throw new IllegalStateException();
             }
             start = System.currentTimeMillis();
+            log.info("ThreadPool task execution #" + execution.incrementAndGet() + " started.");
+        }
+    }
+
+    protected void startExceptionCheck() {
+        if (enabled) {
+            if (exceptionCheckStart != 0) {
+                throw new IllegalStateException();
+            }
+            exceptionCheckStart = System.currentTimeMillis();
         }
     }
 
@@ -59,8 +70,14 @@ public class ProfiledThreadPoolService extends ThreadPoolService {
             if (start == 0) {
                 throw new IllegalStateException();
             }
-            log.info("ThreadPool task execution #" + execution.incrementAndGet() + " took " + (System.currentTimeMillis() - start) + " ms");
+            final long current = System.currentTimeMillis();
+            String message = "ThreadPool task execution #" + execution.get() + " took " + (current - start) + " ms";
+            if (exceptionCheckStart != 0) {
+                message += ", out of which checking for exceptions took " + (current - exceptionCheckStart) + " ms";
+            }
+            log.info(message);
             start = 0;
+            exceptionCheckStart = 0;
         }
     }
 
@@ -82,5 +99,11 @@ public class ProfiledThreadPoolService extends ThreadPoolService {
         } finally {
             stopProfiling();
         }
+    }
+
+    @Override
+    protected void checkForExceptions(List<Future<Void>> futures) {
+        startExceptionCheck();
+        super.checkForExceptions(futures);
     }
 }
