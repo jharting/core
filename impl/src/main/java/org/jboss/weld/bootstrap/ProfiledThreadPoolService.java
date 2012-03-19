@@ -41,6 +41,7 @@ public class ProfiledThreadPoolService extends ThreadPoolService {
     private volatile long start = 0;
     private volatile long exceptionCheckStart = 0;
     private final boolean enabled;
+    private long sum = 0L;
 
     public ProfiledThreadPoolService() {
         enabled = "true".equals(System.getenv(PROFILING_VARIABLE_NAME));
@@ -71,13 +72,15 @@ public class ProfiledThreadPoolService extends ThreadPoolService {
                 throw new IllegalStateException();
             }
             final long current = System.currentTimeMillis();
-            String message = "ThreadPool task execution #" + execution.get() + " took " + (current - start) + " ms";
+            final long time = current - start;
+            String message = "ThreadPool task execution #" + execution.get() + " took " + (time) + " ms";
             if (exceptionCheckStart != 0) {
                 message += ", out of which checking for exceptions took " + (current - exceptionCheckStart) + " ms";
             }
             log.info(message);
             start = 0;
             exceptionCheckStart = 0;
+            sum += time;
         }
     }
 
@@ -105,5 +108,11 @@ public class ProfiledThreadPoolService extends ThreadPoolService {
     protected void checkForExceptions(List<Future<Void>> futures) {
         startExceptionCheck();
         super.checkForExceptions(futures);
+    }
+
+    @Override
+    public void cleanup() {
+        log.info("ThreadPool task execution took " + sum + " ms in total.");
+        super.cleanup();
     }
 }
