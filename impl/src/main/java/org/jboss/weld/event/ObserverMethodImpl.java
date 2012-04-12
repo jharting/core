@@ -115,7 +115,7 @@ public class ObserverMethodImpl<T, X> implements ObserverMethod<T> {
                 continue;
             }
             if (injectionPoint.getQualifier(New.class) != null) {
-                this.newInjectionPoints.add(injectionPoint);
+                newInjectionPoints.add(injectionPoint);
             }
             injectionPoints.add(injectionPoint);
         }
