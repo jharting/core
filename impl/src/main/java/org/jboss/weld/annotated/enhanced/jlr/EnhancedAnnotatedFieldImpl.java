@@ -42,7 +42,8 @@ public class EnhancedAnnotatedFieldImpl<T, X> extends AbstractEnhancedAnnotatedM
 
     public static <X, Y extends X> EnhancedAnnotatedFieldImpl<?, X> of(AnnotatedField<X> annotatedField, EnhancedAnnotatedType<Y> declaringClass, ClassTransformer classTransformer) {
         EnhancedAnnotatedType<X> downcastDeclaringType = Reflections.cast(declaringClass);
-        return new EnhancedAnnotatedFieldImpl<Object, X>(annotatedField, buildAnnotationMap(annotatedField.getAnnotations()), buildAnnotationMap(annotatedField.getAnnotations()), downcastDeclaringType, classTransformer);
+        Map<Class<? extends Annotation>, Annotation> annotationMap = classTransformer.buildAnnotationMap(annotatedField.getAnnotations());
+        return new EnhancedAnnotatedFieldImpl<Object, X>(annotatedField, annotationMap, annotationMap, downcastDeclaringType, classTransformer);
     }
 
     /**

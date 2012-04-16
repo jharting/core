@@ -59,7 +59,8 @@ public class EnhancedAnnotatedMethodImpl<T, X> extends AbstractEnhancedAnnotated
 
     public static <T, X, Y extends X> EnhancedAnnotatedMethodImpl<T, X> of(AnnotatedMethod<X> annotatedMethod, EnhancedAnnotatedType<Y> declaringClass, ClassTransformer classTransformer) {
         EnhancedAnnotatedType<X> downcastDeclaringType = Reflections.cast(declaringClass);
-        return new EnhancedAnnotatedMethodImpl<T, X>(annotatedMethod, buildAnnotationMap(annotatedMethod.getAnnotations()), buildAnnotationMap(annotatedMethod.getAnnotations()), downcastDeclaringType, classTransformer);
+        Map<Class<? extends Annotation>, Annotation> annotationMap = classTransformer.buildAnnotationMap(annotatedMethod.getAnnotations());
+        return new EnhancedAnnotatedMethodImpl<T, X>(annotatedMethod, annotationMap, annotationMap, downcastDeclaringType, classTransformer);
     }
 
     /**

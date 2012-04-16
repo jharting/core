@@ -38,7 +38,6 @@ import org.jboss.weld.annotated.enhanced.EnhancedAnnotated;
 import org.jboss.weld.exceptions.WeldException;
 import org.jboss.weld.literal.DefaultLiteral;
 import org.jboss.weld.resources.ClassTransformer;
-import org.jboss.weld.resources.SharedObjectFacade;
 import org.jboss.weld.util.collections.ArraySet;
 import org.jboss.weld.util.collections.ArraySetMultimap;
 import org.jboss.weld.util.collections.Arrays2;
@@ -74,21 +73,6 @@ public abstract class AbstractEnhancedAnnotated<T, S> implements EnhancedAnnotat
         }
         return annotationMap;
     }
-
-    /**
-     * Builds the annotation map (annotation type -> annotation)
-     *
-     * @param annotations The array of annotations to map
-     * @return The annotation map
-     */
-    protected static Map<Class<? extends Annotation>, Annotation> buildAnnotationMap(Iterable<Annotation> annotations) {
-        Map<Class<? extends Annotation>, Annotation> annotationMap = new HashMap<Class<? extends Annotation>, Annotation>();
-        for (Annotation annotation : annotations) {
-            annotationMap.put(annotation.annotationType(), annotation);
-        }
-        return annotationMap;
-    }
-
 
     protected static void addMetaAnnotations(ArraySetMultimap<Class<? extends Annotation>, Annotation> metaAnnotationMap, Annotation annotation, Annotation[] metaAnnotations, boolean declared) {
         for (Annotation metaAnnotation : metaAnnotations) {

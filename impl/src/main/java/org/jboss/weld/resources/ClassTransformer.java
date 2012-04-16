@@ -16,10 +16,14 @@
  */
 package org.jboss.weld.resources;
 
+import static org.jboss.weld.util.collections.WeldCollections.immutableMap;
 import static org.jboss.weld.util.reflection.Reflections.cast;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -90,6 +94,17 @@ public class ClassTransformer implements Service {
         }
     }
 
+    private static class AnnotationMapBuilder implements Function<Set<Annotation>, Map<Class<? extends Annotation>, Annotation>> {
+        @Override
+        public Map<Class<? extends Annotation>, Annotation> apply(Set<Annotation> input) {
+            Map<Class<? extends Annotation>, Annotation> annotationMap = new HashMap<Class<? extends Annotation>, Annotation>();
+            for (Annotation annotation : input) {
+                annotationMap.put(annotation.annotationType(), annotation);
+            }
+            return immutableMap(annotationMap);
+        }
+    };
+
 
     private static final class TypeHolder<T> {
         private final Class<T> rawType;
@@ -135,6 +150,7 @@ public class ClassTransformer implements Service {
     private final ConcurrentMap<SlimAnnotatedType<?>, EnhancedAnnotatedType<?>> enhancedAnnotatedTypes;
     private final ConcurrentMap<Class<? extends Annotation>, EnhancedAnnotation<?>> annotations;
     private final TypeStore typeStore;
+    private final Map<Set<Annotation>, Map<Class<? extends Annotation>, Annotation>> annotationMaps;
 
     public ClassTransformer(TypeStore typeStore) {
         MapMaker defaultMaker = new MapMaker();
@@ -145,6 +161,7 @@ public class ClassTransformer implements Service {
         this.externalSlimAnnotatedTypesById = new ConcurrentHashMap<String, UnbackedAnnotatedType<?>>();
         this.enhancedAnnotatedTypes = defaultMaker.makeComputingMap(new TransformSlimAnnotatedTypeToEnhancedAnnotatedType());
         this.annotations = defaultMaker.makeComputingMap(new TransformClassToWeldAnnotation());
+        this.annotationMaps = defaultMaker.makeComputingMap(new AnnotationMapBuilder());
         this.typeStore = typeStore;
     }
 
@@ -217,12 +234,17 @@ public class ClassTransformer implements Service {
         return typeStore;
     }
 
+    public Map<Class<? extends Annotation>, Annotation> buildAnnotationMap(Set<Annotation> annotations) {
+        return annotationMaps.get(annotations);
+    }
+
     public void cleanupAfterBoot() {
         this.enhancedAnnotatedTypes.clear();
         this.annotations.clear();
         for (BackedAnnotatedType<?> annotatedType : discoveredSlimAnnotatedTypes.values()) {
             annotatedType.clear();
         }
+        annotationMaps.clear();
     }
 
     public void cleanup() {

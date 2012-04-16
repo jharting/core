@@ -54,7 +54,8 @@ public class EnhancedAnnotatedConstructorImpl<T> extends AbstractEnhancedAnnotat
     private final AnnotatedConstructor<T> slim;
 
     public static <T> EnhancedAnnotatedConstructor<T> of(AnnotatedConstructor<T> annotatedConstructor, EnhancedAnnotatedType<T> declaringClass, ClassTransformer classTransformer) {
-        return new EnhancedAnnotatedConstructorImpl<T>(annotatedConstructor, buildAnnotationMap(annotatedConstructor.getAnnotations()), buildAnnotationMap(annotatedConstructor.getAnnotations()), declaringClass, classTransformer);
+        Map<Class<? extends Annotation>, Annotation> annotationMap = classTransformer.buildAnnotationMap(annotatedConstructor.getAnnotations());
+        return new EnhancedAnnotatedConstructorImpl<T>(annotatedConstructor, annotationMap, annotationMap, declaringClass, classTransformer);
     }
 
     /**

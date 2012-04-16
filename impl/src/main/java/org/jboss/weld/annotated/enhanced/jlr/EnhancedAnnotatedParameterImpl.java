@@ -42,7 +42,7 @@ import org.jboss.weld.util.reflection.Formats;
 public class EnhancedAnnotatedParameterImpl<T, X> extends AbstractEnhancedAnnotated<T, Object> implements EnhancedAnnotatedParameter<T, X> {
 
     public static <T, X> EnhancedAnnotatedParameter<T, X> of(AnnotatedParameter<X> annotatedParameter, EnhancedAnnotatedCallable<?, X, ?> declaringMember, ClassTransformer classTransformer) {
-        return new EnhancedAnnotatedParameterImpl<T, X>(annotatedParameter, declaringMember, buildAnnotationMap(annotatedParameter.getAnnotations()), classTransformer);
+        return new EnhancedAnnotatedParameterImpl<T, X>(annotatedParameter, declaringMember, classTransformer.buildAnnotationMap(annotatedParameter.getAnnotations()), classTransformer);
     }
 
     private final EnhancedAnnotatedCallable<?, X, ?> declaringMember;

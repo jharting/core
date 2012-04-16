@@ -104,9 +104,10 @@ public class EnhancedAnnotatedTypeImpl<T> extends AbstractEnhancedAnnotated<T, C
 
     public static <T> EnhancedAnnotatedType<T> of(SlimAnnotatedType<T> annotatedType, ClassTransformer classTransformer) {
         if (annotatedType instanceof BackedAnnotatedType<?>) {
-            return new EnhancedAnnotatedTypeImpl<T>(annotatedType, buildAnnotationMap(annotatedType.getAnnotations()), buildAnnotationMap(annotatedType.getJavaClass().getDeclaredAnnotations()), classTransformer);
+            return new EnhancedAnnotatedTypeImpl<T>(annotatedType, classTransformer.buildAnnotationMap(annotatedType.getAnnotations()), buildAnnotationMap(annotatedType.getJavaClass().getDeclaredAnnotations()), classTransformer);
         } else {
-            return new EnhancedAnnotatedTypeImpl<T>(annotatedType, buildAnnotationMap(annotatedType.getAnnotations()), buildAnnotationMap(annotatedType.getAnnotations()), classTransformer);
+            Map<Class<? extends Annotation>, Annotation> annotationMap = classTransformer.buildAnnotationMap(annotatedType.getAnnotations());
+            return new EnhancedAnnotatedTypeImpl<T>(annotatedType, annotationMap, annotationMap, classTransformer);
         }
     }
 
