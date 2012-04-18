@@ -33,6 +33,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -83,6 +84,7 @@ import org.jboss.weld.interceptor.builder.InterceptionModelBuilder;
 import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionModel;
+import org.jboss.weld.interceptor.util.InterceptionTypeRegistry;
 import org.jboss.weld.interceptor.util.InterceptionUtils;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.metadata.cache.MetaAnnotationStore;
@@ -427,18 +429,36 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
         return hasInterceptors;
     }
 
-    private void initTargetClassInterceptors() {
-        if (!Beans.isInterceptor(getEnhancedAnnotated())) {
-            InterceptorMetadata<T> interceptorClassMetadata = beanManager.getInterceptorMetadataReader().getTargetClassInterceptorMetadata(WeldInterceptorClassMetadata.of(getEnhancedAnnotated()));
-            hasSerializationOrInvocationInterceptorMethods = interceptorClassMetadata.isEligible(org.jboss.weld.interceptor.spi.model.InterceptionType.AROUND_INVOKE)
-                    || interceptorClassMetadata.isEligible(org.jboss.weld.interceptor.spi.model.InterceptionType.AROUND_TIMEOUT)
-                    || interceptorClassMetadata.isEligible(org.jboss.weld.interceptor.spi.model.InterceptionType.PRE_PASSIVATE)
-                    || interceptorClassMetadata.isEligible(org.jboss.weld.interceptor.spi.model.InterceptionType.POST_ACTIVATE);
-        } else {
-            // an interceptor does not have lifecycle methods of its own, but it intercepts the methods of the
-            // target class
-            hasSerializationOrInvocationInterceptorMethods = false;
+    static {
+        List<Class<? extends Annotation>> annotations = new ArrayList<Class<? extends Annotation>>();
+        org.jboss.weld.interceptor.spi.model.InterceptionType[] serializationOrInvocationInterceptionTypes = new org.jboss.weld.interceptor.spi.model.InterceptionType[] {org.jboss.weld.interceptor.spi.model.InterceptionType.AROUND_INVOKE, org.jboss.weld.interceptor.spi.model.InterceptionType.AROUND_TIMEOUT, org.jboss.weld.interceptor.spi.model.InterceptionType.POST_ACTIVATE, org.jboss.weld.interceptor.spi.model.InterceptionType.PRE_PASSIVATE};
+        for (org.jboss.weld.interceptor.spi.model.InterceptionType interceptionType : serializationOrInvocationInterceptionTypes) {
+            Class<? extends Annotation> annotation = InterceptionTypeRegistry.getAnnotationClass(interceptionType);
+            if (annotation != null) {
+                annotations.add(annotation);
+            }
         }
+        serializationOrInvocationInterceptionAnnotations = Collections.unmodifiableList(annotations);
+    }
+
+    private static final List<Class<? extends Annotation>> serializationOrInvocationInterceptionAnnotations;
+
+    private void initTargetClassInterceptors() {
+        if (!(this instanceof InterceptorImpl<?>)) {
+//            InterceptorMetadata<T> interceptorClassMetadata = beanManager.getInterceptorMetadataReader().getTargetClassInterceptorMetadata(WeldInterceptorClassMetadata.of(getEnhancedAnnotated()));
+//            hasSerializationOrInvocationInterceptorMethods = interceptorClassMetadata.isEligible(org.jboss.weld.interceptor.spi.model.InterceptionType.AROUND_INVOKE)
+//                    || interceptorClassMetadata.isEligible(org.jboss.weld.interceptor.spi.model.InterceptionType.AROUND_TIMEOUT)
+//                    || interceptorClassMetadata.isEligible(org.jboss.weld.interceptor.spi.model.InterceptionType.PRE_PASSIVATE)
+//                    || interceptorClassMetadata.isEligible(org.jboss.weld.interceptor.spi.model.InterceptionType.POST_ACTIVATE);
+            for (Class<? extends Annotation> clazz : serializationOrInvocationInterceptionAnnotations) {
+                if (!getEnhancedAnnotated().getEnhancedMethods(clazz).isEmpty()) {
+                    hasSerializationOrInvocationInterceptorMethods = true;
+                }
+            }
+        }
+        // an interceptor does not have lifecycle methods of its own, but it intercepts the methods of the
+        // target class
+        hasSerializationOrInvocationInterceptorMethods = false;
     }
 
     protected void checkConstructor(EnhancedAnnotatedConstructor<T> enhancedAnnotated) {
