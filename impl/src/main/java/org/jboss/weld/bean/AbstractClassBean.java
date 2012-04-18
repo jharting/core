@@ -554,7 +554,9 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
 
         private void initLifeCycleInterceptor(InterceptionType interceptionType, Map<Class<? extends Annotation>, Annotation> classBindingAnnotations) {
             List<Interceptor<?>> resolvedInterceptors = beanManager.resolveInterceptors(interceptionType, classBindingAnnotations.values());
-            builder.intercept(interceptionType).with(toSerializableContextualArray(resolvedInterceptors));
+            if (!resolvedInterceptors.isEmpty()) {
+                builder.intercept(interceptionType).with(toSerializableContextualArray(resolvedInterceptors));
+            }
         }
 
         private void initCdiBusinessMethodInterceptors(Map<Class<? extends Annotation>, Annotation> classBindingAnnotations) {
