@@ -22,12 +22,16 @@ import static org.jboss.weld.util.collections.WeldCollections.immutableList;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedMethod;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
 import org.jboss.weld.interceptor.reader.DefaultMethodMetadata;
 import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.MethodMetadata;
+import org.jboss.weld.interceptor.spi.model.InterceptionType;
+import org.jboss.weld.interceptor.util.InterceptionTypeRegistry;
 
 /**
  * @author Marius Bogoevici
@@ -44,11 +48,15 @@ public class WeldInterceptorClassMetadata<T> implements ClassMetadata<T>, Serial
     private WeldInterceptorClassMetadata(EnhancedAnnotatedType<T> weldClass) {
         this.clazz = weldClass.getJavaClass();
         ArrayList<MethodMetadata> methodMetadatas = new ArrayList<MethodMetadata>();
-        for (EnhancedAnnotatedMethod<?, ?> method : weldClass.getDeclaredEnhancedMethods()) {
+
+        List<EnhancedAnnotatedMethod<?, ?>> interceptorMethods = new LinkedList<EnhancedAnnotatedMethod<?,?>>();
+        for (InterceptionType interceptionType : InterceptionTypeRegistry.getSupportedInterceptionTypes()) {
+            interceptorMethods.addAll(weldClass.getDeclaredEnhancedMethods(InterceptionTypeRegistry.getAnnotationClass(interceptionType)));
+        }
+
+        for (EnhancedAnnotatedMethod<?, ?> method : interceptorMethods) {
             MethodMetadata methodMetadata = DefaultMethodMetadata.of(method, WeldAnnotatedMethodReader.getInstance());
-            if (methodMetadata.getSupportedInterceptionTypes() != null && methodMetadata.getSupportedInterceptionTypes().size() != 0) {
-                methodMetadatas.add(methodMetadata);
-            }
+            methodMetadatas.add(methodMetadata);
         }
         this.methodMetadatas = immutableList(methodMetadatas);
         if (weldClass.getEnhancedSuperclass() != null) {
