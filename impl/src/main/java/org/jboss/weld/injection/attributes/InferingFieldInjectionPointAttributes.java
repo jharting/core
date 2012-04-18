@@ -50,7 +50,8 @@ public class InferingFieldInjectionPointAttributes<T, X> extends AbstractInferin
     private final AnnotatedField<X> field;
 
     protected InferingFieldInjectionPointAttributes(EnhancedAnnotatedField<T, X> field, Bean<?> bean, BeanManagerImpl manager) {
-        super(bean, SharedObjectCache.instance(manager).getSharedSet(field.getQualifiers()));
+//        super(bean, SharedObjectCache.instance(manager).getSharedSet(field.getQualifiers()));
+        super(bean, field.getQualifiers());
         this.field = field.slim();
     }
 
