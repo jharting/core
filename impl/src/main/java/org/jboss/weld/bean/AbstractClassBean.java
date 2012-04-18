@@ -672,8 +672,8 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
         private InterceptorMetadata<SerializableContextual<Interceptor<?>, ?>> getInterceptorMetadata(Interceptor<?> interceptor) {
             SerializableContextualImpl<Interceptor<?>, ?> contextual = new SerializableContextualImpl(interceptor, getContextualStore());
             if (interceptor instanceof InterceptorImpl) {
-                InterceptorImpl interceptorImpl = (InterceptorImpl) interceptor;
-                WeldInterceptorClassMetadata classMetadata = WeldInterceptorClassMetadata.of(interceptorImpl.getEnhancedAnnotated());
+                InterceptorImpl<?> interceptorImpl = (InterceptorImpl<?>) interceptor;
+                ClassMetadata<?> classMetadata = interceptorImpl.getInterceptorMetadata().getInterceptorClass();
                 SerializableContextualInterceptorReference interceptorReference = new SerializableContextualInterceptorReference(contextual, classMetadata);
                 return beanManager.getInterceptorMetadataReader().getInterceptorMetadata(interceptorReference);
             } else {
