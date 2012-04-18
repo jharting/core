@@ -44,32 +44,32 @@ public class SharedObjectCache implements Service {
         return manager.getServices().get(SharedObjectCache.class);
     }
 
-    private final Map<Set<?>, Set<?>> sharedSets = new MapMaker().makeComputingMap(new Function<Set<?>, Set<?>>() {
+    private final Map<Set<?>, Set<?>> sharedSets = new MapMaker().concurrencyLevel(16).makeComputingMap(new Function<Set<?>, Set<?>>() {
         public Set<?> apply(Set<?> from) {
             return WeldCollections.immutableSet(from);
         }
     });
 
-    private final Map<Map<?, ?>, Map<?, ?>> sharedMaps = new MapMaker().makeComputingMap(new Function<Map<?, ?>, Map<?, ?>>() {
+    private final Map<Map<?, ?>, Map<?, ?>> sharedMaps = new MapMaker().concurrencyLevel(16).makeComputingMap(new Function<Map<?, ?>, Map<?, ?>>() {
         public Map<?, ?> apply(Map<?, ?> from) {
             return WeldCollections.immutableMap(from);
         }
     });
 
-    private final Map<ArraySetMultimap<?, ?>, ArraySetMultimap<?, ?>> sharedMultiMaps = new MapMaker().makeComputingMap(new Function<ArraySetMultimap<?, ?>, ArraySetMultimap<?, ?>>() {
+    private final Map<ArraySetMultimap<?, ?>, ArraySetMultimap<?, ?>> sharedMultiMaps = new MapMaker().concurrencyLevel(16).makeComputingMap(new Function<ArraySetMultimap<?, ?>, ArraySetMultimap<?, ?>>() {
         public ArraySetMultimap<?, ?> apply(ArraySetMultimap<?, ?> from) {
             return from;
         }
     });
 
-    private final Map<Type, LazyValueHolder<Set<Type>>> typeClosureHolders = new MapMaker().makeComputingMap(new Function<Type, LazyValueHolder<Set<Type>>>() {
+    private final Map<Type, LazyValueHolder<Set<Type>>> typeClosureHolders = new MapMaker().concurrencyLevel(16).makeComputingMap(new Function<Type, LazyValueHolder<Set<Type>>>() {
         @Override
         public LazyValueHolder<Set<Type>> apply(Type input) {
             return new TypeClosureLazyValueHolder(input);
         }
     });
 
-    private final Map<Type, Type> resolvedTypes = new MapMaker().makeComputingMap(new Function<Type, Type>() {
+    private final Map<Type, Type> resolvedTypes = new MapMaker().concurrencyLevel(16).makeComputingMap(new Function<Type, Type>() {
 
         public Type apply(Type from) {
             return new HierarchyDiscovery(from).getResolvedType();
