@@ -21,9 +21,18 @@
  */
 package org.jboss.weld.bootstrap;
 
+import static org.jboss.weld.logging.messages.BootstrapMessage.IGNORING_CLASS_DUE_TO_LOADING_ERROR;
+import static org.slf4j.ext.XLogger.Level.INFO;
+
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.Bean;
@@ -41,6 +50,7 @@ import org.jboss.weld.ejb.InternalEjbDescriptor;
 import org.jboss.weld.executor.IterativeWorkerTaskFactory;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.manager.api.ExecutorServices;
+import org.jboss.weld.resources.spi.ResourceLoadingException;
 import org.jboss.weld.util.Beans;
 import org.jboss.weld.util.BeansClosure;
 import org.jboss.weld.util.collections.ConcurrentHashSetSupplier;
@@ -65,15 +75,60 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
         this.executor = services.get(ExecutorServices.class);
     }
 
-//    @Override
-//    public BeanDeployer addClasses(Iterable<String> c) {
-//        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<String>(c) {
-//            protected void doWork(String className) {
-//                addClass(className);
-//            }
-//        });
-//        return this;
-//    }
+    @Override
+    public BeanDeployer addClasses(final Iterable<String> c) {
+        final BlockingQueue<Class<?>> classes = new LinkedBlockingQueue<Class<?>>();
+        final AtomicBoolean finished = new AtomicBoolean();
+
+        executor.getTaskExecutor().submit(new Callable<Void>() {
+            public Void call() throws Exception {
+                for (String className : c) {
+                    try {
+                        classes.add(resourceLoader.classForName(className));
+                    } catch (ResourceLoadingException e) {
+                        log.info(IGNORING_CLASS_DUE_TO_LOADING_ERROR, className);
+                        xlog.catching(INFO, e);
+                    }
+                }
+                for (int i = 0; i < 3; i++) {
+                    classes.add(ConcurrentBeanDeployer.class);
+                }
+                finished.set(true);
+                return null;
+            }
+        });
+
+        Collection<Callable<Void>> tasks = new LinkedList<Callable<Void>>();
+        for (int i = 0; i < 3; i++) {
+            tasks.add(new Callable<Void>() {
+
+                @Override
+                public Void call() throws Exception {
+                    for (Class<?> clazz = classes.take(); clazz != ConcurrentBeanDeployer.class; clazz = classes.take()) {
+                        if (clazz != null && !clazz.isAnnotation()) {
+                            AnnotatedType<?> annotatedType = null;
+                            try {
+                                annotatedType = classTransformer.getAnnotatedType(clazz);
+                            } catch (ResourceLoadingException e) {
+                                log.info(IGNORING_CLASS_DUE_TO_LOADING_ERROR, clazz.getName());
+                                xlog.catching(INFO, e);
+                            }
+                            if (annotatedType != null) {
+                                getEnvironment().addAnnotatedType(annotatedType);
+                            }
+                        }
+                    }
+                    return null;
+                }
+            });
+        }
+        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<String>(c) {
+            protected void doWork(String className) {
+                addClass(className);
+            }
+        });
+        return this;
+    }
 
     @Override
     public void processAnnotatedTypes() {

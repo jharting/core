@@ -73,10 +73,10 @@ import com.google.common.collect.Multimap;
  */
 public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> {
 
-    private transient LocLogger log = loggerFactory().getLogger(Category.CLASS_LOADING);
-    private transient XLogger xlog = loggerFactory().getXLogger(Category.CLASS_LOADING);
+    protected transient LocLogger log = loggerFactory().getLogger(Category.CLASS_LOADING);
+    protected transient XLogger xlog = loggerFactory().getXLogger(Category.CLASS_LOADING);
 
-    private final ResourceLoader resourceLoader;
+    protected final ResourceLoader resourceLoader;
     protected final ClassTransformer classTransformer;
 
     public BeanDeployer(BeanManagerImpl manager, EjbDescriptors ejbDescriptors, ServiceRegistry services) {
