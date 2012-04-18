@@ -41,7 +41,6 @@ import org.jboss.weld.ejb.InternalEjbDescriptor;
 import org.jboss.weld.executor.IterativeWorkerTaskFactory;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.manager.api.ExecutorServices;
-import org.jboss.weld.util.Beans;
 import org.jboss.weld.util.BeansClosure;
 import org.jboss.weld.util.collections.ConcurrentHashSetSupplier;
 import org.jboss.weld.util.reflection.Reflections;
@@ -78,6 +77,9 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
     @Override
     public void processAnnotatedTypes() {
         executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<AnnotatedType<?>>(getEnvironment().getAnnotatedTypes()) {
+
+            private final VetoRepository vetoRepository = new VetoRepository();
+
             protected void doWork(AnnotatedType<?> annotatedType) {
                 // fire event
                 boolean synthetic = getEnvironment().getAnnotatedTypeSource(annotatedType) != null;
@@ -104,7 +106,7 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
                     }
 
                     // vetoed due to @Veto or @Requires
-                    boolean vetoed = Beans.isVetoed(annotatedType);
+                    boolean vetoed = vetoRepository.isVetoed(annotatedType);
 
                     if (dirty && !vetoed) {
                         getEnvironment().addAnnotatedType(annotatedType); // add a replacement for the removed class

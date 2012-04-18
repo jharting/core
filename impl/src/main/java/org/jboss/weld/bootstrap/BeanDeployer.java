@@ -34,11 +34,8 @@ import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.ProcessBeanAttributes;
 import javax.interceptor.Interceptor;
 
-import org.jboss.weld.Container;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
 import org.jboss.weld.annotated.slim.SlimAnnotatedType;
-import org.jboss.weld.annotated.slim.backed.BackedAnnotatedType;
-import org.jboss.weld.annotated.slim.unbacked.UnbackedAnnotatedType;
 import org.jboss.weld.bean.AbstractBean;
 import org.jboss.weld.bean.AbstractClassBean;
 import org.jboss.weld.bean.RIBean;
@@ -129,6 +126,7 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
     public void processAnnotatedTypes() {
         Set<AnnotatedType<?>> classesToBeAdded = new HashSet<AnnotatedType<?>>();
         Set<AnnotatedType<?>> classesToBeRemoved = new HashSet<AnnotatedType<?>>();
+        VetoRepository vetoRepository = new VetoRepository();
 
         for (AnnotatedType<?> annotatedType : getEnvironment().getAnnotatedTypes()) {
             // fire event
@@ -157,7 +155,7 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
                 }
 
                 // vetoed due to @Veto or @Requires
-                boolean vetoed = Beans.isVetoed(annotatedType);
+                boolean vetoed = vetoRepository.isVetoed(annotatedType);
 
                 if (dirty && !vetoed) {
                     classesToBeAdded.add(annotatedType); // add a replacement for the removed class
