@@ -78,6 +78,9 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
     @Override
     public void processAnnotatedTypes() {
         executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<AnnotatedType<?>>(getEnvironment().getAnnotatedTypes()) {
+
+            private final VetoRepository vetoRepository = new VetoRepository();
+
             protected void doWork(AnnotatedType<?> annotatedType) {
                 // fire event
                 boolean synthetic = getEnvironment().getAnnotatedTypeSource(annotatedType) != null;
@@ -104,7 +107,7 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
                     }
 
                     // vetoed due to @Veto or @Requires
-                    boolean vetoed = Beans.isVetoed(annotatedType);
+                    boolean vetoed = vetoRepository.isVetoed(annotatedType);
 
                     if (dirty && !vetoed) {
                         getEnvironment().addAnnotatedType(annotatedType); // add a replacement for the removed class
