@@ -65,15 +65,15 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
         this.executor = services.get(ExecutorServices.class);
     }
 
-    @Override
-    public BeanDeployer addClasses(Iterable<String> c) {
-        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<String>(c) {
-            protected void doWork(String className) {
-                addClass(className);
-            }
-        });
-        return this;
-    }
+//    @Override
+//    public BeanDeployer addClasses(Iterable<String> c) {
+//        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<String>(c) {
+//            protected void doWork(String className) {
+//                addClass(className);
+//            }
+//        });
+//        return this;
+//    }
 
     @Override
     public void processAnnotatedTypes() {
