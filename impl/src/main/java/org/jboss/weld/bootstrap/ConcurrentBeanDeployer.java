@@ -151,6 +151,8 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
             executor.getTaskExecutor().submit(task);
         }
 
+        final BlockingQueue<AnnotatedType<?>> approvedAnnotatedTypes = new LinkedBlockingQueue<AnnotatedType<?>>();
+
         try {
             executor.getTaskExecutor().submit(new Callable<Void>() {
 
@@ -195,10 +197,14 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
                             boolean vetoed = Beans.isVetoed(annotatedType);
 
                             if (!vetoed) {
-                                getEnvironment().addAnnotatedType(annotatedType);
+                                approvedAnnotatedTypes.add(annotatedType);
                             }
                         }
                     }
+                    approvedAnnotatedTypes.add(EmptyAnnotatedType.INSTANCE);
+                    approvedAnnotatedTypes.add(EmptyAnnotatedType.INSTANCE);
+                    approvedAnnotatedTypes.add(EmptyAnnotatedType.INSTANCE);
+                    approvedAnnotatedTypes.add(EmptyAnnotatedType.INSTANCE);
                     return null;
                 }
             }).get();
@@ -209,6 +215,41 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+
+        final Multimap<Class<?>, AnnotatedType<?>> otherWeldClasses = Multimaps.newSetMultimap(new ConcurrentHashMap<Class<?>, Collection<AnnotatedType<?>>>(),
+                new ConcurrentHashSetSupplier<AnnotatedType<?>>());
+
+        Collection<Callable<Void>> createClassTasks = new LinkedList<Callable<Void>>();
+        for (int i = 0; i < 4; i++) {
+            createClassTasks.add(new Callable<Void>() {
+                @Override
+                public Void call() throws Exception {
+                    for (AnnotatedType<?> type = approvedAnnotatedTypes.take(); type != EmptyAnnotatedType.INSTANCE; type = approvedAnnotatedTypes.take()) {
+                        createClassBean(type, otherWeldClasses);
+                    }
+                    return null;
+                }
+            });
+        }
+        executor.invokeAllAndCheckForExceptions(createClassTasks);
+
+        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<InternalEjbDescriptor<?>>(getEnvironment().getEjbDescriptors()) {
+            protected void doWork(InternalEjbDescriptor<?> descriptor) {
+                if (!getEnvironment().isVetoed(descriptor.getBeanClass())) {
+                    if (descriptor.isSingleton() || descriptor.isStateful() || descriptor.isStateless()) {
+                        if (otherWeldClasses.containsKey(descriptor.getBeanClass())) {
+                            for (AnnotatedType<?> annotatedType : otherWeldClasses.get(descriptor.getBeanClass())) {
+                                EnhancedAnnotatedType<?> weldClass = classTransformer.getEnhancedAnnotatedType(annotatedType);
+                                createSessionBean(descriptor, Reflections.<EnhancedAnnotatedType> cast(weldClass));
+                            }
+                        } else {
+                            createSessionBean(descriptor);
+                        }
+                    }
+                }
+            }
+        });
+
         return this;
     }
 
@@ -276,31 +317,31 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
 
     @Override
     public void createClassBeans() {
-        final Multimap<Class<?>, AnnotatedType<?>> otherWeldClasses = Multimaps.newSetMultimap(new ConcurrentHashMap<Class<?>, Collection<AnnotatedType<?>>>(),
-                new ConcurrentHashSetSupplier<AnnotatedType<?>>());
-
-        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<AnnotatedType<?>>(getEnvironment().getAnnotatedTypes()) {
-            protected void doWork(AnnotatedType<?> weldClass) {
-                createClassBean(weldClass, otherWeldClasses);
-            }
-        });
-
-        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<InternalEjbDescriptor<?>>(getEnvironment().getEjbDescriptors()) {
-            protected void doWork(InternalEjbDescriptor<?> descriptor) {
-                if (!getEnvironment().isVetoed(descriptor.getBeanClass())) {
-                    if (descriptor.isSingleton() || descriptor.isStateful() || descriptor.isStateless()) {
-                        if (otherWeldClasses.containsKey(descriptor.getBeanClass())) {
-                            for (AnnotatedType<?> annotatedType : otherWeldClasses.get(descriptor.getBeanClass())) {
-                                EnhancedAnnotatedType<?> weldClass = classTransformer.getEnhancedAnnotatedType(annotatedType);
-                                createSessionBean(descriptor, Reflections.<EnhancedAnnotatedType> cast(weldClass));
-                            }
-                        } else {
-                            createSessionBean(descriptor);
-                        }
-                    }
-                }
-            }
-        });
+//        final Multimap<Class<?>, AnnotatedType<?>> otherWeldClasses = Multimaps.newSetMultimap(new ConcurrentHashMap<Class<?>, Collection<AnnotatedType<?>>>(),
+//                new ConcurrentHashSetSupplier<AnnotatedType<?>>());
+//
+//        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<AnnotatedType<?>>(getEnvironment().getAnnotatedTypes()) {
+//            protected void doWork(AnnotatedType<?> weldClass) {
+//                createClassBean(weldClass, otherWeldClasses);
+//            }
+//        });
+//
+//        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<InternalEjbDescriptor<?>>(getEnvironment().getEjbDescriptors()) {
+//            protected void doWork(InternalEjbDescriptor<?> descriptor) {
+//                if (!getEnvironment().isVetoed(descriptor.getBeanClass())) {
+//                    if (descriptor.isSingleton() || descriptor.isStateful() || descriptor.isStateless()) {
+//                        if (otherWeldClasses.containsKey(descriptor.getBeanClass())) {
+//                            for (AnnotatedType<?> annotatedType : otherWeldClasses.get(descriptor.getBeanClass())) {
+//                                EnhancedAnnotatedType<?> weldClass = classTransformer.getEnhancedAnnotatedType(annotatedType);
+//                                createSessionBean(descriptor, Reflections.<EnhancedAnnotatedType> cast(weldClass));
+//                            }
+//                        } else {
+//                            createSessionBean(descriptor);
+//                        }
+//                    }
+//                }
+//            }
+//        });
     }
 
     @Override
