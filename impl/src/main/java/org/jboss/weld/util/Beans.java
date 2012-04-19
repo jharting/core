@@ -464,13 +464,13 @@ public class Beans {
     }
 
     private static void addFieldInjectionPoint(EnhancedAnnotatedField<?, ?> annotatedField, Set<FieldInjectionPoint<?, ?>> injectableFields, Bean<?> declaringBean, BeanManagerImpl manager) {
-        if (!annotatedField.isAnnotationPresent(Produces.class)) {
+//        if (!annotatedField.isAnnotationPresent(Produces.class)) {
             if (annotatedField.isFinal()) {
                 throw new DefinitionException(QUALIFIER_ON_FINAL_FIELD, annotatedField);
             }
             FieldInjectionPoint<?, ?> fieldInjectionPoint = FieldInjectionPoint.of(manager.createInjectionPoint(annotatedField, declaringBean), manager);
             injectableFields.add(fieldInjectionPoint);
-        }
+//        }
     }
 
     /**
