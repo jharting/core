@@ -104,6 +104,12 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
 
         // class loading
         executor.submit(new IterativeWorkerTaskFactory<String>(c) {
+
+            @Override
+            public List<Callable<Void>> createTasks(int threadPoolSize) {
+                return super.createTasks(2);
+            }
+
             @Override
             protected void doWork(String className) {
                 try {
@@ -118,6 +124,7 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
 
             @Override
             protected void cleanup() {
+                loadedClasses.add(ConcurrentBeanDeployer.class);
                 loadedClasses.add(ConcurrentBeanDeployer.class);
             }
         });
