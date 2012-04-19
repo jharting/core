@@ -46,22 +46,22 @@ public class ExecutorServicesFactory {
     }
 
     public static ExecutorServices create(Properties properties) {
-//        if (properties.getProperty(ENABLED, "true").equalsIgnoreCase("false")) {
+        if (properties.getProperty(ENABLED, "true").equalsIgnoreCase("false")) {
             return new SingleThreadExecutorServices();
-//        }
+        }
 
-//        ExecutorServices executor = null;
-//        if (properties.containsKey(THREAD_POOL_SIZE)) {
-//            executor = new FixedThreadPoolExecutorServices(parseThreadPoolSize(properties.getProperty(THREAD_POOL_SIZE)));
-//        } else {
-//            executor = new FixedThreadPoolExecutorServices();
-//        }
-//
-//        if (properties.getProperty(DEBUG, "false").equalsIgnoreCase("true")) {
-//            executor = new ProfilingExecutorServices(executor);
-//        }
-//
-//        return executor;
+        ExecutorServices executor = null;
+        if (properties.containsKey(THREAD_POOL_SIZE)) {
+            executor = new FixedThreadPoolExecutorServices(parseThreadPoolSize(properties.getProperty(THREAD_POOL_SIZE)));
+        } else {
+            executor = new FixedThreadPoolExecutorServices();
+        }
+
+        if (properties.getProperty(DEBUG, "false").equalsIgnoreCase("true")) {
+            executor = new ProfilingExecutorServices(executor);
+        }
+
+        return executor;
     }
 
     public static ExecutorServices createDefault() {
