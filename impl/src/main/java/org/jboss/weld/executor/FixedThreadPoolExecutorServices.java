@@ -19,8 +19,12 @@ package org.jboss.weld.executor;
 import static org.jboss.weld.logging.Category.BOOTSTRAP;
 import static org.jboss.weld.logging.LoggerFactory.loggerFactory;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -60,13 +64,22 @@ public class FixedThreadPoolExecutorServices extends AbstractExecutorServices {
     private final ExecutorService executor;
 
     public FixedThreadPoolExecutorServices() {
-        this(Runtime.getRuntime().availableProcessors());
+        this(16);
     }
 
     public FixedThreadPoolExecutorServices(int threadPoolSize) {
         this.threadPoolSize = threadPoolSize;
         this.executor = Executors.newFixedThreadPool(threadPoolSize, new DeamonThreadFactory());
         log.debug(BootstrapMessage.THREADS_IN_USE, threadPoolSize);
+    }
+
+    public <T> List<Future<T>> submit(TaskFactory<T> factory) {
+        List<Callable<T>> tasks = factory.createTasks(getThreadPoolSize());
+        List<Future<T>> results = new LinkedList<Future<T>>();
+        for (Callable<T> task : tasks) {
+            results.add(executor.submit(task));
+        }
+        return results;
     }
 
     @Override
