@@ -90,61 +90,69 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
         this.preloader = this.executor.getTaskExecutor().submit(new ObserverResolutionPreloader());
     }
 
+    @Override
     protected void preload(Class<?> eventType, Type... typeParameters) {
         preloaderQueue.add(new ParameterizedTypeImpl(eventType, typeParameters, null));
     }
 
     @Override
     public BeanDeployer addClasses(final Iterable<String> c) {
-        final BlockingQueue<Class<?>> classes = new LinkedBlockingQueue<Class<?>>();
-
-        FixedThreadPoolExecutorServices executor = (FixedThreadPoolExecutorServices) this.executor;
-
-        // class loading
-        executor.submit(new IterativeWorkerTaskFactory<String>(c) {
+        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<String>(c) {
             @Override
-            protected void doWork(String className) {
-                try {
-                    Class<?> clazz = resourceLoader.classForName(className);
-                    classes.add(clazz);
-                    preload(ProcessAnnotatedType.class, clazz);
-                } catch (ResourceLoadingException e) {
-                    log.info(IGNORING_CLASS_DUE_TO_LOADING_ERROR, className);
-                    xlog.catching(INFO, e);
-                }
-            }
-
-            @Override
-            protected void cleanup() {
-                classes.add(ConcurrentBeanDeployer.class);
+            protected void doWork(String item) {
+                addClass(item);
             }
         });
-
-        Collection<Callable<Void>> tasks = new LinkedList<Callable<Void>>();
-        for (int i = 0; i < 4; i++) {
-            tasks.add(new Callable<Void>() {
-                @Override
-                public Void call() throws Exception {
-                    for (Class<?> clazz = classes.take(); clazz != ConcurrentBeanDeployer.class; clazz = classes.take()) {
-                        if (clazz != null && !clazz.isAnnotation()) {
-                            AnnotatedType<?> annotatedType = null;
-                            try {
-                                annotatedType = classTransformer.getAnnotatedType(clazz);
-                            } catch (ResourceLoadingException e) {
-                                log.info(IGNORING_CLASS_DUE_TO_LOADING_ERROR, clazz.getName());
-                                xlog.catching(INFO, e);
-                            }
-                            if (annotatedType != null) {
-                                getEnvironment().addAnnotatedType(annotatedType);
-                            }
-                        }
-                    }
-                    return null;
-                }
-            });
-        }
-        executor.invokeAllAndCheckForExceptions(tasks);
         return this;
+//        final BlockingQueue<Class<?>> classes = new LinkedBlockingQueue<Class<?>>();
+//
+//        FixedThreadPoolExecutorServices executor = (FixedThreadPoolExecutorServices) this.executor;
+//
+//        // class loading
+//        executor.submit(new IterativeWorkerTaskFactory<String>(c) {
+//            @Override
+//            protected void doWork(String className) {
+//                try {
+//                    Class<?> clazz = resourceLoader.classForName(className);
+//                    classes.add(clazz);
+//                    preload(ProcessAnnotatedType.class, clazz);
+//                } catch (ResourceLoadingException e) {
+//                    log.info(IGNORING_CLASS_DUE_TO_LOADING_ERROR, className);
+//                    xlog.catching(INFO, e);
+//                }
+//            }
+//
+//            @Override
+//            protected void cleanup() {
+//                classes.add(ConcurrentBeanDeployer.class);
+//            }
+//        });
+//
+//        Collection<Callable<Void>> tasks = new LinkedList<Callable<Void>>();
+//        for (int i = 0; i < 4; i++) {
+//            tasks.add(new Callable<Void>() {
+//                @Override
+//                public Void call() throws Exception {
+//                    for (Class<?> clazz = classes.take(); clazz != ConcurrentBeanDeployer.class; clazz = classes.take()) {
+//                        if (clazz != null && !clazz.isAnnotation()) {
+//                            AnnotatedType<?> annotatedType = null;
+//                            try {
+//                                annotatedType = classTransformer.getAnnotatedType(clazz);
+//                            } catch (ResourceLoadingException e) {
+//                                log.info(IGNORING_CLASS_DUE_TO_LOADING_ERROR, clazz.getName());
+//                                xlog.catching(INFO, e);
+//                            }
+//                            if (annotatedType != null) {
+//                                getEnvironment().addAnnotatedType(annotatedType);
+//                            }
+//                        }
+//                    }
+//                    return null;
+//                }
+//            });
+//        }
+//        executor.invokeAllAndCheckForExceptions(tasks);
+//        return this;
     }
 
     @Override

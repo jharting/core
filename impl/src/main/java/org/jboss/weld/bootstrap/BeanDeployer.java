@@ -21,6 +21,7 @@ import static org.jboss.weld.logging.messages.BootstrapMessage.BEAN_IS_BOTH_INTE
 import static org.jboss.weld.logging.messages.BootstrapMessage.IGNORING_CLASS_DUE_TO_LOADING_ERROR;
 import static org.slf4j.ext.XLogger.Level.INFO;
 
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -31,14 +32,15 @@ import javax.decorator.Decorator;
 import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.Extension;
+import javax.enterprise.inject.spi.ProcessAnnotatedType;
+import javax.enterprise.inject.spi.ProcessBean;
 import javax.enterprise.inject.spi.ProcessBeanAttributes;
+import javax.enterprise.inject.spi.ProcessInjectionTarget;
+import javax.enterprise.inject.spi.ProcessManagedBean;
 import javax.interceptor.Interceptor;
 
-import org.jboss.weld.Container;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
 import org.jboss.weld.annotated.slim.SlimAnnotatedType;
-import org.jboss.weld.annotated.slim.backed.BackedAnnotatedType;
-import org.jboss.weld.annotated.slim.unbacked.UnbackedAnnotatedType;
 import org.jboss.weld.bean.AbstractBean;
 import org.jboss.weld.bean.AbstractClassBean;
 import org.jboss.weld.bean.RIBean;
@@ -89,6 +91,10 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
         this.classTransformer = manager.getServices().get(ClassTransformer.class);
     }
 
+    protected void preload(Class<?> eventType, Type... typeParameters) {
+        // NOOP
+    }
+
     public BeanDeployer addClass(String className) {
         Class<?> clazz = null;
         try {
@@ -99,6 +105,7 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
         }
 
         if (clazz != null && !clazz.isAnnotation()) {
+            preload(ProcessAnnotatedType.class, clazz);
             AnnotatedType<?> annotatedType = null;
             try {
                 annotatedType = classTransformer.getAnnotatedType(clazz);
@@ -213,14 +220,19 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
     protected void createClassBean(AnnotatedType<?> annotatedType, Multimap<Class<?>, AnnotatedType<?>> otherWeldClasses) {
         boolean managedBeanOrDecorator = !getEnvironment().getEjbDescriptors().contains(annotatedType.getJavaClass()) && Beans.isTypeManagedBeanOrDecoratorOrInterceptor(annotatedType);
         if (managedBeanOrDecorator) {
+            preload(ProcessBeanAttributes.class, annotatedType.getJavaClass());
+            preload(ProcessInjectionTarget.class, annotatedType.getJavaClass());
             EnhancedAnnotatedType<?> weldClass = classTransformer.getEnhancedAnnotatedType(annotatedType);
             if (weldClass.isAnnotationPresent(Decorator.class)) {
                 validateDecorator(weldClass);
                 createDecorator(weldClass);
+                preload(ProcessBean.class, annotatedType.getJavaClass());
             } else if (weldClass.isAnnotationPresent(Interceptor.class)) {
                 validateInterceptor(weldClass);
                 createInterceptor(weldClass);
+                preload(ProcessBean.class, annotatedType.getJavaClass());
             } else if (!weldClass.isAbstract()) {
+                preload(ProcessManagedBean.class, annotatedType.getJavaClass());
                 createManagedBean(weldClass);
             }
         } else {
