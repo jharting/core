@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -97,104 +98,160 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
 
     @Override
     public BeanDeployer addClasses(final Iterable<String> c) {
-        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<String>(c) {
+        final BlockingQueue<Class<?>> loadedClasses = new LinkedBlockingQueue<Class<?>>();
+
+        FixedThreadPoolExecutorServices executor = (FixedThreadPoolExecutorServices) this.executor;
+
+        // class loading
+        executor.submit(new IterativeWorkerTaskFactory<String>(c) {
             @Override
-            protected void doWork(String item) {
-                addClass(item);
+            protected void doWork(String className) {
+                try {
+                    Class<?> clazz = resourceLoader.classForName(className);
+                    loadedClasses.add(clazz);
+                    preload(ProcessAnnotatedType.class, clazz);
+                } catch (ResourceLoadingException e) {
+                    log.info(IGNORING_CLASS_DUE_TO_LOADING_ERROR, className);
+                    xlog.catching(INFO, e);
+                }
+            }
+
+            @Override
+            protected void cleanup() {
+                loadedClasses.add(ConcurrentBeanDeployer.class);
             }
         });
+
+        final BlockingQueue<AnnotatedType<?>> loadedAnnotatedTypes = new LinkedBlockingQueue<AnnotatedType<?>>(getEnvironment().getAnnotatedTypes());
+        Collection<Callable<Void>> tasks = new LinkedList<Callable<Void>>();
+        for (int i = 0; i < 4; i++) {
+            tasks.add(new Callable<Void>() {
+                @Override
+                public Void call() throws Exception {
+                    for (Class<?> clazz = loadedClasses.take(); clazz != ConcurrentBeanDeployer.class; clazz = loadedClasses.take()) {
+                        if (clazz != null && !clazz.isAnnotation()) {
+                            AnnotatedType<?> annotatedType = null;
+                            try {
+                                annotatedType = classTransformer.getAnnotatedType(clazz);
+                            } catch (ResourceLoadingException e) {
+                                log.info(IGNORING_CLASS_DUE_TO_LOADING_ERROR, clazz.getName());
+                                xlog.catching(INFO, e);
+                            }
+                            if (annotatedType != null) {
+                                loadedAnnotatedTypes.add(annotatedType);
+                            }
+                        }
+                    }
+                    loadedAnnotatedTypes.add(EmptyAnnotatedType.INSTANCE);
+                    return null;
+                }
+            });
+        }
+        for (Callable<Void> task : tasks) {
+            executor.getTaskExecutor().submit(task);
+        }
+
+        try {
+            executor.getTaskExecutor().submit(new Callable<Void>() {
+
+                private int stoppers = 0;
+
+                @Override
+                public Void call() throws Exception {
+                    for (AnnotatedType<?> annotatedType = loadedAnnotatedTypes.take(); stoppers < 4; annotatedType = loadedAnnotatedTypes.take()) {
+                        if (annotatedType == EmptyAnnotatedType.INSTANCE) {
+                            stoppers++;
+                            if (stoppers == 4) {
+                                break;
+                            }
+                            continue;
+                        }
+                        // fire event
+                        boolean synthetic = getEnvironment().getAnnotatedTypeSource(annotatedType) != null;
+                        ProcessAnnotatedTypeImpl<?> event;
+                        if (synthetic) {
+                            event = ProcessAnnotatedTypeFactory.create(getManager(), annotatedType, getEnvironment().getAnnotatedTypeSource(annotatedType));
+                        } else {
+                            event = ProcessAnnotatedTypeFactory.create(getManager(), annotatedType);
+                        }
+                        event.fire();
+                        // process the result
+                        if (event.isVeto()) {
+                            if (!synthetic) {
+                                getEnvironment().vetoJavaClass(annotatedType.getJavaClass());
+                            }
+                        } else {
+                            boolean dirty = event.isDirty();
+                            if (dirty) {
+                                AnnotatedType<?> modifiedType = event.getAnnotatedType();
+                                if (modifiedType instanceof SlimAnnotatedType<?>) {
+                                    annotatedType = modifiedType;
+                                } else {
+                                    annotatedType = classTransformer.getAnnotatedType(modifiedType);
+                                }
+                            }
+
+                            // vetoed due to @Veto or @Requires
+                            boolean vetoed = Beans.isVetoed(annotatedType);
+
+                            if (!vetoed) {
+                                getEnvironment().addAnnotatedType(annotatedType);
+                            }
+                        }
+                    }
+                    return null;
+                }
+            }).get();
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         return this;
-//        final BlockingQueue<Class<?>> classes = new LinkedBlockingQueue<Class<?>>();
-//
-//        FixedThreadPoolExecutorServices executor = (FixedThreadPoolExecutorServices) this.executor;
-//
-//        // class loading
-//        executor.submit(new IterativeWorkerTaskFactory<String>(c) {
-//            @Override
-//            protected void doWork(String className) {
-//                try {
-//                    Class<?> clazz = resourceLoader.classForName(className);
-//                    classes.add(clazz);
-//                    preload(ProcessAnnotatedType.class, clazz);
-//                } catch (ResourceLoadingException e) {
-//                    log.info(IGNORING_CLASS_DUE_TO_LOADING_ERROR, className);
-//                    xlog.catching(INFO, e);
-//                }
-//            }
-//
-//            @Override
-//            protected void cleanup() {
-//                classes.add(ConcurrentBeanDeployer.class);
-//            }
-//        });
-//
-//        Collection<Callable<Void>> tasks = new LinkedList<Callable<Void>>();
-//        for (int i = 0; i < 4; i++) {
-//            tasks.add(new Callable<Void>() {
-//                @Override
-//                public Void call() throws Exception {
-//                    for (Class<?> clazz = classes.take(); clazz != ConcurrentBeanDeployer.class; clazz = classes.take()) {
-//                        if (clazz != null && !clazz.isAnnotation()) {
-//                            AnnotatedType<?> annotatedType = null;
-//                            try {
-//                                annotatedType = classTransformer.getAnnotatedType(clazz);
-//                            } catch (ResourceLoadingException e) {
-//                                log.info(IGNORING_CLASS_DUE_TO_LOADING_ERROR, clazz.getName());
-//                                xlog.catching(INFO, e);
-//                            }
-//                            if (annotatedType != null) {
-//                                getEnvironment().addAnnotatedType(annotatedType);
-//                            }
-//                        }
-//                    }
-//                    return null;
-//                }
-//            });
-//        }
-//        executor.invokeAllAndCheckForExceptions(tasks);
-//        return this;
     }
 
     @Override
     public void processAnnotatedTypes() {
-        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<AnnotatedType<?>>(getEnvironment().getAnnotatedTypes()) {
-            protected void doWork(AnnotatedType<?> annotatedType) {
-                // fire event
-                boolean synthetic = getEnvironment().getAnnotatedTypeSource(annotatedType) != null;
-                ProcessAnnotatedTypeImpl<?> event;
-                if (synthetic) {
-                    event = ProcessAnnotatedTypeFactory.create(getManager(), annotatedType, getEnvironment().getAnnotatedTypeSource(annotatedType));
-                } else {
-                    event = ProcessAnnotatedTypeFactory.create(getManager(), annotatedType);
-                }
-                event.fire();
-                // process the result
-                if (event.isVeto()) {
-                    getEnvironment().vetoAnnotatedType(annotatedType);
-                } else {
-                    boolean dirty = event.isDirty();
-                    if (dirty) {
-                        getEnvironment().removeAnnotatedType(annotatedType); // remove the original class
-                        AnnotatedType<?> modifiedType = event.getAnnotatedType();
-                        if (modifiedType instanceof SlimAnnotatedType<?>) {
-                            annotatedType = modifiedType;
-                        } else {
-                            annotatedType = classTransformer.getAnnotatedType(modifiedType);
-                        }
-                    }
-
-                    // vetoed due to @Veto or @Requires
-                    boolean vetoed = Beans.isVetoed(annotatedType);
-
-                    if (dirty && !vetoed) {
-                        getEnvironment().addAnnotatedType(annotatedType); // add a replacement for the removed class
-                    }
-                    if (!dirty && vetoed) {
-                        getEnvironment().vetoAnnotatedType(annotatedType);
-                    }
-                }
-            }
-        });
+//        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<AnnotatedType<?>>(getEnvironment().getAnnotatedTypes()) {
+//            protected void doWork(AnnotatedType<?> annotatedType) {
+//                // fire event
+//                boolean synthetic = getEnvironment().getAnnotatedTypeSource(annotatedType) != null;
+//                ProcessAnnotatedTypeImpl<?> event;
+//                if (synthetic) {
+//                    event = ProcessAnnotatedTypeFactory.create(getManager(), annotatedType, getEnvironment().getAnnotatedTypeSource(annotatedType));
+//                } else {
+//                    event = ProcessAnnotatedTypeFactory.create(getManager(), annotatedType);
+//                }
+//                event.fire();
+//                // process the result
+//                if (event.isVeto()) {
+//                    getEnvironment().vetoAnnotatedType(annotatedType);
+//                } else {
+//                    boolean dirty = event.isDirty();
+//                    if (dirty) {
+//                        getEnvironment().removeAnnotatedType(annotatedType); // remove the original class
+//                        AnnotatedType<?> modifiedType = event.getAnnotatedType();
+//                        if (modifiedType instanceof SlimAnnotatedType<?>) {
+//                            annotatedType = modifiedType;
+//                        } else {
+//                            annotatedType = classTransformer.getAnnotatedType(modifiedType);
+//                        }
+//                    }
+//
+//                    // vetoed due to @Veto or @Requires
+//                    boolean vetoed = Beans.isVetoed(annotatedType);
+//
+//                    if (dirty && !vetoed) {
+//                        getEnvironment().addAnnotatedType(annotatedType); // add a replacement for the removed class
+//                    }
+//                    if (!dirty && vetoed) {
+//                        getEnvironment().vetoAnnotatedType(annotatedType);
+//                    }
+//                }
+//            }
+//        });
     }
 
     @Override
