@@ -89,7 +89,9 @@ public class SharedObjectCache implements Service {
     }
 
     public LazyValueHolder<Set<Type>> getTypeClosureHolder(Type type) {
-        return typeClosureHolders.get(type);
+        TypeClosureLazyValueHolder holder = new TypeClosureLazyValueHolder(type);
+        holder.get();
+        return holder;
     }
 
     public Type getResolvedType(Type type) {
