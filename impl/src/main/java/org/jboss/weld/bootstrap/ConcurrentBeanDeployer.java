@@ -28,12 +28,11 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.Bean;
@@ -41,7 +40,6 @@ import javax.enterprise.inject.spi.ProcessAnnotatedType;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
 import org.jboss.weld.annotated.slim.SlimAnnotatedType;
-import org.jboss.weld.annotated.slim.backed.BackedAnnotatedType;
 import org.jboss.weld.bean.AbstractBean;
 import org.jboss.weld.bean.AbstractClassBean;
 import org.jboss.weld.bean.RIBean;
@@ -74,32 +72,42 @@ import com.google.common.collect.Multimaps;
 public class ConcurrentBeanDeployer extends BeanDeployer {
 
     private final ExecutorServices executor;
+    private final LinkedBlockingQueue<Type> preloaderQueue = new LinkedBlockingQueue<Type>();
+    private final Future<Void> preloader;
+
+    private class ObserverResolutionPreloader implements Callable<Void> {
+        @Override
+        public Void call() throws Exception {
+            for (Type eventType = preloaderQueue.take(); true; eventType = preloaderQueue.take()) {
+                getManager().resolveObserverMethods(eventType);
+            }
+        }
+    }
 
     public ConcurrentBeanDeployer(BeanManagerImpl manager, EjbDescriptors ejbDescriptors, ServiceRegistry services) {
         super(manager, ejbDescriptors, services, BeanDeployerEnvironment.newConcurrentEnvironment(ejbDescriptors, manager));
         this.executor = services.get(ExecutorServices.class);
+        this.preloader = this.executor.getTaskExecutor().submit(new ObserverResolutionPreloader());
+    }
+
+    protected void preload(Class<?> eventType, Type... typeParameters) {
+        preloaderQueue.add(new ParameterizedTypeImpl(eventType, typeParameters, null));
     }
 
     @Override
     public BeanDeployer addClasses(final Iterable<String> c) {
         final BlockingQueue<Class<?>> classes = new LinkedBlockingQueue<Class<?>>();
-        final BlockingQueue<Class<?>> preLoading = new LinkedBlockingQueue<Class<?>>();
 
         FixedThreadPoolExecutorServices executor = (FixedThreadPoolExecutorServices) this.executor;
 
         // class loading
         executor.submit(new IterativeWorkerTaskFactory<String>(c) {
             @Override
-            public List<Callable<Void>> createTasks(int threadPoolSize) {
-                return super.createTasks(2);
-            }
-
-            @Override
             protected void doWork(String className) {
                 try {
                     Class<?> clazz = resourceLoader.classForName(className);
                     classes.add(clazz);
-                    preLoading.add(clazz);
+                    preload(ProcessAnnotatedType.class, clazz);
                 } catch (ResourceLoadingException e) {
                     log.info(IGNORING_CLASS_DUE_TO_LOADING_ERROR, className);
                     xlog.catching(INFO, e);
@@ -108,32 +116,13 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
 
             @Override
             protected void cleanup() {
-                preLoading.add(ConcurrentBeanDeployer.class);
-                classes.add(ConcurrentBeanDeployer.class);
                 classes.add(ConcurrentBeanDeployer.class);
             }
         });
 
-        // 1 preloader
-        executor.getTaskExecutor().submit(new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                for (Class<?> clazz = preLoading.take(); clazz != ConcurrentBeanDeployer.class; clazz = preLoading.take()) {
-                    if (!clazz.isAnnotation()) {
-                        Type type = new ParameterizedTypeImpl(ProcessAnnotatedType.class, new Type[] {clazz}, null);
-                        getManager().resolveObserverMethods(type);
-                    }
-                }
-                return null;
-            }
-        });
-
-        final BlockingQueue<AnnotatedType<?>> annotatedTypes = new LinkedBlockingQueue<AnnotatedType<?>>();
-        annotatedTypes.addAll(getEnvironment().getAnnotatedTypes());
-
+        Collection<Callable<Void>> tasks = new LinkedList<Callable<Void>>();
         for (int i = 0; i < 4; i++) {
-            executor.getTaskExecutor().submit(new Callable<Void>() {
-
+            tasks.add(new Callable<Void>() {
                 @Override
                 public Void call() throws Exception {
                     for (Class<?> clazz = classes.take(); clazz != ConcurrentBeanDeployer.class; clazz = classes.take()) {
@@ -146,58 +135,6 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
                                 xlog.catching(INFO, e);
                             }
                             if (annotatedType != null) {
-                                annotatedTypes.add(annotatedType);
-                            }
-                        }
-                    }
-                    annotatedTypes.add(EmptyAnnotatedType.INSTANCE);
-                    return null;
-                }
-            });
-        }
-
-        Collection<Callable<Void>> tasks = new LinkedList<Callable<Void>>();
-        for (int i = 0; i < 4; i++) {
-            tasks.add(new Callable<Void>() {
-
-                @Override
-                public Void call() throws Exception {
-                    for (AnnotatedType<?> annotatedType = annotatedTypes.take(); annotatedType != EmptyAnnotatedType.INSTANCE; annotatedType = annotatedTypes.take()) {
-                     // fire event
-                        boolean synthetic = getEnvironment().getAnnotatedTypeSource(annotatedType) != null;
-                        ProcessAnnotatedTypeImpl<?> event;
-                        if (synthetic) {
-                            event = ProcessAnnotatedTypeFactory.create(getManager(), annotatedType, getEnvironment().getAnnotatedTypeSource(annotatedType));
-                        } else {
-                            event = ProcessAnnotatedTypeFactory.create(getManager(), annotatedType);
-                        }
-                        event.fire();
-                        // process the result
-                        if (event.isVeto()) {
-                            getEnvironment().vetoJavaClass(annotatedType.getJavaClass());
-//                            getEnvironment().vetoAnnotatedType(annotatedType);
-                        } else {
-                            boolean dirty = event.isDirty();
-                            if (dirty) {
-//                                getEnvironment().removeAnnotatedType(annotatedType); // remove the original class
-                                AnnotatedType<?> modifiedType = event.getAnnotatedType();
-                                if (modifiedType instanceof SlimAnnotatedType<?>) {
-                                    annotatedType = modifiedType;
-                                } else {
-                                    annotatedType = classTransformer.getAnnotatedType(modifiedType);
-                                }
-                            }
-
-                            // vetoed due to @Veto or @Requires
-                            boolean vetoed = Beans.isVetoed(annotatedType);
-
-//                            if (dirty && !vetoed) {
-//                                getEnvironment().addAnnotatedType(annotatedType); // add a replacement for the removed class
-//                            }
-//                            if (!dirty && vetoed) {
-//                                getEnvironment().vetoAnnotatedType(annotatedType);
-//                            }
-                            if (!vetoed) {
                                 getEnvironment().addAnnotatedType(annotatedType);
                             }
                         }
@@ -212,7 +149,44 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
 
     @Override
     public void processAnnotatedTypes() {
-        // done already above
+        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<AnnotatedType<?>>(getEnvironment().getAnnotatedTypes()) {
+            protected void doWork(AnnotatedType<?> annotatedType) {
+                // fire event
+                boolean synthetic = getEnvironment().getAnnotatedTypeSource(annotatedType) != null;
+                ProcessAnnotatedTypeImpl<?> event;
+                if (synthetic) {
+                    event = ProcessAnnotatedTypeFactory.create(getManager(), annotatedType, getEnvironment().getAnnotatedTypeSource(annotatedType));
+                } else {
+                    event = ProcessAnnotatedTypeFactory.create(getManager(), annotatedType);
+                }
+                event.fire();
+                // process the result
+                if (event.isVeto()) {
+                    getEnvironment().vetoAnnotatedType(annotatedType);
+                } else {
+                    boolean dirty = event.isDirty();
+                    if (dirty) {
+                        getEnvironment().removeAnnotatedType(annotatedType); // remove the original class
+                        AnnotatedType<?> modifiedType = event.getAnnotatedType();
+                        if (modifiedType instanceof SlimAnnotatedType<?>) {
+                            annotatedType = modifiedType;
+                        } else {
+                            annotatedType = classTransformer.getAnnotatedType(modifiedType);
+                        }
+                    }
+
+                    // vetoed due to @Veto or @Requires
+                    boolean vetoed = Beans.isVetoed(annotatedType);
+
+                    if (dirty && !vetoed) {
+                        getEnvironment().addAnnotatedType(annotatedType); // add a replacement for the removed class
+                    }
+                    if (!dirty && vetoed) {
+                        getEnvironment().vetoAnnotatedType(annotatedType);
+                    }
+                }
+            }
+        });
     }
 
     @Override
@@ -302,5 +276,11 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
             }
         });
         return this;
+    }
+
+    @Override
+    public void cleanup() {
+        preloader.cancel(true);
+        super.cleanup();
     }
 }
