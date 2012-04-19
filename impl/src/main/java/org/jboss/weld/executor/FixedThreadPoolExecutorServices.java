@@ -64,7 +64,7 @@ public class FixedThreadPoolExecutorServices extends AbstractExecutorServices {
     private final ExecutorService executor;
 
     public FixedThreadPoolExecutorServices() {
-        this(16);
+        this(1);
     }
 
     public FixedThreadPoolExecutorServices(int threadPoolSize) {
