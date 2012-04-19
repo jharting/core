@@ -25,18 +25,19 @@ import com.google.common.collect.ImmutableSet;
 
 public class BackedAnnotatedParameter<X> extends BackedAnnotated implements AnnotatedParameter<X>, Serializable {
 
-    public static <X> AnnotatedParameter<X> of(Type baseType, int position, AnnotatedCallable<X> declaringCallable) {
-        return new BackedAnnotatedParameter<X>(baseType, position, declaringCallable);
+    public static <X> AnnotatedParameter<X> of(Type baseType, Annotation[] annotations, int position, AnnotatedCallable<X> declaringCallable) {
+        return new BackedAnnotatedParameter<X>(baseType, annotations, position, declaringCallable);
     }
 
     private final int position;
     private final AnnotatedCallable<X> declaringCallable;
     private transient Set<Annotation> cachedAnnotations;
 
-    public BackedAnnotatedParameter(Type baseType, int position, AnnotatedCallable<X> declaringCallable) {
+    public BackedAnnotatedParameter(Type baseType, Annotation[] annotations, int position, AnnotatedCallable<X> declaringCallable) {
         super(baseType);
         this.position = position;
         this.declaringCallable = declaringCallable;
+        this.cachedAnnotations = SharedObjectFacade.wrap(ImmutableSet.copyOf(annotations));
     }
 
     public int getPosition() {
@@ -57,13 +58,13 @@ public class BackedAnnotatedParameter<X> extends BackedAnnotated implements Anno
     }
 
     public Set<Annotation> getAnnotations() {
-        if (cachedAnnotations == null) {
-            synchronized(this) {
-                if (cachedAnnotations == null) {
-                    this.cachedAnnotations = buildAnnotationSet();
-                }
-            }
-        }
+//        if (cachedAnnotations == null) {
+//            synchronized(this) {
+//                if (cachedAnnotations == null) {
+//                    this.cachedAnnotations = buildAnnotationSet();
+//                }
+//            }
+//        }
         return cachedAnnotations;
     }
 
