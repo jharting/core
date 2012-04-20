@@ -28,6 +28,9 @@ import java.lang.reflect.Type;
 import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.BeanAttributes;
+import javax.enterprise.inject.spi.ProcessProducer;
+import javax.enterprise.inject.spi.ProcessProducerField;
+import javax.enterprise.inject.spi.ProcessProducerMethod;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedField;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedMethod;
@@ -222,12 +225,16 @@ public class AbstractBeanDeployer<E extends BeanDeployerEnvironment> {
     }
 
     protected <X, T> void createProducerMethod(AbstractClassBean<X> declaringBean, EnhancedAnnotatedMethod<T, ? super X> annotatedMethod) {
+        preloadContainerLifecycleEvent(ProcessProducerMethod.class, annotatedMethod.getBaseType(), annotatedMethod.getDeclaringType().getBaseType());
+        preloadContainerLifecycleEvent(ProcessProducer.class, annotatedMethod.getDeclaringType().getBaseType(), annotatedMethod.getBaseType());
         BeanAttributes<T> attributes = BeanAttributesFactory.forBean(annotatedMethod, getManager());
         ProducerMethod<? super X, T> bean = ProducerMethod.of(attributes, annotatedMethod, declaringBean, manager, services);
         getEnvironment().addProducerMethod(bean);
     }
 
     protected <X, T> void createProducerField(AbstractClassBean<X> declaringBean, EnhancedAnnotatedField<T, ? super X> field) {
+        preloadContainerLifecycleEvent(ProcessProducerField.class, field.getBaseType(), field.getDeclaringType().getBaseType());
+        preloadContainerLifecycleEvent(ProcessProducer.class, field.getDeclaringType().getBaseType(), field.getBaseType());
         BeanAttributes<T> attributes = BeanAttributesFactory.forBean(field, getManager());
         ProducerField<X, T> bean;
         if (isEEResourceProducerField(field)) {
