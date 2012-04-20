@@ -282,6 +282,7 @@ public class WeldBootstrap implements Bootstrap {
             deploymentServices.add(TypeStore.class, implementationServices.get(TypeStore.class));
             deploymentServices.add(ContextualStore.class, implementationServices.get(ContextualStore.class));
             deploymentServices.add(CurrentInjectionPoint.class, implementationServices.get(CurrentInjectionPoint.class));
+            deploymentServices.add(ContainerLifecycleEventPreloader.class, implementationServices.get(ContainerLifecycleEventPreloader.class));
 
             this.environment = environment;
             this.deploymentManager = BeanManagerImpl.newRootManager("deployment", deploymentServices, EMPTY_ENABLED);
@@ -318,6 +319,7 @@ public class WeldBootstrap implements Bootstrap {
 
         ExecutorServices executor = ExecutorServicesFactory.create(DefaultResourceLoader.INSTANCE);
         services.add(ExecutorServices.class, executor);
+        services.add(ContainerLifecycleEventPreloader.class, new ContainerLifecycleEventPreloader(executor));
         if (executor instanceof SingleThreadExecutorServices) {
             services.add(Validator.class, new Validator());
         } else {
@@ -475,6 +477,7 @@ public class WeldBootstrap implements Bootstrap {
         }
         ClassTransformer.instance(deploymentManager).cleanupAfterBoot();
         Container.instance().services().get(SharedObjectCache.class).cleanupAfterBoot();
+        Container.instance().services().get(ContainerLifecycleEventPreloader.class).cleanup();
         return this;
     }
 
@@ -539,6 +542,8 @@ public class WeldBootstrap implements Bootstrap {
                         BeforeShutdownImpl.fire(deploymentManager, beanDeployments);
                     } finally {
                         Container.instance().setState(ContainerState.SHUTDOWN);
+                        // ContainerLifecycleEventPreloader needs to be stopped explicitly before ExecutorServices
+                        Container.instance().services().get(ContainerLifecycleEventPreloader.class).cleanup();
                         Container.instance().cleanup();
                         // remove BeanManager references
                         try {
