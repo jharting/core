@@ -23,6 +23,7 @@ import static org.jboss.weld.logging.messages.BootstrapMessage.FOUND_INTERCEPTOR
 import static org.jboss.weld.logging.messages.BootstrapMessage.FOUND_OBSERVER_METHOD;
 
 import java.lang.reflect.Member;
+import java.lang.reflect.Type;
 
 import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
@@ -92,6 +93,20 @@ public class AbstractBeanDeployer<E extends BeanDeployerEnvironment> {
 
     protected BeanManagerImpl getManager() {
         return manager;
+    }
+
+    /**
+     * In multi-threaded environment we often cannot leverage multiple core fully in bootstrap because the deployer
+     * threads are often blocked by the reflection API or waiting to get a classloader lock. While waiting for classes to be loaded or
+     * reflection metadata to be obtained, we can make use of the idle CPU cores and start resolving container lifecycle event observers
+     * (extensions) upfront for those types of events we know we will be firing. Since these resolutions are cached, firing of the
+     * lifecycle events will then be very fast.
+     *
+     * This method is a noop hook by default. It is expected to be override by a concurrent implementation of bean deployer.
+     *
+     */
+    protected void preloadContainerLifecycleEvent(Class<?> eventRawType, Type... typeParameters) {
+        // noop by default
     }
 
     // interceptors, decorators and observers go first
