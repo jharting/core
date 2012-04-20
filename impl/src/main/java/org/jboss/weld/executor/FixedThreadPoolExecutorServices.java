@@ -39,7 +39,7 @@ import org.slf4j.cal10n.LocLogger;
  */
 public class FixedThreadPoolExecutorServices extends AbstractExecutorServices {
 
-    private static final int DEFAULT_THREAD_POOL_SIZE = 2 * Runtime.getRuntime().availableProcessors();
+    private static final int DEFAULT_THREAD_POOL_SIZE = Runtime.getRuntime().availableProcessors() + 1;
 
     /**
      * Use daemon threads so that Weld does not hang e.g. in a SE environment.
@@ -70,7 +70,7 @@ public class FixedThreadPoolExecutorServices extends AbstractExecutorServices {
 
     public FixedThreadPoolExecutorServices(int threadPoolSize) {
         this.threadPoolSize = threadPoolSize;
-        this.executor = Executors.newFixedThreadPool(threadPoolSize);
+        this.executor = Executors.newFixedThreadPool(threadPoolSize, new DeamonThreadFactory());
         log.debug(BootstrapMessage.THREADS_IN_USE, threadPoolSize);
     }
 
