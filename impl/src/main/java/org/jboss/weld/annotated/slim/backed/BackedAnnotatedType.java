@@ -23,6 +23,7 @@ import org.jboss.weld.Container;
 import org.jboss.weld.annotated.slim.SlimAnnotatedType;
 import org.jboss.weld.exceptions.InvalidObjectException;
 import org.jboss.weld.resources.ClassTransformer;
+import org.jboss.weld.resources.SharedObjectCache;
 import org.jboss.weld.util.LazyValueHolder;
 import org.jboss.weld.util.collections.ArraySet;
 import org.jboss.weld.util.reflection.Formats;
@@ -33,12 +34,12 @@ import com.google.common.collect.ImmutableSet;
 
 public class BackedAnnotatedType<X> extends BackedAnnotated implements SlimAnnotatedType<X>, Serializable {
 
-    public static <X> BackedAnnotatedType<X> of(Class<X> javaClass, ClassTransformer classTransformer) {
-        return of(javaClass, javaClass, classTransformer);
+    public static <X> BackedAnnotatedType<X> of(Class<X> javaClass, ClassTransformer classTransformer, SharedObjectCache cache) {
+        return of(javaClass, javaClass, classTransformer, cache);
     }
 
-    public static <X> BackedAnnotatedType<X> of(Class<X> javaClass, Type baseType, ClassTransformer classTransformer) {
-        return new BackedAnnotatedType<X>(javaClass, baseType, classTransformer);
+    public static <X> BackedAnnotatedType<X> of(Class<X> javaClass, Type baseType, ClassTransformer classTransformer, SharedObjectCache cache) {
+        return new BackedAnnotatedType<X>(javaClass, baseType, classTransformer, cache);
     }
 
     private final Class<X> javaClass;
@@ -46,12 +47,13 @@ public class BackedAnnotatedType<X> extends BackedAnnotated implements SlimAnnot
     private final LazyValueHolder<Set<AnnotatedMethod<? super X>>> methods;
     private final LazyValueHolder<Set<AnnotatedField<? super X>>> fields;
     private final ClassTransformer transformer;
+    private final SharedObjectCache cache;
 
-    public BackedAnnotatedType(Class<X> rawType, Type baseType, ClassTransformer classTransformer) {
-        super(baseType);
+    public BackedAnnotatedType(Class<X> rawType, Type baseType, ClassTransformer classTransformer, SharedObjectCache cache) {
+        super(baseType, cache);
         this.javaClass = rawType;
         this.transformer = classTransformer;
-        // TODO this all should be initialized lazily so that we can serialize the AnnotatedType
+        this.cache = cache;
 
         this.constructors = new BackedAnnotatedConstructors();
         this.fields = new BackedAnnotatedFields();
@@ -171,7 +173,7 @@ public class BackedAnnotatedType<X> extends BackedAnnotated implements SlimAnnot
             ArraySet<AnnotatedConstructor<X>> constructors = new ArraySet<AnnotatedConstructor<X>>(declaredConstructors.length);
             for (Constructor<?> constructor : declaredConstructors) {
                 Constructor<X> c = Reflections.cast(constructor);
-                constructors.add(BackedAnnotatedConstructor.of(c, BackedAnnotatedType.this));
+                constructors.add(BackedAnnotatedConstructor.of(c, BackedAnnotatedType.this, cache));
             }
             return immutableSet(constructors);
         }
@@ -184,7 +186,7 @@ public class BackedAnnotatedType<X> extends BackedAnnotated implements SlimAnnot
             Class<? super X> clazz = javaClass;
             while (clazz != Object.class && clazz != null) {
                 for (Field field : SecureReflections.getDeclaredFields(clazz)) {
-                    fields.add(BackedAnnotatedField.of(field, getDeclaringAnnotatedType(field, transformer)));
+                    fields.add(BackedAnnotatedField.of(field, getDeclaringAnnotatedType(field, transformer), cache));
                 }
                 clazz = clazz.getSuperclass();
             }
@@ -199,7 +201,7 @@ public class BackedAnnotatedType<X> extends BackedAnnotated implements SlimAnnot
             Class<? super X> clazz = javaClass;
             while (clazz != Object.class && clazz != null) {
                 for (Method method : SecureReflections.getDeclaredMethods(clazz)) {
-                    methods.add(BackedAnnotatedMethod.of(method, getDeclaringAnnotatedType(method, transformer)));
+                    methods.add(BackedAnnotatedMethod.of(method, getDeclaringAnnotatedType(method, transformer), cache));
                 }
                 clazz = clazz.getSuperclass();
             }
