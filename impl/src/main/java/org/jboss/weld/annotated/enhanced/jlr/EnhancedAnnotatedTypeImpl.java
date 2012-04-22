@@ -16,7 +16,7 @@
  */
 package org.jboss.weld.annotated.enhanced.jlr;
 
-import static org.jboss.weld.util.collections.WeldCollections.immutableMap;
+import static org.jboss.weld.util.collections.WeldCollections.immutableSetMultimap;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -27,7 +27,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -46,11 +45,14 @@ import org.jboss.weld.annotated.slim.SlimAnnotatedType;
 import org.jboss.weld.annotated.slim.backed.BackedAnnotatedType;
 import org.jboss.weld.resources.ClassTransformer;
 import org.jboss.weld.util.collections.ArraySet;
-import org.jboss.weld.util.collections.ArraySetMultimap;
 import org.jboss.weld.util.reflection.Formats;
 import org.jboss.weld.util.reflection.Reflections;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
+import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 
 /**
@@ -96,7 +98,7 @@ public class EnhancedAnnotatedTypeImpl<T> extends AbstractEnhancedAnnotated<T, C
 
     // The meta-annotation map (annotation type -> set of annotations containing
     // meta-annotation) of the item
-    private final Map<Class<? extends Annotation>, List<Annotation>> declaredMetaAnnotationMap;
+    private final Multimap<Class<? extends Annotation>, Annotation> declaredMetaAnnotationMap;
 
     private final boolean discovered;
 
@@ -253,13 +255,13 @@ public class EnhancedAnnotatedTypeImpl<T> extends AbstractEnhancedAnnotated<T, C
         this.declaredAnnotatedMethods.trimToSize();
         this.declaredMethodsByAnnotatedParameters.trimToSize();
 
-        ArraySetMultimap<Class<? extends Annotation>, Annotation> declaredMetaAnnotationMap = new ArraySetMultimap<Class<? extends Annotation>, Annotation>();
+        SetMultimap<Class<? extends Annotation>, Annotation> declaredMetaAnnotationMap = HashMultimap.create();
         for (Annotation declaredAnnotation : declaredAnnotationMap.values()) {
             addMetaAnnotations(declaredMetaAnnotationMap, declaredAnnotation, declaredAnnotation.annotationType().getAnnotations(), true);
             addMetaAnnotations(declaredMetaAnnotationMap, declaredAnnotation, classTransformer.getTypeStore().get(declaredAnnotation.annotationType()), true);
-            declaredMetaAnnotationMap.putSingleElement(declaredAnnotation.annotationType(), declaredAnnotation);
+            declaredMetaAnnotationMap.put(declaredAnnotation.annotationType(), declaredAnnotation);
         }
-        this.declaredMetaAnnotationMap = immutableMap(declaredMetaAnnotationMap);
+        this.declaredMetaAnnotationMap = immutableSetMultimap(declaredMetaAnnotationMap);
     }
 
     /**
@@ -563,8 +565,8 @@ public class EnhancedAnnotatedTypeImpl<T> extends AbstractEnhancedAnnotated<T, C
         return cast(methods);
     }
 
-    public Set<Annotation> getDeclaredMetaAnnotations(Class<? extends Annotation> metaAnnotationType) {
-        return Collections.unmodifiableSet(new ArraySet<Annotation>(declaredMetaAnnotationMap.get(metaAnnotationType)));
+    public Collection<Annotation> getDeclaredMetaAnnotations(Class<? extends Annotation> metaAnnotationType) {
+        return declaredMetaAnnotationMap.get(metaAnnotationType);
     }
 
     public boolean isDiscovered() {

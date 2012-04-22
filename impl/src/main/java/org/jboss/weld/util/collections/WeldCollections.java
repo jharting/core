@@ -24,9 +24,13 @@ import java.util.Set;
 
 import org.jboss.weld.util.reflection.Reflections;
 
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.Multimaps;
+import com.google.common.collect.SetMultimap;
 
 /**
  * Collection utilities.
@@ -37,6 +41,7 @@ import com.google.common.collect.ImmutableSet;
 public class WeldCollections {
 
     public static final Map<Object, List<Object>> EMPTY_ARRAY_SET_MULTIMAP = Collections.unmodifiableMap(new ArraySetMultimap<Object, Object>().trimToSize());
+    public static final SetMultimap<Object, Object> EMPTY_SET_MULTIMAP = Multimaps.unmodifiableSetMultimap(HashMultimap.create());
 
     private WeldCollections() {
     }
@@ -76,7 +81,7 @@ public class WeldCollections {
     }
 
     /**
-     * Returns an immutable view of a given map. If the given list is empty, a shared instance is returned.
+     * Returns an immutable view of a given map. If the given map is empty, a shared instance is returned.
      */
     public static <K, V> Map<K, V> immutableMap(Map<K, V> map) {
         if (map.isEmpty()) {
@@ -92,5 +97,15 @@ public class WeldCollections {
             ArraySetMultimap.class.cast(map).trimToSize();
         }
         return Collections.unmodifiableMap(map);
+    }
+
+    /**
+     * Returns an immutable view of a given {@link SetMultimap}. If the given multimap is empty, a shared instance is returned.
+     */
+    public static <K, V> SetMultimap<K, V> immutableSetMultimap(SetMultimap<K, V> multimap) {
+        if (multimap.isEmpty()) {
+            return Reflections.cast(EMPTY_SET_MULTIMAP);
+        }
+        return Multimaps.unmodifiableSetMultimap(multimap);
     }
 }
