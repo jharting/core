@@ -17,6 +17,8 @@
 
 package org.jboss.weld.interceptor.reader;
 
+import static org.jboss.weld.util.collections.WeldCollections.immutableSet;
+
 import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.lang.reflect.Method;
@@ -26,7 +28,6 @@ import org.jboss.weld.interceptor.builder.MethodReference;
 import org.jboss.weld.interceptor.spi.metadata.MethodMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionType;
 import org.jboss.weld.interceptor.util.InterceptionTypeRegistry;
-import org.jboss.weld.resources.SharedObjectFacade;
 import org.jboss.weld.util.collections.ArraySet;
 
 /**
@@ -50,7 +51,7 @@ public class DefaultMethodMetadata<M> implements MethodMetadata, Serializable {
                 supportedInterceptorTypes.add(interceptionType);
             }
         }
-        this.supportedInterceptorTypes = SharedObjectFacade.wrap(supportedInterceptorTypes);
+        this.supportedInterceptorTypes = immutableSet(supportedInterceptorTypes);
     }
 
     private DefaultMethodMetadata(Set<InterceptionType> interceptionTypes, MethodReference methodReference) {
