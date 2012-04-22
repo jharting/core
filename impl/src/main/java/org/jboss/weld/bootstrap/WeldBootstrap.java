@@ -309,7 +309,7 @@ public class WeldBootstrap implements Bootstrap {
         services.add(TypeStore.class, typeStore);
         SharedObjectCache cache = new SharedObjectCache();
         services.add(SharedObjectCache.class, cache);
-        ClassTransformer classTransformer = new ClassTransformer(typeStore);
+        ClassTransformer classTransformer = new ClassTransformer(typeStore, cache);
         services.add(ClassTransformer.class, classTransformer);
         services.add(MemberTransformer.class, new MemberTransformer(classTransformer));
         services.add(MetaAnnotationStore.class, new MetaAnnotationStore(classTransformer));

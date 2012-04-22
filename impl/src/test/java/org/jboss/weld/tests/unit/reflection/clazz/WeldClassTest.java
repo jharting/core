@@ -22,6 +22,7 @@ import org.jboss.weld.annotated.slim.backed.BackedAnnotatedType;
 import org.jboss.weld.annotated.slim.unbacked.UnbackedAnnotatedType;
 import org.jboss.weld.metadata.TypeStore;
 import org.jboss.weld.resources.ClassTransformer;
+import org.jboss.weld.resources.SharedObjectCache;
 import org.jboss.weld.util.reflection.HierarchyDiscovery;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -38,7 +39,7 @@ import java.util.Set;
 //@Artifact
 public class WeldClassTest {
 
-    private final ClassTransformer transformer = new ClassTransformer(new TypeStore());
+    private final ClassTransformer transformer = new ClassTransformer(new TypeStore(), new SharedObjectCache());
 
     /*
     * description = "WELD-216"
@@ -46,7 +47,7 @@ public class WeldClassTest {
     @Test
     @Ignore // Broken
     public void testMemberClassWithGenericTypes() {
-        AnnotatedType<?> at = EnhancedAnnotatedTypeImpl.of(BackedAnnotatedType.of(new Kangaroo().procreate().getClass(), transformer), transformer);
+        AnnotatedType<?> at = EnhancedAnnotatedTypeImpl.of(BackedAnnotatedType.of(new Kangaroo().procreate().getClass(), transformer, new SharedObjectCache()), transformer);
         EnhancedAnnotatedTypeImpl.of(UnbackedAnnotatedType.of(at), transformer);
     }
 
@@ -62,7 +63,7 @@ public class WeldClassTest {
     *           InstantiatorFactory.useInstantiators() <-- Needs Containers
     */
     public void testLocalClassWithGenericTypes() {
-        AnnotatedType<?> at = EnhancedAnnotatedTypeImpl.of(BackedAnnotatedType.of(new Koala().procreate().getClass(), transformer), transformer);
+        AnnotatedType<?> at = EnhancedAnnotatedTypeImpl.of(BackedAnnotatedType.of(new Koala().procreate().getClass(), transformer, new SharedObjectCache()), transformer);
         EnhancedAnnotatedTypeImpl.of(UnbackedAnnotatedType.of(at), transformer);
     }
 
@@ -78,7 +79,7 @@ public class WeldClassTest {
     *           InstantiatorFactory.useInstantiators() <-- Needs Containers
     */
     public void testAnonymousClassWithGenericTypes() {
-        AnnotatedType<?> at = EnhancedAnnotatedTypeImpl.of(BackedAnnotatedType.of(new Possum().procreate().getClass(), transformer), transformer);
+        AnnotatedType<?> at = EnhancedAnnotatedTypeImpl.of(BackedAnnotatedType.of(new Possum().procreate().getClass(), transformer, new SharedObjectCache()), transformer);
         EnhancedAnnotatedTypeImpl.of(UnbackedAnnotatedType.of(at), transformer);
     }
 

@@ -70,7 +70,7 @@ public class ClassTransformer implements Service {
     private class TransformClassToSlimAnnotatedType implements Function<TypeHolder<?>, BackedAnnotatedType<?>> {
         @Override
         public BackedAnnotatedType<?> apply(TypeHolder<?> typeHolder) {
-            return BackedAnnotatedType.of(typeHolder.getRawType(), typeHolder.getBaseType(), ClassTransformer.this);
+            return BackedAnnotatedType.of(typeHolder.getRawType(), typeHolder.getBaseType(), ClassTransformer.this, cache);
         }
     }
 
