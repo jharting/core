@@ -48,7 +48,7 @@ public class ContainerLifecycleEventPreloader implements Service {
 
         @Override
         public Thread newThread(Runnable r) {
-            Thread thread = new Thread(THREAD_GROUP, THREAD_NAME_PREFIX + threadNumber.getAndIncrement());
+            Thread thread = new Thread(THREAD_GROUP, r, THREAD_NAME_PREFIX + threadNumber.getAndIncrement());
             thread.setDaemon(true);
             return thread;
         }
@@ -71,7 +71,7 @@ public class ContainerLifecycleEventPreloader implements Service {
         }
     }
 
-    private ExecutorService executor;
+    private final ExecutorService executor;
 
     public ContainerLifecycleEventPreloader() {
         this.executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new DeamonThreadFactory());
