@@ -66,6 +66,9 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
         super(manager, ejbDescriptors, services, BeanDeployerEnvironment.newConcurrentEnvironment(ejbDescriptors, manager));
         this.executor = services.get(ExecutorServices.class);
         this.preloader = services.get(ContainerLifecycleEventPreloader.class);
+        if (this.preloader == null) {
+            throw new IllegalArgumentException(ContainerLifecycleEventPreloader.class.getName() + " is null");
+        }
     }
 
     @Override

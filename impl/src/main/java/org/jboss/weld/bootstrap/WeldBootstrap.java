@@ -318,11 +318,11 @@ public class WeldBootstrap implements Bootstrap {
 
         ExecutorServices executor = ExecutorServicesFactory.create(DefaultResourceLoader.INSTANCE);
         services.add(ExecutorServices.class, executor);
-        services.add(ContainerLifecycleEventPreloader.class, new ContainerLifecycleEventPreloader(executor));
         if (executor instanceof SingleThreadExecutorServices) {
             services.add(Validator.class, new Validator());
         } else {
             services.add(Validator.class, new ConcurrentValidator(executor));
+            services.add(ContainerLifecycleEventPreloader.class, new ContainerLifecycleEventPreloader());
         }
 
         return services;
@@ -541,8 +541,6 @@ public class WeldBootstrap implements Bootstrap {
                         BeforeShutdownImpl.fire(deploymentManager, beanDeployments);
                     } finally {
                         Container.instance().setState(ContainerState.SHUTDOWN);
-                        // ContainerLifecycleEventPreloader needs to be stopped explicitly before ExecutorServices
-                        Container.instance().services().get(ContainerLifecycleEventPreloader.class).cleanup();
                         Container.instance().cleanup();
                         // remove BeanManager references
                         try {
