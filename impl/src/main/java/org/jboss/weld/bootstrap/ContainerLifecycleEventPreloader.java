@@ -17,18 +17,15 @@
 package org.jboss.weld.bootstrap;
 
 import java.lang.reflect.Type;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.enterprise.inject.spi.BeanManager;
 
 import org.jboss.weld.bootstrap.api.Service;
-import org.jboss.weld.executor.FixedThreadPoolExecutorServices;
-import org.jboss.weld.executor.ProfilingExecutorServices;
-import org.jboss.weld.manager.api.ExecutorServices;
 import org.jboss.weld.util.reflection.ParameterizedTypeImpl;
 
 /**
@@ -40,9 +37,24 @@ import org.jboss.weld.util.reflection.ParameterizedTypeImpl;
  */
 public class ContainerLifecycleEventPreloader implements Service {
 
-    private static class PreloadingTask {
+    /**
+     * Use daemon threads so that Weld does not hang e.g. in a SE environment.
+     */
+    private static class DeamonThreadFactory implements ThreadFactory {
 
-        public static final PreloadingTask STOPPER = new PreloadingTask(null, null);
+        private final AtomicInteger threadNumber = new AtomicInteger(1);
+        private static final String THREAD_NAME_PREFIX = "weld-preloader-";
+        private static final ThreadGroup THREAD_GROUP = new ThreadGroup("weld-preloaders");
+
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread thread = new Thread(THREAD_GROUP, THREAD_NAME_PREFIX + threadNumber.getAndIncrement());
+            thread.setDaemon(true);
+            return thread;
+        }
+    }
+
+    private class PreloadingTask implements Callable<Void> {
 
         private final Type type;
         private final BeanManager manager;
@@ -51,45 +63,27 @@ public class ContainerLifecycleEventPreloader implements Service {
             this.type = type;
             this.manager = manager;
         }
-    }
 
-    private class Worker implements Callable<Void> {
         @Override
         public Void call() throws Exception {
-            for (PreloadingTask task = preloaderQueue.take(); task != PreloadingTask.STOPPER; task = preloaderQueue.take()) {
-                task.manager.resolveObserverMethods(task.type);
-            }
+            manager.resolveObserverMethods(type);
             return null;
         }
     }
 
-    private final BlockingQueue<PreloadingTask> preloaderQueue = new LinkedBlockingQueue<PreloadingTask>();
-    private final boolean enabled;
+    private ExecutorService executor;
 
-    public ContainerLifecycleEventPreloader(ExecutorServices executor) {
-        if (executor instanceof ProfilingExecutorServices) {
-            executor = ProfilingExecutorServices.class.cast(executor).getDelegate();
-        }
-        if (executor instanceof FixedThreadPoolExecutorServices && FixedThreadPoolExecutorServices.class.cast(executor).getThreadPoolSize() > 1) {
-            FixedThreadPoolExecutorServices.class.cast(executor).getTaskExecutor().submit(new Worker());
-            enabled = true;
-        } else {
-            // not a multithreaded environment - no preloading
-            enabled = false;
-        }
+    public ContainerLifecycleEventPreloader() {
+        this.executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new DeamonThreadFactory());
     }
 
     public void preloadContainerLifecycleEvent(BeanManager manager, Class<?> eventRawType, Type... typeParameters) {
-        if (enabled) {
-            preloaderQueue.add(new PreloadingTask(new ParameterizedTypeImpl(eventRawType, typeParameters, null), manager));
-        }
+        executor.submit(new PreloadingTask(new ParameterizedTypeImpl(eventRawType, typeParameters, null), manager));
     }
 
     @Override
     public void cleanup() {
-        if (enabled) {
-            preloaderQueue.clear();
-            preloaderQueue.add(PreloadingTask.STOPPER);
-        }
+        // TODO
+        executor.shutdownNow();
     }
 }
