@@ -173,6 +173,8 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
 
     private final boolean proxiable;
 
+    private ProxyClassConstructorInjectionPointWrapper<T> constructorInjectionPointWrapper;
+
     /**
      * Creates a simple, annotation defined Web Bean
      *
@@ -266,11 +268,16 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
         }
     }
 
+    @Override
+    protected void initEnhancedSubclass() {
+        super.initEnhancedSubclass();
+        this.constructorInjectionPointWrapper = new ProxyClassConstructorInjectionPointWrapper<T>(this, constructorForEnhancedSubclass, getConstructor(), beanManager);
+    }
+
     protected T createInstance(CreationalContext<T> ctx) {
         if (!isSubclassed()) {
             return getConstructor().newInstance(beanManager, ctx);
         } else {
-            ProxyClassConstructorInjectionPointWrapper<T> constructorInjectionPointWrapper = new ProxyClassConstructorInjectionPointWrapper<T>(this, constructorForEnhancedSubclass, getConstructor(), beanManager);
             return constructorInjectionPointWrapper.newInstance(beanManager, ctx);
         }
     }

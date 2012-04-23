@@ -134,7 +134,11 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
 
     // The item representation
     protected final AnnotatedType<T> annotatedType;
+
+    // These fields are used during bootstrap only. After bootstrap they are reset to null
     protected volatile EnhancedAnnotatedType<T> enhancedAnnotatedItem;
+    private volatile EnhancedAnnotatedConstructor<T> enhancedAnnotatedConstructor;
+    protected EnhancedAnnotatedConstructor<T> constructorForEnhancedSubclass;
 
     // The injectable fields of each type in the type hierarchy, with the actual
     // type at the bottom
@@ -159,9 +163,6 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
 
     private final ConstructorInjectionPoint<T> constructor;
 
-    protected EnhancedAnnotatedType<T> enhancedSubclass;
-
-    protected EnhancedAnnotatedConstructor<T> constructorForEnhancedSubclass;
 
     private boolean passivationCapableBean;
     private boolean passivationCapableDependency;
@@ -332,6 +333,8 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
     public void cleanupAfterBoot() {
         super.cleanupAfterBoot();
         this.enhancedAnnotatedItem = null;
+        this.enhancedAnnotatedConstructor = null;
+        this.constructorForEnhancedSubclass = null;
     }
 
     /**
@@ -454,9 +457,9 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
      * Initializes the constructor
      */
     protected ConstructorInjectionPoint<T> initConstructor(BeanManagerImpl manager) {
-        EnhancedAnnotatedConstructor<T> enhancedAnnotated = Beans.getBeanConstructor(getEnhancedAnnotated());
-        checkConstructor(enhancedAnnotated);
-        ConstructorInjectionPoint<T> injectionPoint = ConstructorInjectionPoint.of(enhancedAnnotated, this, manager);
+        enhancedAnnotatedConstructor = Beans.getBeanConstructor(getEnhancedAnnotated());
+        checkConstructor(enhancedAnnotatedConstructor);
+        ConstructorInjectionPoint<T> injectionPoint = ConstructorInjectionPoint.of(enhancedAnnotatedConstructor, this, manager);
         addInjectionPoints(injectionPoint.getParameterInjectionPoints());
         return injectionPoint;
     }
@@ -476,9 +479,9 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
 
     protected void initEnhancedSubclass() {
         final ClassTransformer transformer = beanManager.getServices().get(ClassTransformer.class);
-        enhancedSubclass = transformer.getEnhancedAnnotatedType(createEnhancedSubclass());
+        final EnhancedAnnotatedType<T> enhancedSubclass = transformer.getEnhancedAnnotatedType(createEnhancedSubclass());
         constructorForEnhancedSubclass = EnhancedAnnotatedConstructorImpl.of(
-                enhancedSubclass.getDeclaredEnhancedConstructor(getConstructor().getSignature()),
+                enhancedSubclass.getDeclaredEnhancedConstructor(enhancedAnnotatedConstructor.getSignature()),
                 enhancedSubclass,
                 transformer);
     }
