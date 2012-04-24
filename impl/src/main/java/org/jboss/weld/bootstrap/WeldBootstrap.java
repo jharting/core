@@ -477,7 +477,10 @@ public class WeldBootstrap implements Bootstrap {
         }
         ClassTransformer.instance(deploymentManager).cleanupAfterBoot();
         Container.instance().services().get(SharedObjectCache.class).cleanupAfterBoot();
-        Container.instance().services().get(ContainerLifecycleEventPreloader.class).cleanup();
+        ContainerLifecycleEventPreloader preloader = Container.instance().services().get(ContainerLifecycleEventPreloader.class);
+        if (preloader != null) {
+            preloader.cleanup();
+        }
         return this;
     }
 
