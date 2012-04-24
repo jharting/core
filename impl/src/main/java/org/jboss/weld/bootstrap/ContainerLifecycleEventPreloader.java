@@ -23,9 +23,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.enterprise.inject.spi.BeanManager;
-
 import org.jboss.weld.bootstrap.api.Service;
+import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.util.reflection.ParameterizedTypeImpl;
 
 /**
@@ -57,9 +56,9 @@ public class ContainerLifecycleEventPreloader implements Service {
     private class PreloadingTask implements Callable<Void> {
 
         private final Type type;
-        private final BeanManager manager;
+        private final BeanManagerImpl manager;
 
-        public PreloadingTask(Type type, BeanManager manager) {
+        public PreloadingTask(Type type, BeanManagerImpl manager) {
             this.type = type;
             this.manager = manager;
         }
@@ -77,7 +76,7 @@ public class ContainerLifecycleEventPreloader implements Service {
         this.executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new DeamonThreadFactory());
     }
 
-    public void preloadContainerLifecycleEvent(BeanManager manager, Class<?> eventRawType, Type... typeParameters) {
+    public void preloadContainerLifecycleEvent(BeanManagerImpl manager, Class<?> eventRawType, Type... typeParameters) {
         executor.submit(new PreloadingTask(new ParameterizedTypeImpl(eventRawType, typeParameters, null), manager));
     }
 
