@@ -21,7 +21,6 @@ import static org.jboss.weld.logging.messages.BootstrapMessage.BEAN_IS_BOTH_INTE
 import static org.jboss.weld.logging.messages.BootstrapMessage.IGNORING_CLASS_DUE_TO_LOADING_ERROR;
 import static org.slf4j.ext.XLogger.Level.INFO;
 
-import java.lang.reflect.ParameterizedType;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -32,17 +31,15 @@ import javax.decorator.Decorator;
 import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.Extension;
+import javax.enterprise.inject.spi.ProcessAnnotatedType;
 import javax.enterprise.inject.spi.ProcessBean;
 import javax.enterprise.inject.spi.ProcessBeanAttributes;
 import javax.enterprise.inject.spi.ProcessInjectionTarget;
 import javax.enterprise.inject.spi.ProcessManagedBean;
 import javax.interceptor.Interceptor;
 
-import org.jboss.weld.Container;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
 import org.jboss.weld.annotated.slim.SlimAnnotatedType;
-import org.jboss.weld.annotated.slim.backed.BackedAnnotatedType;
-import org.jboss.weld.annotated.slim.unbacked.UnbackedAnnotatedType;
 import org.jboss.weld.bean.AbstractBean;
 import org.jboss.weld.bean.AbstractClassBean;
 import org.jboss.weld.bean.RIBean;
@@ -103,7 +100,7 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
         }
 
         if (clazz != null && !clazz.isAnnotation()) {
-            preloadContainerLifecycleEvent(ParameterizedType.class, clazz);
+            preloadContainerLifecycleEvent(ProcessAnnotatedType.class, clazz);
             AnnotatedType<?> annotatedType = null;
             try {
                 annotatedType = classTransformer.getAnnotatedType(clazz);
