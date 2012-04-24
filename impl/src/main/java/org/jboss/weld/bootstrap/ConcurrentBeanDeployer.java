@@ -30,20 +30,14 @@ import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.Bean;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
-import org.jboss.weld.annotated.slim.SlimAnnotatedType;
-import org.jboss.weld.bean.AbstractBean;
 import org.jboss.weld.bean.AbstractClassBean;
 import org.jboss.weld.bean.RIBean;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
-import org.jboss.weld.bootstrap.events.ProcessAnnotatedTypeFactory;
-import org.jboss.weld.bootstrap.events.ProcessAnnotatedTypeImpl;
 import org.jboss.weld.ejb.EjbDescriptors;
 import org.jboss.weld.ejb.InternalEjbDescriptor;
 import org.jboss.weld.executor.IterativeWorkerTaskFactory;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.manager.api.ExecutorServices;
-import org.jboss.weld.util.Beans;
-import org.jboss.weld.util.BeansClosure;
 import org.jboss.weld.util.collections.ConcurrentHashSetSupplier;
 import org.jboss.weld.util.reflection.Reflections;
 
@@ -202,16 +196,6 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
         executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<RIBean<?>>(getEnvironment().getBeans()) {
             protected void doWork(RIBean<?> bean) {
                 bean.initialize(getEnvironment());
-            }
-        });
-        return this;
-    }
-
-    @Override
-    public AbstractBeanDeployer<BeanDeployerEnvironment> fireBeanEvents() {
-        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<RIBean<?>>(getEnvironment().getBeans()) {
-            protected void doWork(RIBean<?> bean) {
-                fireBeanEvents(bean);
             }
         });
         return this;

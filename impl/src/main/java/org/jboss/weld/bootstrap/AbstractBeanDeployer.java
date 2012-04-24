@@ -30,6 +30,7 @@ import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.BeanAttributes;
 import javax.enterprise.inject.spi.ProcessBean;
 import javax.enterprise.inject.spi.ProcessBeanAttributes;
+import javax.enterprise.inject.spi.ProcessObserverMethod;
 import javax.enterprise.inject.spi.ProcessProducer;
 import javax.enterprise.inject.spi.ProcessProducerField;
 import javax.enterprise.inject.spi.ProcessProducerMethod;
@@ -265,6 +266,7 @@ public class AbstractBeanDeployer<E extends BeanDeployerEnvironment> {
     protected <T, X> void createObserverMethod(RIBean<X> declaringBean, EnhancedAnnotatedMethod<T, ? super X> method) {
         ObserverMethodImpl<T, X> observer = ObserverFactory.create(method, declaringBean, manager);
         ObserverInitializationContext<T, ? super X> observerInitializer = ObserverInitializationContext.of(observer, method);
+        preloadContainerLifecycleEvent(ProcessObserverMethod.class, observer.getObservedType(), declaringBean.getBeanClass());
         getEnvironment().addObserverMethod(observerInitializer);
     }
 
