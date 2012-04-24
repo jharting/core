@@ -16,16 +16,22 @@
  */
 package org.jboss.weld.bootstrap;
 
+import static org.jboss.weld.logging.Category.BOOTSTRAP;
+import static org.jboss.weld.logging.LoggerFactory.loggerFactory;
+
 import java.lang.reflect.Type;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jboss.weld.bootstrap.api.Service;
+import org.jboss.weld.logging.messages.BootstrapMessage;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.util.reflection.ParameterizedTypeImpl;
+import org.slf4j.cal10n.LocLogger;
 
 /**
  * Allows observer methods for container lifecycle events to be resolved upfront while the deployment is waiting for classloader
@@ -35,6 +41,10 @@ import org.jboss.weld.util.reflection.ParameterizedTypeImpl;
  *
  */
 public class ContainerLifecycleEventPreloader implements Service {
+
+    // This is an optional services thus we do not need tasks to finish in order to get a valid deployment
+    private static final long SHUTDOWN_TIMEOUT = 1L;
+    private static final LocLogger log = loggerFactory().getLogger(BOOTSTRAP);
 
     /**
      * Use daemon threads so that Weld does not hang e.g. in a SE environment.
@@ -82,7 +92,15 @@ public class ContainerLifecycleEventPreloader implements Service {
 
     @Override
     public void cleanup() {
-        // TODO
-        executor.shutdownNow();
+        if (!executor.isShutdown()) {
+            executor.shutdownNow();
+            try {
+                if (!executor.awaitTermination(SHUTDOWN_TIMEOUT, TimeUnit.SECONDS)) {
+                    log.warn(BootstrapMessage.TIMEOUT_SHUTTING_DOWN_THREAD_POOL, executor, this);
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 }
