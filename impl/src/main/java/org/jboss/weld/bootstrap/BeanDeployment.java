@@ -29,6 +29,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import javax.enterprise.context.spi.Context;
+import javax.enterprise.inject.spi.AfterBeanDiscovery;
+import javax.enterprise.inject.spi.AfterDeploymentValidation;
+import javax.enterprise.inject.spi.BeforeBeanDiscovery;
+import javax.enterprise.inject.spi.ProcessModule;
 
 import org.jboss.weld.bean.builtin.BeanManagerBean;
 import org.jboss.weld.bean.builtin.BeanMetadataBean;
@@ -141,6 +145,11 @@ public class BeanDeployment {
         // Must at the Manager bean straight away, as it can be injected during startup!
         beanManager.addBean(new BeanManagerBean(beanManager));
         this.contexts = contexts;
+
+        beanDeployer.preloadContainerLifecycleEvent(BeforeBeanDiscovery.class);
+        beanDeployer.preloadContainerLifecycleEvent(ProcessModule.class);
+        beanDeployer.preloadContainerLifecycleEvent(AfterBeanDiscovery.class);
+        beanDeployer.preloadContainerLifecycleEvent(AfterDeploymentValidation.class);
     }
 
     public BeanManagerImpl getBeanManager() {
