@@ -53,6 +53,7 @@ import org.jboss.weld.bean.RIBean;
 import org.jboss.weld.bean.SessionBean;
 import org.jboss.weld.bean.attributes.BeanAttributesFactory;
 import org.jboss.weld.bean.attributes.ExternalBeanAttributesFactory;
+import org.jboss.weld.bean.builtin.AbstractBuiltInBean;
 import org.jboss.weld.bean.builtin.ee.EEResourceProducerField;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
 import org.jboss.weld.bootstrap.events.ProcessBeanAttributesImpl;
@@ -316,6 +317,11 @@ public class AbstractBeanDeployer<E extends BeanDeployerEnvironment> {
 
     public E getEnvironment() {
         return environment;
+    }
+
+    public void addBuiltInBean(AbstractBuiltInBean<?> bean) {
+        preloadContainerLifecycleEvent(ProcessBean.class, bean.getBeanClass());
+        getEnvironment().addBuiltInBean(bean);
     }
 
     protected <T, S> boolean fireProcessBeanAttributes(AbstractBean<T, S> bean) {
