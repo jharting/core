@@ -49,7 +49,7 @@ public class SubclassedComponentInstantiator<T> implements Instantiator<T> {
 
     private final ConstructorInjectionPoint<T> proxyClassConstructorInjectionPoint;
 
-    public SubclassedComponentInstantiator(AnnotatedType<T> type, Bean<T> bean, SimpleInstantiator<T> delegate, BeanManagerImpl manager) {
+    public SubclassedComponentInstantiator(AnnotatedType<T> type, Bean<T> bean, DefaultInstantiator<T> delegate, BeanManagerImpl manager) {
         EnhancedAnnotatedConstructor<T> constructorForEnhancedSubclass = initEnhancedSubclass(manager, type, bean, delegate.getConstructor());
         this.proxyClassConstructorInjectionPoint = new ProxyClassConstructorInjectionPointWrapper<T>(bean, type.getJavaClass(), constructorForEnhancedSubclass, delegate.getConstructor(), manager);
     }

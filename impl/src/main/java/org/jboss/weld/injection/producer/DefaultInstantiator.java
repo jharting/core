@@ -31,11 +31,11 @@ import org.jboss.weld.manager.BeanManagerImpl;
  *
  * @param <T>
  */
-public class SimpleInstantiator<T> implements Instantiator<T> {
+public class DefaultInstantiator<T> implements Instantiator<T> {
 
     private final ConstructorInjectionPoint<T> constructor;
 
-    public SimpleInstantiator(EnhancedAnnotatedType<T> type, Bean<T> bean, BeanManagerImpl manager) {
+    public DefaultInstantiator(EnhancedAnnotatedType<T> type, Bean<T> bean, BeanManagerImpl manager) {
         constructor = InjectionPointFactory.instance().createConstructorInjectionPoint(bean, type, manager);
     }
 
