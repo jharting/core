@@ -103,15 +103,15 @@ public class InterceptorImpl<T> extends ManagedBean<T> implements Interceptor<T>
         return serializable;
     }
 
-    @Override
-    protected void defaultPostConstruct(T instance) {
-        // Lifecycle callbacks not supported
-    }
-
-    @Override
-    protected void defaultPreDestroy(T instance) {
-        // Lifecycle callbacks not supported
-    }
+//    @Override
+//    protected void defaultPostConstruct(T instance) {
+//        // Lifecycle callbacks not supported
+//    }
+//
+//    @Override
+//    protected void defaultPreDestroy(T instance) {
+//        // Lifecycle callbacks not supported
+//    }
 
     @Override
     public String toString() {

@@ -90,6 +90,7 @@ import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedField;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedMember;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedParameter;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
+import org.jboss.weld.bean.DecoratorImpl;
 import org.jboss.weld.bean.NewBean;
 import org.jboss.weld.bean.RIBean;
 import org.jboss.weld.bean.SessionBean;
@@ -125,9 +126,12 @@ import org.jboss.weld.injection.attributes.FieldInjectionPointAttributes;
 import org.jboss.weld.injection.attributes.InferingFieldInjectionPointAttributes;
 import org.jboss.weld.injection.attributes.InferingParameterInjectionPointAttributes;
 import org.jboss.weld.injection.attributes.ParameterInjectionPointAttributes;
+import org.jboss.weld.injection.producer.AbstractInjectionTarget;
+import org.jboss.weld.injection.producer.DecoratorInjectionTarget;
 import org.jboss.weld.injection.producer.InjectionTargetInitializationContext;
 import org.jboss.weld.injection.producer.InjectionTargetService;
-import org.jboss.weld.injection.producer.WeldInjectionTarget;
+import org.jboss.weld.injection.producer.DefaultInjectionTarget;
+import org.jboss.weld.injection.producer.ejb.SessionBeanInjectionTarget;
 import org.jboss.weld.interceptor.reader.cache.DefaultMetadataCachingReader;
 import org.jboss.weld.interceptor.reader.cache.MetadataCachingReader;
 import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
@@ -1046,8 +1050,16 @@ public class BeanManagerImpl implements WeldManager, Serializable {
         }
     }
 
-    public <T> WeldInjectionTarget<T> createInjectionTarget(EnhancedAnnotatedType<T> type, Bean<T> bean) {
-        WeldInjectionTarget<T> injectionTarget = new WeldInjectionTarget<T>(type, bean, this);
+    public <T> AbstractInjectionTarget<T> createInjectionTarget(EnhancedAnnotatedType<T> type, Bean<T> bean) {
+        AbstractInjectionTarget<T> injectionTarget = null;
+        if (bean instanceof DecoratorImpl<?> || type.isAnnotationPresent(javax.decorator.Decorator.class) || type.isAbstract()) {
+            // TODO if we get an abstract class, we assume that it is a decorator class - is this good?
+            injectionTarget = new DecoratorInjectionTarget<T>(type, bean, this);
+        } else if (bean instanceof SessionBean<?>) {
+            injectionTarget = new SessionBeanInjectionTarget<T>(type, (SessionBean<T>) bean, this);
+        } else {
+            injectionTarget = new DefaultInjectionTarget<T>(type, bean, this);
+        }
         /*
          * Every InjectionTarget, regardless whether it's used within Weld's Bean implementation or requested from extension
          * has to be initialized after beans (interceptors) are deployed.

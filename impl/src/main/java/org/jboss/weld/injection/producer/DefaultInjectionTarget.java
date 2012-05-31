@@ -22,7 +22,7 @@ import java.util.Set;
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.Decorator;
-import javax.enterprise.inject.spi.Interceptor;
+import javax.enterprise.inject.spi.InjectionPoint;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
 import org.jboss.weld.injection.InjectionContextImpl;
@@ -36,19 +36,26 @@ import org.jboss.weld.util.Beans;
  * @author Pete Muir
  * @author Jozef Hartinger
  */
-public class WeldInjectionTarget<T> extends AbstractInjectionTarget<T> {
+public class DefaultInjectionTarget<T> extends AbstractInjectionTarget<T> {
 
     private final Set<WeldInjectionPoint<?, ?>> ejbInjectionPoints;
     private final Set<WeldInjectionPoint<?, ?>> persistenceContextInjectionPoints;
     private final Set<WeldInjectionPoint<?, ?>> persistenceUnitInjectionPoints;
     private final Set<WeldInjectionPoint<?, ?>> resourceInjectionPoints;
 
-    public WeldInjectionTarget(EnhancedAnnotatedType<T> type, Bean<T> bean, BeanManagerImpl beanManager) {
+    public DefaultInjectionTarget(EnhancedAnnotatedType<T> type, Bean<T> bean, BeanManagerImpl beanManager) {
         super(type, bean, beanManager);
         this.ejbInjectionPoints = InjectionPointFactory.instance().getEjbInjectionPoints(bean, type, beanManager);
         this.persistenceContextInjectionPoints = InjectionPointFactory.instance().getPersistenceContextInjectionPoints(bean, type, beanManager);
         this.persistenceUnitInjectionPoints = InjectionPointFactory.instance().getPersistenceUnitInjectionPoints(bean, type, beanManager);
         this.resourceInjectionPoints = InjectionPointFactory.instance().getResourceInjectionPoints(bean, type, beanManager);
+    }
+
+    @Override
+    protected Instantiator<T> initInstantiator(EnhancedAnnotatedType<T> type, Bean<T> bean, BeanManagerImpl beanManager, Set<InjectionPoint> injectionPoints) {
+        DefaultInstantiator<T> instantiator = new DefaultInstantiator<T>(type, bean, beanManager);
+        injectionPoints.addAll(instantiator.getConstructor().getParameterInjectionPoints());
+        return instantiator;
     }
 
     public void inject(final T instance, final CreationalContext<T> ctx) {
@@ -81,17 +88,20 @@ public class WeldInjectionTarget<T> extends AbstractInjectionTarget<T> {
         // No-op
     }
 
-    public synchronized void initializeAfterBeanDiscovery(EnhancedAnnotatedType<T> annotatedType) {
+    public void initializeAfterBeanDiscovery(EnhancedAnnotatedType<T> annotatedType) {
         if (isInterceptionCandidate() && !beanManager.getInterceptorModelRegistry().containsKey(annotatedType.getJavaClass())) {
             new InterceptionModelInitializer<T>(beanManager, annotatedType, getBean()).init();
         }
-        boolean hasInterceptors = this.isInterceptionCandidate() && (beanManager.getInterceptorModelRegistry().containsKey(getType().getJavaClass()));
+        boolean hasInterceptors = isInterceptionCandidate() && (beanManager.getInterceptorModelRegistry().containsKey(getType().getJavaClass()));
 
         List<Decorator<?>> decorators = null;
-        if (getBean() != null) {
+        if (getBean() != null && isInterceptionCandidate()) {
             decorators = beanManager.resolveDecorators(getBean().getTypes(), getBean().getQualifiers());
         }
         boolean hasDecorators = decorators != null && !decorators.isEmpty();
+        if (hasDecorators) {
+            checkDecoratedMethods(annotatedType, decorators);
+        }
 
         if (hasInterceptors || hasDecorators) {
             if (getInstantiator() instanceof DefaultInstantiator<?>) {
@@ -106,15 +116,9 @@ public class WeldInjectionTarget<T> extends AbstractInjectionTarget<T> {
         }
     }
 
-    protected boolean isInterceptionCandidate() {
-        return !((getBean() instanceof Interceptor<?>) ||
-           (getBean() instanceof Decorator<?>) ||
-           getType().isAnnotationPresent(javax.interceptor.Interceptor.class) ||
-           getType().isAnnotationPresent(javax.decorator.Decorator.class));
-    }
-
     @Override
     public String toString() {
         return "WeldInjectionTarget for " + getType().getJavaClass();
     }
+
 }

@@ -31,6 +31,7 @@ import org.jboss.weld.bootstrap.BeanDeployerEnvironment;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
 import org.jboss.weld.bootstrap.api.helpers.SimpleServiceRegistry;
 import org.jboss.weld.ejb.EjbDescriptors;
+import org.jboss.weld.injection.producer.InjectionTargetService;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.metadata.TypeStore;
 import org.jboss.weld.metadata.cache.MetaAnnotationStore;
@@ -55,6 +56,7 @@ public class AccessibleManagerResolutionTest {
         this.services.add(ContextualStore.class, new ContextualStoreImpl());
         this.services.add(ClassTransformer.class, classTransformer);
         this.services.add(SharedObjectCache.class, new SharedObjectCache());
+        this.services.add(InjectionTargetService.class, new InjectionTargetService(BeanManagerImpl.newRootManager("foo", services, EMPTY_ENABLED)));
     }
 
     private <T> void addBean(BeanManagerImpl manager, Class<T> c) {

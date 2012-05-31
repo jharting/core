@@ -199,8 +199,10 @@ public class ProxyFactory<T> {
         //there is a remote chance that this could generate the same
         //proxy name for two interfaces with the same simple name.
         //append the hash code of the bean id to be sure
-        final String id = Container.instance().services().get(ContextualStore.class).putIfAbsent(bean);
-        name.append(id.hashCode());
+        if (bean != null) {
+            final String id = Container.instance().services().get(ContextualStore.class).putIfAbsent(bean);
+            name.append(id.hashCode());
+        }
         className = name.toString();
         return className;
     }

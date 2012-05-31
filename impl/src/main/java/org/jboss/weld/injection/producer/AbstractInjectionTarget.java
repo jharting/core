@@ -16,30 +16,43 @@
  */
 package org.jboss.weld.injection.producer;
 
+import static org.jboss.weld.logging.messages.BeanMessage.FINAL_BEAN_CLASS_WITH_DECORATORS_NOT_ALLOWED;
+import static org.jboss.weld.logging.messages.BeanMessage.FINAL_BEAN_CLASS_WITH_INTERCEPTORS_NOT_ALLOWED;
 import static org.jboss.weld.logging.messages.BeanMessage.INVOCATION_ERROR;
+import static org.jboss.weld.logging.messages.BeanMessage.NON_CONTAINER_DECORATOR;
+import static org.jboss.weld.logging.messages.BeanMessage.SIMPLE_BEAN_AS_NON_STATIC_INNER_CLASS_NOT_ALLOWED;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.AnnotatedMethod;
 import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.Bean;
+import javax.enterprise.inject.spi.Decorator;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.enterprise.inject.spi.InjectionTarget;
+import javax.enterprise.inject.spi.Interceptor;
 
+import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedMethod;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
 import org.jboss.weld.annotated.runtime.RuntimeAnnotatedMembers;
+import org.jboss.weld.bean.CustomDecoratorWrapper;
+import org.jboss.weld.bean.DecoratorImpl;
 import org.jboss.weld.exceptions.DefinitionException;
+import org.jboss.weld.exceptions.DeploymentException;
+import org.jboss.weld.exceptions.IllegalStateException;
 import org.jboss.weld.exceptions.WeldException;
 import org.jboss.weld.injection.FieldInjectionPoint;
 import org.jboss.weld.injection.InjectionPointFactory;
 import org.jboss.weld.injection.MethodInjectionPoint;
-import org.jboss.weld.logging.messages.BeanMessage;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.util.Beans;
 import org.jboss.weld.util.InjectionPoints;
+import org.jboss.weld.util.collections.WeldCollections;
 
 /**
  * @author Pete Muir
@@ -62,26 +75,79 @@ public abstract class AbstractInjectionTarget<T> implements InjectionTarget<T> {
     public AbstractInjectionTarget(EnhancedAnnotatedType<T> type, Bean<T> bean, BeanManagerImpl beanManager) {
         this.beanManager = beanManager;
         this.type = type.slim();
-        this.injectionPoints = new HashSet<InjectionPoint>();
-        if (type.getJavaClass().isInterface()) {
-            throw new DefinitionException(BeanMessage.INJECTION_TARGET_CANNOT_BE_CREATED_FOR_INTERFACE, type);
+        Set<InjectionPoint> injectionPoints = new HashSet<InjectionPoint>();
+
+        this.bean = bean;
+        this.injectableFields = InjectionPointFactory.instance().getFieldInjectionPoints(bean, type, beanManager);
+        injectionPoints.addAll(InjectionPoints.flattenInjectionPoints(this.injectableFields));
+        this.initializerMethods = Beans.getInitializerMethods(bean, type, beanManager);
+        injectionPoints.addAll(InjectionPoints.flattenParameterInjectionPoints(initializerMethods));
+        if (isInterceptor()) {
+            this.postConstructMethods = Collections.emptyList();
+            this.preDestroyMethods = Collections.emptyList();
+        } else {
+            this.postConstructMethods = Beans.getPostConstructMethods(type);
+            this.preDestroyMethods = Beans.getPreDestroyMethods(type);
         }
 
-        DefaultInstantiator<T> instantiator = new DefaultInstantiator<T>(type, bean, beanManager);
-        injectionPoints.addAll(instantiator.getConstructor().getParameterInjectionPoints());
-        this.instantiator = instantiator;
+        checkType(type);
+        this.instantiator = initInstantiator(type, bean, beanManager, injectionPoints);
+        this.injectionPoints = WeldCollections.immutableSet(injectionPoints);
+    }
 
-        this.injectableFields = InjectionPointFactory.instance().getFieldInjectionPoints(bean, type, beanManager);
-        this.injectionPoints.addAll(InjectionPoints.flattenInjectionPoints(this.injectableFields));
-        this.initializerMethods = Beans.getInitializerMethods(bean, type, beanManager);
-        this.injectionPoints.addAll(InjectionPoints.flattenParameterInjectionPoints(initializerMethods));
-        this.postConstructMethods = Beans.getPostConstructMethods(type);
-        this.preDestroyMethods = Beans.getPreDestroyMethods(type);
-        this.bean = bean;
+    protected void checkType(EnhancedAnnotatedType<T> type) {
+        if (type.isAnonymousClass() || (type.isMemberClass() && !type.isStatic())) {
+            throw new DefinitionException(SIMPLE_BEAN_AS_NON_STATIC_INNER_CLASS_NOT_ALLOWED, type);
+        }
+    }
+
+    protected void checkDecoratedMethods(EnhancedAnnotatedType<T> type, List<Decorator<?>> decorators) {
+        if (hasDecorators()) {
+            if (type.isFinal()) {
+                throw new DeploymentException(FINAL_BEAN_CLASS_WITH_DECORATORS_NOT_ALLOWED, this);
+            }
+            for (Decorator<?> decorator : decorators) {
+                EnhancedAnnotatedType<?> decoratorClass;
+                if (decorator instanceof DecoratorImpl<?>) {
+                    DecoratorImpl<?> decoratorBean = (DecoratorImpl<?>) decorator;
+                    decoratorClass = decoratorBean.getEnhancedAnnotated();
+                } else if (decorator instanceof CustomDecoratorWrapper<?>) {
+                    decoratorClass = ((CustomDecoratorWrapper<?>) decorator).getEnhancedAnnotated();
+                } else {
+                    throw new IllegalStateException(NON_CONTAINER_DECORATOR, decorator);
+                }
+
+                for (EnhancedAnnotatedMethod<?, ?> decoratorMethod : decoratorClass.getEnhancedMethods()) {
+                    EnhancedAnnotatedMethod<?, ?> method = type.getEnhancedMethod(decoratorMethod.getSignature());
+                    if (method != null && !method.isStatic() && !method.isPrivate() && method.isFinal()) {
+                        throw new DeploymentException(FINAL_BEAN_CLASS_WITH_INTERCEPTORS_NOT_ALLOWED, method, decoratorMethod);
+                    }
+                }
+            }
+        }
+    }
+
+    protected boolean isInterceptor() {
+        return (bean instanceof Interceptor<?>) || type.isAnnotationPresent(javax.interceptor.Interceptor.class);
+    }
+
+    protected boolean isDecorator() {
+        return (bean instanceof Decorator<?>) || type.isAnnotationPresent(javax.decorator.Decorator.class);
+    }
+
+    protected boolean isInterceptionCandidate() {
+        return !isInterceptor() && !isDecorator();
     }
 
     public T produce(CreationalContext<T> ctx) {
-        return instantiator.newInstance(ctx, beanManager);
+        T instance = instantiator.newInstance(ctx, beanManager);
+        if (bean != null && !bean.getScope().equals(Dependent.class) && !instantiator.hasDecorators()) {
+            // This should be safe, but needs verification PLM
+            // Without this, the chaining of decorators will fail as the
+            // incomplete instance will be resolved
+            ctx.push(instance);
+        }
+        return instance;
     }
 
     public void postConstruct(T instance) {
@@ -153,4 +219,22 @@ public abstract class AbstractInjectionTarget<T> implements InjectionTarget<T> {
     public boolean hasDecorators() {
         return instantiator.hasDecorators();
     }
+
+    public List<AnnotatedMethod<? super T>> getPostConstructMethods() {
+        return postConstructMethods;
+    }
+
+    public List<AnnotatedMethod<? super T>> getPreDestroyMethods() {
+        return preDestroyMethods;
+    }
+
+    protected abstract void initializeAfterBeanDiscovery(EnhancedAnnotatedType<T> annotatedType);
+
+    /**
+     * Returns an instantiator that will be used to create a new instance of a given component. If the instantiator uses a
+     * constructor with injection points, the implementation of the
+     * {@link #initInstantiator(EnhancedAnnotatedType, Bean, BeanManagerImpl, Set)} method is supposed to register all these
+     * injection points within the injectionPoints set passed in as a parameter.
+     */
+    protected abstract Instantiator<T> initInstantiator(EnhancedAnnotatedType<T> type, Bean<T> bean, BeanManagerImpl beanManager, Set<InjectionPoint> injectionPoints);
 }

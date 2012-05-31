@@ -24,6 +24,7 @@ import javax.enterprise.inject.spi.BeanAttributes;
 import javax.enterprise.inject.spi.Decorator;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.enterprise.inject.spi.InjectionTarget;
+import javax.enterprise.inject.spi.Interceptor;
 
 import org.jboss.weld.Container;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
@@ -45,6 +46,7 @@ import org.jboss.weld.injection.InjectionContextImpl;
 import org.jboss.weld.injection.InjectionPointFactory;
 import org.jboss.weld.injection.ProxyClassConstructorInjectionPointWrapper;
 import org.jboss.weld.injection.WeldInjectionPoint;
+import org.jboss.weld.injection.producer.DefaultInjectionTarget;
 import org.jboss.weld.interceptor.proxy.DefaultInvocationContextFactory;
 import org.jboss.weld.interceptor.proxy.InterceptorProxyCreatorImpl;
 import org.jboss.weld.interceptor.util.InterceptionUtils;
@@ -83,92 +85,92 @@ import static org.jboss.weld.util.reflection.Reflections.cast;
  */
 public class ManagedBean<T> extends AbstractClassBean<T> {
 
-    private static class ManagedBeanInjectionTarget<T> implements InjectionTarget<T> {
-
-        private final ManagedBean<T> bean;
-        private volatile WeldInterceptorClassMetadata<T> weldInterceptorClassMetadata;
-
-        private ManagedBeanInjectionTarget(ManagedBean<T> bean) {
-            this.bean = bean;
-        }
-
-        private void initializeAfterBeanDiscovery(EnhancedAnnotatedType<T> type) {
-            if (bean.hasInterceptors()) {
-                this.weldInterceptorClassMetadata = WeldInterceptorClassMetadata.of(type);
-            }
-        }
-
-        protected ManagedBean<T> getBean() {
-            return bean;
-        }
-
-        public void inject(final T instance, final CreationalContext<T> ctx) {
-            new InjectionContextImpl<T>(bean.getBeanManager(), ManagedBeanInjectionTarget.this, getBean().getAnnotated(), instance) {
-                public void proceed() {
-                    Beans.injectEEFields(instance, bean.getBeanManager(), bean.ejbInjectionPoints, bean.persistenceContextInjectionPoints, bean.persistenceUnitInjectionPoints, bean.resourceInjectionPoints);
-                    Beans.injectFieldsAndInitializers(instance, ctx, bean.getBeanManager(), bean.getInjectableFields(), bean.getInitializerMethods());
-                }
-            }.run();
-        }
-
-        public void postConstruct(T instance) {
-            if (bean.hasInterceptors()) {
-                InterceptionUtils.executePostConstruct(instance);
-            } else {
-                bean.defaultPostConstruct(instance);
-            }
-        }
-
-        public void preDestroy(T instance) {
-            if (bean.hasInterceptors()) {
-                InterceptionUtils.executePredestroy(instance);
-            } else {
-                bean.defaultPreDestroy(instance);
-            }
-        }
-
-        public void dispose(T instance) {
-            // No-op
-        }
-
-        public Set<InjectionPoint> getInjectionPoints() {
-            return cast(bean.getWeldInjectionPoints());
-        }
-
-        public T produce(final CreationalContext<T> ctx) {
-            T instance;
-            if (!bean.hasDecorators()) {
-                // This should be safe, but needs verification PLM
-                // Without this, the chaining of decorators will fail as the
-                // incomplete instance will be resolved
-                instance = bean.createInstance(ctx);
-                // Do not keep dependent instances as incomplete
-                if (bean.isDependent() == false) {
-                    ctx.push(instance);
-                }
-            } else {
-                T undecoratedInstance = bean.createInstance(ctx);
-                instance = bean.applyDecorators(undecoratedInstance, ctx, Container.instance().services().get(CurrentInjectionPoint.class).peek());
-            }
-            if (bean.hasInterceptors()) {
-                return bean.applyInterceptors(instance, ctx, weldInterceptorClassMetadata);
-            } else {
-                return instance;
-            }
-        }
-
-
-    }
+//    private static class ManagedBeanInjectionTarget<T> implements InjectionTarget<T> {
+//
+//        private final ManagedBean<T> bean;
+//        private volatile WeldInterceptorClassMetadata<T> weldInterceptorClassMetadata;
+//
+//        private ManagedBeanInjectionTarget(ManagedBean<T> bean) {
+//            this.bean = bean;
+//        }
+//
+//        private void initializeAfterBeanDiscovery(EnhancedAnnotatedType<T> type) {
+//            if (bean.hasInterceptors()) {
+//                this.weldInterceptorClassMetadata = WeldInterceptorClassMetadata.of(type);
+//            }
+//        }
+//
+//        protected ManagedBean<T> getBean() {
+//            return bean;
+//        }
+//
+//        public void inject(final T instance, final CreationalContext<T> ctx) {
+//            new InjectionContextImpl<T>(bean.getBeanManager(), ManagedBeanInjectionTarget.this, getBean().getAnnotated(), instance) {
+//                public void proceed() {
+//                    Beans.injectEEFields(instance, bean.getBeanManager(), bean.ejbInjectionPoints, bean.persistenceContextInjectionPoints, bean.persistenceUnitInjectionPoints, bean.resourceInjectionPoints);
+//                    Beans.injectFieldsAndInitializers(instance, ctx, bean.getBeanManager(), bean.getInjectableFields(), bean.getInitializerMethods());
+//                }
+//            }.run();
+//        }
+//
+//        public void postConstruct(T instance) {
+//            if (bean.hasInterceptors()) {
+//                InterceptionUtils.executePostConstruct(instance);
+//            } else {
+//                bean.defaultPostConstruct(instance);
+//            }
+//        }
+//
+//        public void preDestroy(T instance) {
+//            if (bean.hasInterceptors()) {
+//                InterceptionUtils.executePredestroy(instance);
+//            } else {
+//                bean.defaultPreDestroy(instance);
+//            }
+//        }
+//
+//        public void dispose(T instance) {
+//            // No-op
+//        }
+//
+//        public Set<InjectionPoint> getInjectionPoints() {
+//            return cast(bean.getWeldInjectionPoints());
+//        }
+//
+//        public T produce(final CreationalContext<T> ctx) {
+//            T instance;
+//            if (!bean.hasDecorators()) {
+//                // This should be safe, but needs verification PLM
+//                // Without this, the chaining of decorators will fail as the
+//                // incomplete instance will be resolved
+//                instance = bean.createInstance(ctx);
+//                // Do not keep dependent instances as incomplete
+//                if (bean.isDependent() == false) {
+//                    ctx.push(instance);
+//                }
+//            } else {
+//                T undecoratedInstance = bean.createInstance(ctx);
+//                instance = bean.applyDecorators(undecoratedInstance, ctx, Container.instance().services().get(CurrentInjectionPoint.class).peek());
+//            }
+//            if (bean.hasInterceptors()) {
+//                return bean.applyInterceptors(instance, ctx, weldInterceptorClassMetadata);
+//            } else {
+//                return instance;
+//            }
+//        }
+//
+//
+//    }
 
     // Logger
     private static final LocLogger log = loggerFactory().getLogger(BEAN);
     private static final XLogger xLog = loggerFactory().getXLogger(BEAN);
 
     // The Java EE style injection points
-    private Set<WeldInjectionPoint<?, ?>> ejbInjectionPoints;
-    private Set<WeldInjectionPoint<?, ?>> persistenceContextInjectionPoints;
-    private Set<WeldInjectionPoint<?, ?>> persistenceUnitInjectionPoints;
-    private Set<WeldInjectionPoint<?, ?>> resourceInjectionPoints;
+//    private Set<WeldInjectionPoint<?, ?>> ejbInjectionPoints;
+//    private Set<WeldInjectionPoint<?, ?>> persistenceContextInjectionPoints;
+//    private Set<WeldInjectionPoint<?, ?>> persistenceUnitInjectionPoints;
+//    private Set<WeldInjectionPoint<?, ?>> resourceInjectionPoints;
 
     private ManagedBean<?> specializedBean;
 
@@ -210,8 +212,8 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
      */
     protected ManagedBean(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> type, String idSuffix, BeanManagerImpl beanManager, ServiceRegistry services) {
         super(attributes, type, idSuffix, beanManager, services);
-        initInitializerMethods(beanManager);
-        initInjectableFields(beanManager);
+//        initInitializerMethods(beanManager);
+//        initInjectableFields(beanManager);
         this.proxiable = Proxies.isTypesProxyable(type.getTypeClosure());
     }
 
@@ -253,18 +255,23 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
     @Override
     public void internalInitialize(BeanDeployerEnvironment environment) {
         super.internalInitialize(environment);
-        initPostConstruct();
-        initPreDestroy();
-        initEEInjectionPoints();
-        setInjectionTarget(new ManagedBeanInjectionTarget<T>(this));
+//        initPostConstruct();
+//        initPreDestroy();
+//        initEEInjectionPoints();
+//        setInjectionTarget(new ManagedBeanInjectionTarget<T>(this));
+//        if (this instanceof Decorator<?>) {
+//            setInjectionTarget(new ManagedBeanInjectionTarget<T>(this));
+//        } else {
+            setInjectionTarget(beanManager.createInjectionTarget(getEnhancedAnnotated(), this));
+//        }
     }
 
     @Override
     public void initializeAfterBeanDiscovery() {
         super.initializeAfterBeanDiscovery();
-        if (getInjectionTarget() instanceof ManagedBeanInjectionTarget<?>) {
-            Reflections.<ManagedBeanInjectionTarget<T>>cast(getInjectionTarget()).initializeAfterBeanDiscovery(getEnhancedAnnotated());
-        }
+//        if (getInjectionTarget() instanceof ManagedBeanInjectionTarget<?>) {
+//            Reflections.<ManagedBeanInjectionTarget<T>>cast(getInjectionTarget()).initializeAfterBeanDiscovery(getEnhancedAnnotated());
+//        }
     }
 
     protected T createInstance(CreationalContext<T> ctx) {
@@ -276,21 +283,21 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
         }
     }
 
-    private void initEEInjectionPoints() {
-        this.ejbInjectionPoints = InjectionPointFactory.instance().getEjbInjectionPoints(this, getEnhancedAnnotated(), getBeanManager());
-        this.persistenceContextInjectionPoints = InjectionPointFactory.instance().getPersistenceContextInjectionPoints(this, getEnhancedAnnotated(), getBeanManager());
-        this.persistenceUnitInjectionPoints = InjectionPointFactory.instance().getPersistenceUnitInjectionPoints(this, getEnhancedAnnotated(), getBeanManager());
-        this.resourceInjectionPoints = InjectionPointFactory.instance().getResourceInjectionPoints(this, getEnhancedAnnotated(), beanManager);
-    }
+//    private void initEEInjectionPoints() {
+//        this.ejbInjectionPoints = InjectionPointFactory.instance().getEjbInjectionPoints(this, getEnhancedAnnotated(), getBeanManager());
+//        this.persistenceContextInjectionPoints = InjectionPointFactory.instance().getPersistenceContextInjectionPoints(this, getEnhancedAnnotated(), getBeanManager());
+//        this.persistenceUnitInjectionPoints = InjectionPointFactory.instance().getPersistenceUnitInjectionPoints(this, getEnhancedAnnotated(), getBeanManager());
+//        this.resourceInjectionPoints = InjectionPointFactory.instance().getResourceInjectionPoints(this, getEnhancedAnnotated(), beanManager);
+//    }
 
     /**
      * Validates the type
      */
     @Override
     protected void checkType() {
-        if (getEnhancedAnnotated().isAnonymousClass() || (getEnhancedAnnotated().isMemberClass() && !getEnhancedAnnotated().isStatic())) {
-            throw new DefinitionException(SIMPLE_BEAN_AS_NON_STATIC_INNER_CLASS_NOT_ALLOWED, type);
-        }
+//        if (getEnhancedAnnotated().isAnonymousClass() || (getEnhancedAnnotated().isMemberClass() && !getEnhancedAnnotated().isStatic())) {
+//            throw new DefinitionException(SIMPLE_BEAN_AS_NON_STATIC_INNER_CLASS_NOT_ALLOWED, type);
+//        }
         if (!isDependent() && getEnhancedAnnotated().isParameterizedType()) {
             throw new DefinitionException(BEAN_MUST_BE_DEPENDENT, type);
         }
@@ -298,29 +305,29 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
         if (passivating && !isPassivationCapableBean()) {
             throw new DeploymentException(PASSIVATING_BEAN_NEEDS_SERIALIZABLE_IMPL, this);
         }
-        if (hasDecorators()) {
-            if (getEnhancedAnnotated().isFinal()) {
-                throw new DeploymentException(FINAL_BEAN_CLASS_WITH_DECORATORS_NOT_ALLOWED, this);
-            }
-            for (Decorator<?> decorator : getDecorators()) {
-                EnhancedAnnotatedType<?> decoratorClass;
-                if (decorator instanceof DecoratorImpl<?>) {
-                    DecoratorImpl<?> decoratorBean = (DecoratorImpl<?>) decorator;
-                    decoratorClass = decoratorBean.getEnhancedAnnotated();
-                } else if (decorator instanceof CustomDecoratorWrapper<?>) {
-                    decoratorClass = ((CustomDecoratorWrapper<?>) decorator).getEnhancedAnnotated();
-                } else {
-                    throw new IllegalStateException(NON_CONTAINER_DECORATOR, decorator);
-                }
-
-                for (EnhancedAnnotatedMethod<?, ?> decoratorMethod : decoratorClass.getEnhancedMethods()) {
-                    EnhancedAnnotatedMethod<?, ?> method = getEnhancedAnnotated().getEnhancedMethod(decoratorMethod.getSignature());
-                    if (method != null && !method.isStatic() && !method.isPrivate() && method.isFinal()) {
-                        throw new DeploymentException(FINAL_BEAN_CLASS_WITH_INTERCEPTORS_NOT_ALLOWED, method, decoratorMethod);
-                    }
-                }
-            }
-        }
+//        if (hasDecorators()) {
+//            if (getEnhancedAnnotated().isFinal()) {
+//                throw new DeploymentException(FINAL_BEAN_CLASS_WITH_DECORATORS_NOT_ALLOWED, this);
+//            }
+//            for (Decorator<?> decorator : getDecorators()) {
+//                EnhancedAnnotatedType<?> decoratorClass;
+//                if (decorator instanceof DecoratorImpl<?>) {
+//                    DecoratorImpl<?> decoratorBean = (DecoratorImpl<?>) decorator;
+//                    decoratorClass = decoratorBean.getEnhancedAnnotated();
+//                } else if (decorator instanceof CustomDecoratorWrapper<?>) {
+//                    decoratorClass = ((CustomDecoratorWrapper<?>) decorator).getEnhancedAnnotated();
+//                } else {
+//                    throw new IllegalStateException(NON_CONTAINER_DECORATOR, decorator);
+//                }
+//
+//                for (EnhancedAnnotatedMethod<?, ?> decoratorMethod : decoratorClass.getEnhancedMethods()) {
+//                    EnhancedAnnotatedMethod<?, ?> method = getEnhancedAnnotated().getEnhancedMethod(decoratorMethod.getSignature());
+//                    if (method != null && !method.isStatic() && !method.isPrivate() && method.isFinal()) {
+//                        throw new DeploymentException(FINAL_BEAN_CLASS_WITH_INTERCEPTORS_NOT_ALLOWED, method, decoratorMethod);
+//                    }
+//                }
+//            }
+//        }
     }
 
     @Override
@@ -368,18 +375,18 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
         return !((this instanceof InterceptorImpl<?>) || (this instanceof DecoratorImpl<?>));
     }
 
-    protected T applyInterceptors(T instance, final CreationalContext<T> creationalContext, WeldInterceptorClassMetadata<T> weldInterceptorClassMetadata) {
-        try {
-            WeldInterceptorInstantiator<T> interceptorInstantiator = new WeldInterceptorInstantiator<T>(beanManager, creationalContext);
-            InterceptorProxyCreatorImpl interceptorProxyCreator = new InterceptorProxyCreatorImpl(interceptorInstantiator, new DefaultInvocationContextFactory(), beanManager.getInterceptorModelRegistry().get(getType()));
-            MethodHandler methodHandler = interceptorProxyCreator.createSubclassingMethodHandler(null, weldInterceptorClassMetadata);
-            CombinedInterceptorAndDecoratorStackMethodHandler wrapperMethodHandler = (CombinedInterceptorAndDecoratorStackMethodHandler) ((ProxyObject) instance).getHandler();
-            wrapperMethodHandler.setInterceptorMethodHandler(methodHandler);
-        } catch (Exception e) {
-            throw new DeploymentException(e);
-        }
-        return instance;
-    }
+//    protected T applyInterceptors(T instance, final CreationalContext<T> creationalContext, WeldInterceptorClassMetadata<T> weldInterceptorClassMetadata) {
+//        try {
+//            WeldInterceptorInstantiator<T> interceptorInstantiator = new WeldInterceptorInstantiator<T>(beanManager, creationalContext);
+//            InterceptorProxyCreatorImpl interceptorProxyCreator = new InterceptorProxyCreatorImpl(interceptorInstantiator, new DefaultInvocationContextFactory(), beanManager.getInterceptorModelRegistry().get(getType()));
+//            MethodHandler methodHandler = interceptorProxyCreator.createSubclassingMethodHandler(null, weldInterceptorClassMetadata);
+//            CombinedInterceptorAndDecoratorStackMethodHandler wrapperMethodHandler = (CombinedInterceptorAndDecoratorStackMethodHandler) ((ProxyObject) instance).getHandler();
+//            wrapperMethodHandler.setInterceptorMethodHandler(methodHandler);
+//        } catch (Exception e) {
+//            throw new DeploymentException(e);
+//        }
+//        return instance;
+//    }
 
     @Override
     public String toString() {
@@ -393,7 +400,7 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
 
     @Override
     public boolean hasDefaultProducer() {
-        return getInjectionTarget() instanceof ManagedBean.ManagedBeanInjectionTarget;
+        return getInjectionTarget() instanceof DefaultInjectionTarget<?>; // TODO remove
     }
 
 }

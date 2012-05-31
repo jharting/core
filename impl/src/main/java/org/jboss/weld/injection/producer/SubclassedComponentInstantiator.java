@@ -33,6 +33,7 @@ import org.jboss.weld.annotated.enhanced.jlr.EnhancedAnnotatedConstructorImpl;
 import org.jboss.weld.annotated.enhanced.jlr.MethodSignatureImpl;
 import org.jboss.weld.bean.proxy.InterceptedSubclassFactory;
 import org.jboss.weld.injection.ConstructorInjectionPoint;
+import org.jboss.weld.injection.InjectionPointFactory;
 import org.jboss.weld.injection.ProxyClassConstructorInjectionPointWrapper;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.resources.ClassTransformer;
@@ -50,8 +51,12 @@ public class SubclassedComponentInstantiator<T> implements Instantiator<T> {
     private final ConstructorInjectionPoint<T> proxyClassConstructorInjectionPoint;
 
     public SubclassedComponentInstantiator(AnnotatedType<T> type, Bean<T> bean, DefaultInstantiator<T> delegate, BeanManagerImpl manager) {
-        EnhancedAnnotatedConstructor<T> constructorForEnhancedSubclass = initEnhancedSubclass(manager, type, bean, delegate.getConstructor());
-        this.proxyClassConstructorInjectionPoint = new ProxyClassConstructorInjectionPointWrapper<T>(bean, type.getJavaClass(), constructorForEnhancedSubclass, delegate.getConstructor(), manager);
+        this(type, bean, delegate.getConstructor(), manager);
+    }
+
+    protected SubclassedComponentInstantiator(AnnotatedType<T> type, Bean<T> bean, ConstructorInjectionPoint<T> originalConstructor, BeanManagerImpl manager) {
+        EnhancedAnnotatedConstructor<T> constructorForEnhancedSubclass = initEnhancedSubclass(manager, type, bean, originalConstructor);
+        this.proxyClassConstructorInjectionPoint = new ProxyClassConstructorInjectionPointWrapper<T>(bean, type.getJavaClass(), constructorForEnhancedSubclass, originalConstructor, manager);
     }
 
     protected EnhancedAnnotatedConstructor<T> initEnhancedSubclass(BeanManagerImpl manager, AnnotatedType<T> type, Bean<?> bean, ConstructorInjectionPoint<T> originalConstructorInjectionPoint) {

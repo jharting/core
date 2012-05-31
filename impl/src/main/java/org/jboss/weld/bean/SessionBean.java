@@ -75,6 +75,7 @@ import org.jboss.weld.exceptions.IllegalArgumentException;
 import org.jboss.weld.exceptions.IllegalStateException;
 import org.jboss.weld.exceptions.WeldException;
 import org.jboss.weld.injection.InjectionContextImpl;
+import org.jboss.weld.injection.producer.ejb.SessionBeanInjectionTarget;
 import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionModel;
 import org.jboss.weld.manager.BeanManagerImpl;
@@ -98,7 +99,7 @@ public class SessionBean<T> extends AbstractClassBean<T> {
     // The EJB descriptor
     private final InternalEjbDescriptor<T> ejbDescriptor;
 
-    private Class<T> proxyClass;
+//    private Class<T> proxyClass;
 
     private SessionBean<?> specializedBean;
 
@@ -135,8 +136,8 @@ public class SessionBean<T> extends AbstractClassBean<T> {
     protected SessionBean(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> type, InternalEjbDescriptor<T> ejbDescriptor, String idSuffix, BeanManagerImpl manager, ServiceRegistry services) {
         super(attributes, type, idSuffix, manager, services);
         this.ejbDescriptor = ejbDescriptor;
-        initInitializerMethods(beanManager);
-        initInjectableFields(beanManager);
+//        initInitializerMethods(beanManager);
+//        initInjectableFields(beanManager);
     }
 
     /**
@@ -145,46 +146,46 @@ public class SessionBean<T> extends AbstractClassBean<T> {
     @Override
     public void internalInitialize(BeanDeployerEnvironment environment) {
         super.internalInitialize(environment);
-        initProxyClass();
+//        initProxyClass();
         checkEJBTypeAllowed();
         checkConflictingRoles();
         checkObserverMethods();
         checkScopeAllowed();
-        setInjectionTarget(new SessionBeanInjectionTarget());
+        setInjectionTarget(beanManager.createInjectionTarget(getEnhancedAnnotated(), this));
     }
 
-    private class SessionBeanInjectionTarget implements InjectionTarget<T> {
-
-        public void inject(final T instance, final CreationalContext<T> ctx) {
-            new InjectionContextImpl<T>(getBeanManager(), this, getAnnotated(), instance) {
-
-                public void proceed() {
-                    Beans.injectFieldsAndInitializers(instance, ctx, getBeanManager(), getInjectableFields(), getInitializerMethods());
-                }
-
-            }.run();
-        }
-
-        public void postConstruct(T instance) {
-            defaultPostConstruct(instance);
-        }
-
-        public void preDestroy(T instance) {
-            defaultPreDestroy(instance);
-        }
-
-        public void dispose(T instance) {
-            // No-op
-        }
-
-        public Set<InjectionPoint> getInjectionPoints() {
-            return cast(getWeldInjectionPoints());
-        }
-
-        public T produce(CreationalContext<T> ctx) {
-            return SessionBean.this.createInstance(ctx);
-        }
-    }
+//    private class SessionBeanInjectionTarget implements InjectionTarget<T> {
+//
+//        public void inject(final T instance, final CreationalContext<T> ctx) {
+//            new InjectionContextImpl<T>(getBeanManager(), this, getAnnotated(), instance) {
+//
+//                public void proceed() {
+//                    Beans.injectFieldsAndInitializers(instance, ctx, getBeanManager(), getInjectableFields(), getInitializerMethods());
+//                }
+//
+//            }.run();
+//        }
+//
+//        public void postConstruct(T instance) {
+//            defaultPostConstruct(instance);
+//        }
+//
+//        public void preDestroy(T instance) {
+//            defaultPreDestroy(instance);
+//        }
+//
+//        public void dispose(T instance) {
+//            // No-op
+//        }
+//
+//        public Set<InjectionPoint> getInjectionPoints() {
+//            return cast(getWeldInjectionPoints());
+//        }
+//
+//        public T produce(CreationalContext<T> ctx) {
+//            return SessionBean.this.createInstance(ctx);
+//        }
+//    }
 
     @Override
     public void initializeAfterBeanDiscovery() {
@@ -192,13 +193,13 @@ public class SessionBean<T> extends AbstractClassBean<T> {
         registerInterceptors();
     }
 
-    protected T createInstance(CreationalContext<T> ctx) {
-        return getConstructor().newInstance(beanManager, ctx);
-    }
+//    protected T createInstance(CreationalContext<T> ctx) {
+//        return getConstructor().newInstance(beanManager, ctx);
+//    }
 
-    protected void initProxyClass() {
-        this.proxyClass = new EnterpriseProxyFactory<T>(getEnhancedAnnotated().getJavaClass(), this).getProxyClass();
-    }
+//    protected void initProxyClass() {
+//        this.proxyClass = new EnterpriseProxyFactory<T>(getEnhancedAnnotated().getJavaClass(), this).getProxyClass();
+//    }
 
     /**
      * Validates for non-conflicting roles
@@ -258,43 +259,44 @@ public class SessionBean<T> extends AbstractClassBean<T> {
      * @return The instance
      */
     public T create(final CreationalContext<T> creationalContext) {
-        try {
-            T instance = SecureReflections.newInstance(proxyClass);
-            creationalContext.push(instance);
-            ProxyFactory.setBeanInstance(instance, new EnterpriseTargetBeanInstance(getAnnotated().getJavaClass(), new EnterpriseBeanProxyMethodHandler<T>(SessionBean.this, creationalContext)), this);
-            if (hasDecorators()) {
-                instance = applyDecorators(instance, creationalContext, null);
-            }
-            return instance;
-        } catch (InstantiationException e) {
-            throw new WeldException(PROXY_INSTANTIATION_FAILED, e, this);
-        } catch (IllegalAccessException e) {
-            throw new WeldException(PROXY_INSTANTIATION_BEAN_ACCESS_FAILED, e, this);
-        } catch (Exception e) {
-            throw new CreationException(EJB_NOT_FOUND, e, proxyClass);
-        }
+        return getInjectionTarget().produce(creationalContext);
+//        try {
+//            T instance = SecureReflections.newInstance(proxyClass);
+//            creationalContext.push(instance);
+//            ProxyFactory.setBeanInstance(instance, new EnterpriseTargetBeanInstance(getAnnotated().getJavaClass(), new EnterpriseBeanProxyMethodHandler<T>(SessionBean.this, creationalContext)), this);
+//            if (hasDecorators()) {
+//                instance = applyDecorators(instance, creationalContext, null);
+//            }
+//            return instance;
+//        } catch (InstantiationException e) {
+//            throw new WeldException(PROXY_INSTANTIATION_FAILED, e, this);
+//        } catch (IllegalAccessException e) {
+//            throw new WeldException(PROXY_INSTANTIATION_BEAN_ACCESS_FAILED, e, this);
+//        } catch (Exception e) {
+//            throw new CreationException(EJB_NOT_FOUND, e, proxyClass);
+//        }
 
     }
 
-    @Override
-    protected T applyDecorators(T instance, CreationalContext<T> creationalContext, InjectionPoint originalInjectionPoint) {
-        assert hasDecorators() : "Bean does not have decorators";
-        //for EJBs, we apply decorators through a proxy
-        T proxy = null;
-        TargetBeanInstance beanInstance = new TargetBeanInstance(this, instance);
-        DecorationHelper<T> decorationHelper = new DecorationHelper<T>(beanInstance, this, decoratorProxyFactory.getProxyClass(), beanManager, getServices().get(ContextualStore.class), getDecorators());
-        DecorationHelper.push(decorationHelper);
-        try {
-            proxy = decorationHelper.getNextDelegate(originalInjectionPoint, creationalContext);
-        } finally {
-            DecorationHelper.pop();
-        }
-
-        if (proxy == null) {
-            throw new WeldException(PROXY_INSTANTIATION_FAILED, this);
-        }
-        return proxy;
-    }
+//    @Override
+//    protected T applyDecorators(T instance, CreationalContext<T> creationalContext, InjectionPoint originalInjectionPoint) {
+//        assert hasDecorators() : "Bean does not have decorators";
+//        //for EJBs, we apply decorators through a proxy
+//        T proxy = null;
+//        TargetBeanInstance beanInstance = new TargetBeanInstance(this, instance);
+//        DecorationHelper<T> decorationHelper = new DecorationHelper<T>(beanInstance, this, decoratorProxyFactory.getProxyClass(), beanManager, getServices().get(ContextualStore.class), getDecorators());
+//        DecorationHelper.push(decorationHelper);
+//        try {
+//            proxy = decorationHelper.getNextDelegate(originalInjectionPoint, creationalContext);
+//        } finally {
+//            DecorationHelper.pop();
+//        }
+//
+//        if (proxy == null) {
+//            throw new WeldException(PROXY_INSTANTIATION_FAILED, this);
+//        }
+//        return proxy;
+//    }
 
     public void destroy(T instance, CreationalContext<T> creationalContext) {
         if (instance == null) {
@@ -398,7 +400,7 @@ public class SessionBean<T> extends AbstractClassBean<T> {
 
     @Override
     public boolean hasDefaultProducer() {
-        return getInjectionTarget() instanceof SessionBean.SessionBeanInjectionTarget;
+        return getInjectionTarget() instanceof SessionBeanInjectionTarget;
     }
 }
 

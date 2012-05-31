@@ -17,14 +17,20 @@
 package org.jboss.weld.injection.producer.ejb;
 
 import java.util.List;
+import java.util.Set;
 
 import javax.enterprise.context.spi.CreationalContext;
+import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.Decorator;
+import javax.enterprise.inject.spi.InjectionPoint;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
 import org.jboss.weld.bean.SessionBean;
+import org.jboss.weld.injection.ConstructorInjectionPoint;
 import org.jboss.weld.injection.InjectionContextImpl;
+import org.jboss.weld.injection.InjectionPointFactory;
 import org.jboss.weld.injection.producer.AbstractInjectionTarget;
+import org.jboss.weld.injection.producer.Instantiator;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.util.Beans;
 
@@ -35,10 +41,9 @@ public class SessionBeanInjectionTarget<T> extends AbstractInjectionTarget<T> {
     public SessionBeanInjectionTarget(EnhancedAnnotatedType<T> type, SessionBean<T> bean, BeanManagerImpl beanManager) {
         super(type, bean, beanManager);
         this.bean = bean;
-        setInstantiator(new SessionBeanInstantiator<T>(type, bean));
     }
 
-    public synchronized void initializeAfterBeanDiscovery(EnhancedAnnotatedType<T> annotatedType) {
+    public void initializeAfterBeanDiscovery(EnhancedAnnotatedType<T> annotatedType) {
         List<Decorator<?>> decorators = beanManager.resolveDecorators(getBean().getTypes(), getBean().getQualifiers());
         if (!decorators.isEmpty()) {
             setInstantiator(new ProxyDecoratorApplyingSessionBeanInstantiator<T>(getInstantiator(), bean, decorators));
@@ -59,6 +64,17 @@ public class SessionBeanInjectionTarget<T> extends AbstractInjectionTarget<T> {
             }
 
         }.run();
+    }
+
+    @Override
+    protected Instantiator<T> initInstantiator(EnhancedAnnotatedType<T> type, Bean<T> bean, BeanManagerImpl beanManager, Set<InjectionPoint> injectionPoints) {
+        if (bean instanceof SessionBean<?>) {
+            ConstructorInjectionPoint<T> originalConstructor = InjectionPointFactory.instance().createConstructorInjectionPoint(bean, type, beanManager);
+            injectionPoints.addAll(originalConstructor.getParameterInjectionPoints());
+            return new SessionBeanInstantiator<T>(type, (SessionBean<T>) bean);
+        } else {
+            throw new IllegalArgumentException(); // TODO
+        }
     }
 
 }

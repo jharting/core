@@ -37,6 +37,7 @@ import org.jboss.weld.context.DependentContext;
 import org.jboss.weld.context.SerializableContextualInstanceImpl;
 import org.jboss.weld.context.WeldCreationalContext;
 import org.jboss.weld.context.api.ContextualInstance;
+import org.jboss.weld.injection.producer.AbstractInjectionTarget;
 import org.jboss.weld.serialization.spi.ContextualStore;
 
 /**
@@ -77,11 +78,14 @@ public class DependentContextImpl implements DependentContext {
         // by this we are making sure that the dependent instance has no transitive dependency with @PreDestroy / disposal method
         if (creationalContext.getDependentInstances().isEmpty()) {
             if (contextual instanceof ManagedBean<?> && ! isInterceptorOrDecorator(contextual)) {
-                ManagedBean<?> bean = (ManagedBean<?>) contextual;
-                if (bean.getPreDestroy().isEmpty() && !bean.hasInterceptors() && bean.hasDefaultProducer()) {
-                    // there is no @PreDestroy callback to call when destroying this dependent instance
-                    // therefore, we do not need to keep the reference
-                    return;
+                ManagedBean<?> managedBean = (ManagedBean<?>) contextual;
+                if (managedBean.getInjectionTarget() instanceof AbstractInjectionTarget<?>) {
+                    AbstractInjectionTarget<?> injectionTarget = (AbstractInjectionTarget<?>) managedBean.getInjectionTarget();
+                    if (injectionTarget.getPreDestroyMethods().isEmpty() && !injectionTarget.hasInterceptors()) {
+                        // there is no @PreDestroy callback to call when destroying this dependent instance
+                        // therefore, we do not need to keep the reference
+                        return;
+                    }
                 }
             }
             if (contextual instanceof AbstractProducerBean<?, ?, ?>) {

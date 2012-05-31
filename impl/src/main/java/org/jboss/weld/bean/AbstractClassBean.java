@@ -60,6 +60,7 @@ import org.jboss.weld.injection.InjectionPointFactory;
 import org.jboss.weld.injection.MethodInjectionPoint;
 import org.jboss.weld.injection.producer.InterceptionModelInitializer;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
+import org.jboss.weld.interceptor.spi.model.InterceptionModel;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.metadata.cache.MetaAnnotationStore;
 import org.jboss.weld.resources.ClassTransformer;
@@ -109,7 +110,6 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
 
     protected ProxyFactory<T> decoratorProxyFactory;
 
-    private boolean hasInterceptors;
     private boolean subclassed;
 
     /**
@@ -149,8 +149,8 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
 
     @Override
     public void initializeAfterBeanDiscovery() {
-        initInterceptorsIfNeeded();
-        initDecorators();
+//        initInterceptorsIfNeeded();
+//        initDecorators();
         if (this.passivationCapableBean && this.hasDecorators()) {
             for (Decorator<?> decorator : this.getDecorators()) {
                 if (!(PassivationCapable.class.isAssignableFrom(decorator.getClass())) || !((WeldDecorator<?>) decorator).getEnhancedAnnotated().isSerializable()) {
@@ -168,52 +168,52 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
             }
         }
         super.initializeAfterBeanDiscovery();
-        subclassed = !Reflections.isFinal(getType()) && (hasDecorators() || hasInterceptors());
-        if (isSubclassed()) {
-            initEnhancedSubclass();
-        }
-        if (hasDecorators()) {
-            decoratorProxyFactory = new ProxyFactory<T>(getType(), getTypes(), this);
-            decoratorProxyFactory.getProxyClass(); //eagerly generate the proxy class
-        }
+//        subclassed = !Reflections.isFinal(getType()) && (hasDecorators() || hasInterceptors());
+//        if (isSubclassed()) {
+//            initEnhancedSubclass();
+//        }
+//        if (hasDecorators()) {
+//            decoratorProxyFactory = new ProxyFactory<T>(getType(), getTypes(), this);
+//            decoratorProxyFactory.getProxyClass(); //eagerly generate the proxy class
+//        }
     }
 
-    protected void initInterceptorsIfNeeded() {
-        if (isInterceptionCandidate() && !beanManager.getInterceptorModelRegistry().containsKey(getType())) {
-            new InterceptionModelInitializer<T>(beanManager, enhancedAnnotatedItem, this).init();
-        }
-        hasInterceptors = this.isInterceptionCandidate() && (beanManager.getInterceptorModelRegistry().containsKey(getType()));
-    }
+//    protected void initInterceptorsIfNeeded() {
+//        if (isInterceptionCandidate() && !beanManager.getInterceptorModelRegistry().containsKey(getType())) {
+//            new InterceptionModelInitializer<T>(beanManager, enhancedAnnotatedItem, this).init();
+//        }
+//        hasInterceptors = this.isInterceptionCandidate() && (beanManager.getInterceptorModelRegistry().containsKey(getType()));
+//    }
 
-    public void initDecorators() {
-        this.decorators = immutableList(getBeanManager().resolveDecorators(getTypes(), getQualifiers()));
-    }
+//    public void initDecorators() {
+//        this.decorators = immutableList(getBeanManager().resolveDecorators(getTypes(), getQualifiers()));
+//    }
 
     public boolean hasDecorators() {
-        return this.decorators != null && this.decorators.size() > 0;
+        return !getDecorators().isEmpty();
     }
 
-    protected T applyDecorators(T instance, CreationalContext<T> creationalContext, InjectionPoint originalInjectionPoint) {
-        assert hasDecorators() : "Bean does not have decorators";
-        TargetBeanInstance beanInstance = new TargetBeanInstance(this, instance);
-        DecorationHelper<T> decorationHelper = new DecorationHelper<T>(beanInstance, this, decoratorProxyFactory.getProxyClass(), beanManager, getContextualStore(), decorators);
-        DecorationHelper.push(decorationHelper);
-        final T outerDelegate;
-        try {
-            outerDelegate = decorationHelper.getNextDelegate(originalInjectionPoint, creationalContext);
-        } finally {
-            DecorationHelper.pop();
-        }
-        if (outerDelegate == null) {
-            throw new WeldException(PROXY_INSTANTIATION_FAILED, this);
-        }
-        CombinedInterceptorAndDecoratorStackMethodHandler wrapperMethodHandler = (CombinedInterceptorAndDecoratorStackMethodHandler) ((ProxyObject) instance).getHandler();
-        wrapperMethodHandler.setOuterDecorator(outerDelegate);
-        return instance;
-    }
+//    protected T applyDecorators(T instance, CreationalContext<T> creationalContext, InjectionPoint originalInjectionPoint) {
+//        assert hasDecorators() : "Bean does not have decorators";
+//        TargetBeanInstance beanInstance = new TargetBeanInstance(this, instance);
+//        DecorationHelper<T> decorationHelper = new DecorationHelper<T>(beanInstance, this, decoratorProxyFactory.getProxyClass(), beanManager, getContextualStore(), decorators);
+//        DecorationHelper.push(decorationHelper);
+//        final T outerDelegate;
+//        try {
+//            outerDelegate = decorationHelper.getNextDelegate(originalInjectionPoint, creationalContext);
+//        } finally {
+//            DecorationHelper.pop();
+//        }
+//        if (outerDelegate == null) {
+//            throw new WeldException(PROXY_INSTANTIATION_FAILED, this);
+//        }
+//        CombinedInterceptorAndDecoratorStackMethodHandler wrapperMethodHandler = (CombinedInterceptorAndDecoratorStackMethodHandler) ((ProxyObject) instance).getHandler();
+//        wrapperMethodHandler.setOuterDecorator(outerDelegate);
+//        return instance;
+//    }
 
     public List<Decorator<?>> getDecorators() {
-        return decorators;
+        return beanManager.resolveDecorators(getTypes(), getQualifiers());
     }
 
     /**
@@ -226,18 +226,18 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
     /**
      * Initializes the injection points
      */
-    protected void initInjectableFields(BeanManagerImpl manager) {
-        injectableFields = InjectionPointFactory.instance().getFieldInjectionPoints(this, getEnhancedAnnotated(),  manager);
-        addInjectionPoints(InjectionPoints.flattenInjectionPoints(injectableFields));
-    }
+//    protected void initInjectableFields(BeanManagerImpl manager) {
+//        injectableFields = InjectionPointFactory.instance().getFieldInjectionPoints(this, getEnhancedAnnotated(),  manager);
+//        addInjectionPoints(InjectionPoints.flattenInjectionPoints(injectableFields));
+//    }
 
     /**
      * Initializes the initializer methods
      */
-    protected void initInitializerMethods(BeanManagerImpl manager) {
-        initializerMethods = Beans.getInitializerMethods(this, getEnhancedAnnotated(), manager);
-        addInjectionPoints(InjectionPoints.flattenParameterInjectionPoints(initializerMethods));
-    }
+//    protected void initInitializerMethods(BeanManagerImpl manager) {
+//        initializerMethods = Beans.getInitializerMethods(this, getEnhancedAnnotated(), manager);
+//        addInjectionPoints(InjectionPoints.flattenParameterInjectionPoints(initializerMethods));
+//    }
 
     /**
      * Validates the bean implementation
@@ -279,48 +279,48 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
      *
      * @return The set of annotated methods
      */
-    public List<? extends Set<? extends MethodInjectionPoint<?, ?>>> getInitializerMethods() {
-        return initializerMethods;
-    }
+//    public List<? extends Set<? extends MethodInjectionPoint<?, ?>>> getInitializerMethods() {
+//        return initializerMethods;
+//    }
 
     /**
      * @return the injectableFields
      */
-    public List<? extends Set<FieldInjectionPoint<?, ?>>> getInjectableFields() {
-        return injectableFields;
-    }
+//    public List<? extends Set<FieldInjectionPoint<?, ?>>> getInjectableFields() {
+//        return injectableFields;
+//    }
 
     /**
      * Initializes the post-construct method
      */
-    protected void initPostConstruct() {
-        this.postConstructMethods = Beans.getPostConstructMethods(getEnhancedAnnotated());
-    }
+//    protected void initPostConstruct() {
+//        this.postConstructMethods = Beans.getPostConstructMethods(getEnhancedAnnotated());
+//    }
 
     /**
      * Initializes the pre-destroy method
      */
-    protected void initPreDestroy() {
-        this.preDestroyMethods = Beans.getPreDestroyMethods(getEnhancedAnnotated());
-    }
+//    protected void initPreDestroy() {
+//        this.preDestroyMethods = Beans.getPreDestroyMethods(getEnhancedAnnotated());
+//    }
 
     /**
      * Returns the post-construct method
      *
      * @return The post-construct method
      */
-    public List<AnnotatedMethod<? super T>> getPostConstruct() {
-        return postConstructMethods;
-    }
+//    public List<AnnotatedMethod<? super T>> getPostConstruct() {
+//        return postConstructMethods;
+//    }
 
     /**
      * Returns the pre-destroy method
      *
      * @return The pre-destroy method
      */
-    public List<AnnotatedMethod<? super T>> getPreDestroy() {
-        return preDestroyMethods;
-    }
+//    public List<AnnotatedMethod<? super T>> getPreDestroy() {
+//        return preDestroyMethods;
+//    }
 
     protected abstract boolean isInterceptionCandidate();
 
@@ -337,34 +337,39 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
         return getInjectionTarget().getInjectionPoints();
     }
 
-    protected void defaultPreDestroy(T instance) {
-        for (AnnotatedMethod<? super T> method : getPreDestroy()) {
-            if (method != null) {
-                try {
-                    // note: RI supports injection into @PreDestroy
-                    RuntimeAnnotatedMembers.invokeMethod(method, instance);
-                } catch (Exception e) {
-                    throw new WeldException(INVOCATION_ERROR, e, method, instance);
-                }
-            }
-        }
-    }
+//    protected void defaultPreDestroy(T instance) {
+//        for (AnnotatedMethod<? super T> method : getPreDestroy()) {
+//            if (method != null) {
+//                try {
+//                    // note: RI supports injection into @PreDestroy
+//                    RuntimeAnnotatedMembers.invokeMethod(method, instance);
+//                } catch (Exception e) {
+//                    throw new WeldException(INVOCATION_ERROR, e, method, instance);
+//                }
+//            }
+//        }
+//    }
+//
+//    protected void defaultPostConstruct(T instance) {
+//        for (AnnotatedMethod<? super T> method : getPostConstruct()) {
+//            if (method != null) {
+//                try {
+//                    // note: RI supports injection into @PreDestroy
+//                    RuntimeAnnotatedMembers.invokeMethod(method, instance);
+//                } catch (Exception e) {
+//                    throw new WeldException(INVOCATION_ERROR, e, method, instance);
+//                }
+//            }
+//        }
+//    }
+//
 
-    protected void defaultPostConstruct(T instance) {
-        for (AnnotatedMethod<? super T> method : getPostConstruct()) {
-            if (method != null) {
-                try {
-                    // note: RI supports injection into @PreDestroy
-                    RuntimeAnnotatedMembers.invokeMethod(method, instance);
-                } catch (Exception e) {
-                    throw new WeldException(INVOCATION_ERROR, e, method, instance);
-                }
-            }
-        }
+    public InterceptionModel<?, ?> getInterceptors() {
+        return beanManager.getInterceptorModelRegistry().get(getType());
     }
 
     public boolean hasInterceptors() {
-        return hasInterceptors;
+        return getInterceptors() != null;
     }
 
     protected void checkConstructor(EnhancedAnnotatedConstructor<T> enhancedAnnotated) {
@@ -400,22 +405,22 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
         return subclassed;
     }
 
-    protected void initEnhancedSubclass() {
-        final ClassTransformer transformer = beanManager.getServices().get(ClassTransformer.class);
-        EnhancedAnnotatedType<T> enhancedSubclass = transformer.getEnhancedAnnotatedType(createEnhancedSubclass());
-        constructorForEnhancedSubclass = EnhancedAnnotatedConstructorImpl.of(
-                enhancedSubclass.getDeclaredEnhancedConstructor(constructor.getSignature()),
-                enhancedSubclass,
-                transformer);
-    }
+//    protected void initEnhancedSubclass() {
+//        final ClassTransformer transformer = beanManager.getServices().get(ClassTransformer.class);
+//        EnhancedAnnotatedType<T> enhancedSubclass = transformer.getEnhancedAnnotatedType(createEnhancedSubclass());
+//        constructorForEnhancedSubclass = EnhancedAnnotatedConstructorImpl.of(
+//                enhancedSubclass.getDeclaredEnhancedConstructor(constructor.getSignature()),
+//                enhancedSubclass,
+//                transformer);
+//    }
 
-    protected Class<T> createEnhancedSubclass() {
-        Set<MethodSignature> enhancedMethodSignatures = new HashSet<MethodSignature>();
-        for (AnnotatedMethod<?> method : Beans.getInterceptableMethods(this.getAnnotated())) {
-            enhancedMethodSignatures.add(new MethodSignatureImpl(method));
-        }
-        return new InterceptedSubclassFactory<T>(getType(), getTypes(), this, enhancedMethodSignatures).getProxyClass();
-    }
+//    protected Class<T> createEnhancedSubclass() {
+//        Set<MethodSignature> enhancedMethodSignatures = new HashSet<MethodSignature>();
+//        for (AnnotatedMethod<?> method : Beans.getInterceptableMethods(this.getAnnotated())) {
+//            enhancedMethodSignatures.add(new MethodSignatureImpl(method));
+//        }
+//        return new InterceptedSubclassFactory<T>(getType(), getTypes(), this, enhancedMethodSignatures).getProxyClass();
+//    }
 
     @Override
     public boolean isPassivationCapableBean() {

@@ -20,8 +20,10 @@ import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.Bean;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
+import org.jboss.weld.exceptions.DefinitionException;
 import org.jboss.weld.injection.ConstructorInjectionPoint;
 import org.jboss.weld.injection.InjectionPointFactory;
+import org.jboss.weld.logging.messages.BeanMessage;
 import org.jboss.weld.manager.BeanManagerImpl;
 
 /**
@@ -36,6 +38,12 @@ public class DefaultInstantiator<T> implements Instantiator<T> {
     private final ConstructorInjectionPoint<T> constructor;
 
     public DefaultInstantiator(EnhancedAnnotatedType<T> type, Bean<T> bean, BeanManagerImpl manager) {
+        if (type.getJavaClass().isInterface()) {
+            throw new DefinitionException(BeanMessage.INJECTION_TARGET_CANNOT_BE_CREATED_FOR_INTERFACE, type);
+        }
+        if (type.isAbstract()) {
+            throw new IllegalArgumentException(); // TODO
+        }
         constructor = InjectionPointFactory.instance().createConstructorInjectionPoint(bean, type, manager);
     }
 

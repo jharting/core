@@ -148,10 +148,10 @@ public class DecoratorImpl<T> extends ManagedBean<T> implements WeldDecorator<T>
         return new DecoratorProxyFactory<T>(getEnhancedAnnotated().getJavaClass(), delegateInjectionPoint, this).getProxyClass();
     }
 
-    @Override
-    protected boolean isSubclassed() {
-        return subclassed;
-    }
+//    @Override
+//    protected boolean isSubclassed() {
+//        return subclassed;
+//    }
 
     @Override
     protected void checkDelegateInjectionPoints() {
@@ -266,10 +266,10 @@ public class DecoratorImpl<T> extends ManagedBean<T> implements WeldDecorator<T>
         return delegateInjectionPoint;
     }
 
-    @Override
-    public void initDecorators() {
-        // No-op, decorators can't have decorators
-    }
+//    @Override
+//    public void initDecorators() {
+//        // No-op, decorators can't have decorators
+//    }
 
     public InvokableAnnotatedMethod<?> getDecoratorMethod(Method method) {
         return Decorators.findDecoratorMethod(this, decoratorMethods, method);
