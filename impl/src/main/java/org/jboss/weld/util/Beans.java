@@ -19,7 +19,6 @@ package org.jboss.weld.util;
 import static java.util.Arrays.asList;
 import static org.jboss.weld.logging.Category.BEAN;
 import static org.jboss.weld.logging.LoggerFactory.loggerFactory;
-import static org.jboss.weld.logging.messages.BeanMessage.DELEGATE_ON_NON_INITIALIZER_METHOD;
 import static org.jboss.weld.logging.messages.BeanMessage.FOUND_DEFAULT_CONSTRUCTOR;
 import static org.jboss.weld.logging.messages.BeanMessage.FOUND_INJECTABLE_CONSTRUCTORS;
 import static org.jboss.weld.logging.messages.BeanMessage.FOUND_ONE_INJECTABLE_CONSTRUCTOR;
@@ -27,8 +26,7 @@ import static org.jboss.weld.logging.messages.BeanMessage.FOUND_ONE_POST_CONSTRU
 import static org.jboss.weld.logging.messages.BeanMessage.FOUND_ONE_PRE_DESTROY_METHOD;
 import static org.jboss.weld.logging.messages.BeanMessage.FOUND_POST_CONSTRUCT_METHODS;
 import static org.jboss.weld.logging.messages.BeanMessage.FOUND_PRE_DESTROY_METHODS;
-import static org.jboss.weld.logging.messages.BeanMessage.NO_DELEGATE_FOR_DECORATOR;
-import static org.jboss.weld.logging.messages.BeanMessage.TOO_MANY_DELEGATES_FOR_DECORATOR;
+import static org.jboss.weld.logging.messages.BeanMessage.PARAMETER_ANNOTATION_NOT_ALLOWED_ON_CONSTRUCTOR;
 import static org.jboss.weld.logging.messages.BeanMessage.TYPED_CLASS_NOT_IN_HIERARCHY;
 import static org.jboss.weld.logging.messages.EventMessage.INVALID_INITIALIZER;
 import static org.jboss.weld.logging.messages.UtilMessage.AMBIGUOUS_CONSTRUCTOR;
@@ -83,7 +81,6 @@ import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanAttributes;
 import javax.enterprise.inject.spi.Extension;
-import javax.enterprise.inject.spi.InjectionPoint;
 import javax.inject.Inject;
 
 import org.jboss.weld.Container;
@@ -492,18 +489,26 @@ public class Beans {
     public static <T> EnhancedAnnotatedConstructor<T> getBeanConstructor(EnhancedAnnotatedType<T> type) {
         Collection<EnhancedAnnotatedConstructor<T>> initializerAnnotatedConstructors = type.getEnhancedConstructors(Inject.class);
         log.trace(FOUND_INJECTABLE_CONSTRUCTORS, initializerAnnotatedConstructors, type);
+        EnhancedAnnotatedConstructor<T> constructor = null;
         if (initializerAnnotatedConstructors.size() > 1) {
             throw new DefinitionException(AMBIGUOUS_CONSTRUCTOR, type, initializerAnnotatedConstructors);
         } else if (initializerAnnotatedConstructors.size() == 1) {
-            EnhancedAnnotatedConstructor<T> constructor = initializerAnnotatedConstructors.iterator().next();
+            constructor = initializerAnnotatedConstructors.iterator().next();
             log.trace(FOUND_ONE_INJECTABLE_CONSTRUCTOR, constructor, type);
-            return constructor;
         } else if (type.getNoArgsEnhancedConstructor() != null) {
-            EnhancedAnnotatedConstructor<T> constructor = type.getNoArgsEnhancedConstructor();
+            constructor = type.getNoArgsEnhancedConstructor();
             log.trace(FOUND_DEFAULT_CONSTRUCTOR, constructor, type);
-            return constructor;
         }
-        throw new DefinitionException(UNABLE_TO_FIND_CONSTRUCTOR, type);
+        if (constructor == null) {
+            throw new DefinitionException(UNABLE_TO_FIND_CONSTRUCTOR, type);
+        }
+        if (!constructor.getEnhancedParameters(Disposes.class).isEmpty()) {
+            throw new DefinitionException(PARAMETER_ANNOTATION_NOT_ALLOWED_ON_CONSTRUCTOR, "@Disposes", constructor);
+        }
+        if (!constructor.getEnhancedParameters(Observes.class).isEmpty()) {
+            throw new DefinitionException(PARAMETER_ANNOTATION_NOT_ALLOWED_ON_CONSTRUCTOR, "@Observes", constructor);
+        }
+        return constructor;
     }
 
     /**

@@ -86,32 +86,32 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
 
     // The injectable fields of each type in the type hierarchy, with the actual
     // type at the bottom
-    private List<Set<FieldInjectionPoint<?, ?>>> injectableFields;
+//    private List<Set<FieldInjectionPoint<?, ?>>> injectableFields;
 
     // The initializer methods of each type in the type hierarchy, with the
     // actual type at the bottom
-    private List<Set<MethodInjectionPoint<?, ?>>> initializerMethods;
+//    private List<Set<MethodInjectionPoint<?, ?>>> initializerMethods;
 
     // Decorators
-    private List<Decorator<?>> decorators;
+//    private List<Decorator<?>> decorators;
 
     // Bean callback methods
-    private List<AnnotatedMethod<? super T>> postConstructMethods;
-    private List<AnnotatedMethod<? super T>> preDestroyMethods;
+//    private List<AnnotatedMethod<? super T>> postConstructMethods;
+//    private List<AnnotatedMethod<? super T>> preDestroyMethods;
 
     // Injection target for the bean
     private InjectionTarget<T> injectionTarget;
 
-    private final ConstructorInjectionPoint<T> constructor;
+//    private final ConstructorInjectionPoint<T> constructor;
 
-    protected EnhancedAnnotatedConstructor<T> constructorForEnhancedSubclass;
+//    protected EnhancedAnnotatedConstructor<T> constructorForEnhancedSubclass;
 
     private boolean passivationCapableBean;
     private boolean passivationCapableDependency;
 
-    protected ProxyFactory<T> decoratorProxyFactory;
+//    protected ProxyFactory<T> decoratorProxyFactory;
 
-    private boolean subclassed;
+//    private boolean subclassed;
 
     /**
      * Constructor
@@ -124,7 +124,7 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
         this.enhancedAnnotatedItem = type;
         this.annotatedType = type.slim();
         initType();
-        this.constructor = initConstructor(beanManager);
+//        this.constructor = initConstructor(beanManager);
     }
 
     /**
@@ -139,7 +139,7 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
 
     private void initPassivationCapable() {
         this.passivationCapableBean = getEnhancedAnnotated().isSerializable();
-        if (getBeanManager().getServices().get(MetaAnnotationStore.class).getScopeModel(getScope()).isNormal()) {
+        if (isNormalScoped()) {
             this.passivationCapableDependency = true;
         } else if (getScope().equals(Dependent.class) && passivationCapableBean) {
             this.passivationCapableDependency = true;
@@ -381,38 +381,38 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
         return getInterceptors() != null;
     }
 
-    protected void checkConstructor(EnhancedAnnotatedConstructor<T> enhancedAnnotated) {
-        if (!enhancedAnnotated.getEnhancedParameters(Disposes.class).isEmpty()) {
-            throw new DefinitionException(PARAMETER_ANNOTATION_NOT_ALLOWED_ON_CONSTRUCTOR, "@Disposes", constructor);
-        }
-        if (!enhancedAnnotated.getEnhancedParameters(Observes.class).isEmpty()) {
-            throw new DefinitionException(PARAMETER_ANNOTATION_NOT_ALLOWED_ON_CONSTRUCTOR, "@Observes", constructor);
-        }
-    }
+//    protected void checkConstructor(EnhancedAnnotatedConstructor<T> enhancedAnnotated) {
+//        if (!enhancedAnnotated.getEnhancedParameters(Disposes.class).isEmpty()) {
+//            throw new DefinitionException(PARAMETER_ANNOTATION_NOT_ALLOWED_ON_CONSTRUCTOR, "@Disposes", constructor);
+//        }
+//        if (!enhancedAnnotated.getEnhancedParameters(Observes.class).isEmpty()) {
+//            throw new DefinitionException(PARAMETER_ANNOTATION_NOT_ALLOWED_ON_CONSTRUCTOR, "@Observes", constructor);
+//        }
+//    }
 
     /**
      * Initializes the constructor
      */
-    protected ConstructorInjectionPoint<T> initConstructor(BeanManagerImpl manager) {
-        EnhancedAnnotatedConstructor<T> enhancedAnnotated = Beans.getBeanConstructor(getEnhancedAnnotated());
-        checkConstructor(enhancedAnnotated);
-        ConstructorInjectionPoint<T> injectionPoint = InjectionPointFactory.instance().createConstructorInjectionPoint(this, getBeanClass(), enhancedAnnotated, manager);
-        addInjectionPoints(injectionPoint.getParameterInjectionPoints());
-        return injectionPoint;
-    }
+//    protected ConstructorInjectionPoint<T> initConstructor(BeanManagerImpl manager) {
+//        EnhancedAnnotatedConstructor<T> enhancedAnnotated = Beans.getBeanConstructor(getEnhancedAnnotated());
+//        checkConstructor(enhancedAnnotated);
+//        ConstructorInjectionPoint<T> injectionPoint = InjectionPointFactory.instance().createConstructorInjectionPoint(this, getBeanClass(), enhancedAnnotated, manager);
+//        addInjectionPoints(injectionPoint.getParameterInjectionPoints());
+//        return injectionPoint;
+//    }
 
     /**
      * Returns the constructor
      *
      * @return The constructor
      */
-    public ConstructorInjectionPoint<T> getConstructor() {
-        return constructor;
-    }
+//    public ConstructorInjectionPoint<T> getConstructor() {
+//        return constructor;
+//    }
 
-    protected boolean isSubclassed() {
-        return subclassed;
-    }
+//    protected boolean isSubclassed() {
+//        return subclassed;
+//    }
 
 //    protected void initEnhancedSubclass() {
 //        final ClassTransformer transformer = beanManager.getServices().get(ClassTransformer.class);
@@ -441,7 +441,7 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
         return passivationCapableDependency;
     }
 
-    private ContextualStore getContextualStore() {
-        return getServices().get(ContextualStore.class);
-    }
+//    private ContextualStore getContextualStore() {
+//        return getServices().get(ContextualStore.class);
+//    }
 }

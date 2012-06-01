@@ -90,7 +90,8 @@ public class DependentContextImpl implements DependentContext {
             }
             if (contextual instanceof AbstractProducerBean<?, ?, ?>) {
                 AbstractProducerBean<?, ?, ?> producer = (AbstractProducerBean<?, ?, ?>) contextual;
-                if (producer.getDisposalMethod() == null && producer.hasDefaultProducer()) {
+                if (producer.getDisposalMethod() == null) {
+                    // TODO: check if the we have the default producer
                     // there is no disposal method to call when destroying this dependent instance
                     // therefore, we do not need to keep the reference
                     return;

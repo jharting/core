@@ -277,14 +277,14 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
 //        }
     }
 
-    protected T createInstance(CreationalContext<T> ctx) {
-        if (!isSubclassed()) {
-            return getConstructor().newInstance(beanManager, ctx);
-        } else {
-            ProxyClassConstructorInjectionPointWrapper<T> constructorInjectionPointWrapper = new ProxyClassConstructorInjectionPointWrapper<T>(this, this.getBeanClass(), constructorForEnhancedSubclass, getConstructor(), beanManager);
-            return constructorInjectionPointWrapper.newInstance(beanManager, ctx);
-        }
-    }
+//    protected T createInstance(CreationalContext<T> ctx) {
+//        if (!isSubclassed()) {
+//            return getConstructor().newInstance(beanManager, ctx);
+//        } else {
+//            ProxyClassConstructorInjectionPointWrapper<T> constructorInjectionPointWrapper = new ProxyClassConstructorInjectionPointWrapper<T>(this, this.getBeanClass(), constructorForEnhancedSubclass, getConstructor(), beanManager);
+//            return constructorInjectionPointWrapper.newInstance(beanManager, ctx);
+//        }
+//    }
 
 //    private void initEEInjectionPoints() {
 //        this.ejbInjectionPoints = InjectionPointFactory.instance().getEjbInjectionPoints(this, getEnhancedAnnotated(), getBeanManager());
@@ -401,9 +401,9 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
         return proxiable;
     }
 
-    @Override
-    public boolean hasDefaultProducer() {
-        return getInjectionTarget() instanceof DefaultInjectionTarget<?>; // TODO remove
-    }
+//    @Override
+//    public boolean hasDefaultProducer() {
+//        return getInjectionTarget() instanceof DefaultInjectionTarget<?>; // TODO remove
+//    }
 
 }

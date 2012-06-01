@@ -386,8 +386,8 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
         protected abstract T produce(Object receiver, CreationalContext<T> ctx);
     }
 
-    @Override
-    public boolean hasDefaultProducer() {
-        return getProducer() instanceof AbstractProducerBean.AbstractProducer;
-    }
+//    @Override
+//    public boolean hasDefaultProducer() {
+//        return getProducer() instanceof AbstractProducerBean.AbstractProducer;
+//    }
 }

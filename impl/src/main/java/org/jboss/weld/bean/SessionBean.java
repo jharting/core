@@ -401,9 +401,9 @@ public class SessionBean<T> extends AbstractClassBean<T> {
         return true;
     }
 
-    @Override
-    public boolean hasDefaultProducer() {
-        return getInjectionTarget() instanceof SessionBeanInjectionTarget;
-    }
+//    @Override
+//    public boolean hasDefaultProducer() {
+//        return getInjectionTarget() instanceof SessionBeanInjectionTarget;
+//    }
 }
 

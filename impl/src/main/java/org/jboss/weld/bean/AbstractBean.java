@@ -127,7 +127,7 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
         log.trace(CREATING_BEAN, getType());
 //        checkDelegateInjectionPoints();
         if (getScope() != null) {
-            proxyRequired = getBeanManager().getServices().get(MetaAnnotationStore.class).getScopeModel(getScope()).isNormal();
+            proxyRequired = isNormalScoped();
         } else {
             proxyRequired = false;
         }
@@ -293,9 +293,9 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
         return services;
     }
 
-    /**
-     * Returns true if the bean uses the default {@link Producer} ( or {@link InjectionTarget}). The method returns false if the
-     * producer of the bean was replaced by an extension.
-     */
-    public abstract boolean hasDefaultProducer();
+//    /**
+//     * Returns true if the bean uses the default {@link Producer} ( or {@link InjectionTarget}). The method returns false if the
+//     * producer of the bean was replaced by an extension.
+//     */
+//    public abstract boolean hasDefaultProducer();
 }

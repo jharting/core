@@ -1,7 +1,7 @@
 package org.jboss.weld.injection.producer;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.enterprise.inject.spi.InjectionTarget;
 
@@ -22,8 +22,8 @@ public class InjectionTargetService implements Service {
 
     public InjectionTargetService(BeanManagerImpl beanManager) {
         this.validator = new Validator();
-        this.injectionTargetsToValidate = new ArrayList<InjectionTarget<?>>();
-        this.injectionTargetsToInitialize = new ArrayList<InjectionTargetInitializationContext<?>>();
+        this.injectionTargetsToValidate = new ConcurrentLinkedQueue<InjectionTarget<?>>();
+        this.injectionTargetsToInitialize = new ConcurrentLinkedQueue<InjectionTargetInitializationContext<?>>();
         this.container = Container.instance();
         this.beanManager = beanManager;
     }

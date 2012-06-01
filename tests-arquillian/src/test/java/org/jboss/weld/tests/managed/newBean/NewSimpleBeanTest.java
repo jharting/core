@@ -16,6 +16,8 @@
  */
 package org.jboss.weld.tests.managed.newBean;
 
+import static org.junit.Assert.assertEquals;
+
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -28,6 +30,8 @@ import org.jboss.weld.bean.NewManagedBean;
 import org.jboss.weld.injection.MethodInjectionPoint;
 import org.jboss.weld.injection.WeldInjectionPoint;
 import org.jboss.weld.injection.producer.AbstractInjectionTarget;
+import org.jboss.weld.injection.producer.DefaultInstantiator;
+import org.jboss.weld.injection.producer.Instantiator;
 import org.jboss.weld.literal.NewLiteral;
 import org.jboss.weld.util.AnnotatedTypes;
 import org.jboss.weld.util.reflection.Reflections;
@@ -36,6 +40,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import javax.enterprise.inject.New;
+import javax.enterprise.inject.spi.AnnotatedConstructor;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.InjectionTarget;
@@ -89,7 +94,7 @@ public class NewSimpleBeanTest {
     @Test
     public void testNewBeanHasSameConstructorAsWrappedBean() {
         initNewBean();
-        Assert.assertTrue(AnnotatedTypes.compareAnnotatedCallable(wrappedSimpleBean.getConstructor().getAnnotated(), newSimpleBean.getConstructor().getAnnotated()));
+        assertEquals(getConstructor(wrappedSimpleBean), getConstructor(newSimpleBean));
     }
 
     // groups = { "new" }
@@ -104,6 +109,18 @@ public class NewSimpleBeanTest {
             InjectionTarget<?> injectionTarget = Reflections.<AbstractClassBean<?>>cast(bean).getInjectionTarget();
             if (injectionTarget instanceof AbstractInjectionTarget<?>) {
                 return Reflections.<AbstractInjectionTarget<?>>cast(injectionTarget).getInitializerMethods();
+            }
+        }
+        throw new IllegalArgumentException(bean.toString());
+    }
+
+    private AnnotatedConstructor<?> getConstructor(AbstractClassBean<?> bean) {
+        InjectionTarget<?> target = bean.getInjectionTarget();
+        if (target instanceof AbstractInjectionTarget<?>) {
+            AbstractInjectionTarget<?> weldTarget = (AbstractInjectionTarget<?>) target;
+            Instantiator<?> instantiator = weldTarget.getInstantiator();
+            if (instantiator instanceof DefaultInstantiator<?>) {
+                return Reflections.<DefaultInstantiator<?>>cast(instantiator).getConstructor().getAnnotated();
             }
         }
         throw new IllegalArgumentException(bean.toString());
