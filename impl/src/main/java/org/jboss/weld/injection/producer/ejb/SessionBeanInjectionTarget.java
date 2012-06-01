@@ -26,11 +26,15 @@ import javax.enterprise.inject.spi.InjectionPoint;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
 import org.jboss.weld.bean.SessionBean;
+import org.jboss.weld.bean.interceptor.InterceptorBindingsAdapter;
+import org.jboss.weld.ejb.spi.EjbServices;
 import org.jboss.weld.injection.ConstructorInjectionPoint;
 import org.jboss.weld.injection.InjectionContextImpl;
 import org.jboss.weld.injection.InjectionPointFactory;
 import org.jboss.weld.injection.producer.AbstractInjectionTarget;
 import org.jboss.weld.injection.producer.Instantiator;
+import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
+import org.jboss.weld.interceptor.spi.model.InterceptionModel;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.util.Beans;
 
@@ -43,10 +47,20 @@ public class SessionBeanInjectionTarget<T> extends AbstractInjectionTarget<T> {
         this.bean = bean;
     }
 
+    @Override
     public void initializeAfterBeanDiscovery(EnhancedAnnotatedType<T> annotatedType) {
+        super.initializeAfterBeanDiscovery(annotatedType);
         List<Decorator<?>> decorators = beanManager.resolveDecorators(getBean().getTypes(), getBean().getQualifiers());
         if (!decorators.isEmpty()) {
             setInstantiator(new ProxyDecoratorApplyingSessionBeanInstantiator<T>(getInstantiator(), bean, decorators));
+        }
+        registerInterceptors();
+    }
+
+    protected void registerInterceptors() {
+        InterceptionModel<ClassMetadata<?>, ?> model = beanManager.getInterceptorModelRegistry().get(bean.getEjbDescriptor().getBeanClass());
+        if (model != null) {
+            getBeanManager().getServices().get(EjbServices.class).registerInterceptors(bean.getEjbDescriptor(), new InterceptorBindingsAdapter(model));
         }
     }
 

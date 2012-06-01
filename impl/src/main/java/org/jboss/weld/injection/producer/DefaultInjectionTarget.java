@@ -89,9 +89,7 @@ public class DefaultInjectionTarget<T> extends AbstractInjectionTarget<T> {
     }
 
     public void initializeAfterBeanDiscovery(EnhancedAnnotatedType<T> annotatedType) {
-        if (isInterceptionCandidate() && !beanManager.getInterceptorModelRegistry().containsKey(annotatedType.getJavaClass())) {
-            new InterceptionModelInitializer<T>(beanManager, annotatedType, getBean()).init();
-        }
+        super.initializeAfterBeanDiscovery(annotatedType);
         boolean hasInterceptors = isInterceptionCandidate() && (beanManager.getInterceptorModelRegistry().containsKey(getType().getJavaClass()));
 
         List<Decorator<?>> decorators = null;

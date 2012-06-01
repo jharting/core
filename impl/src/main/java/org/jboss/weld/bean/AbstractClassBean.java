@@ -22,6 +22,7 @@ import static org.jboss.weld.logging.messages.BeanMessage.PROXY_INSTANTIATION_FA
 import static org.jboss.weld.logging.messages.BeanMessage.SPECIALIZING_BEAN_MUST_EXTEND_A_BEAN;
 import static org.jboss.weld.util.collections.WeldCollections.immutableList;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -160,7 +161,7 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
             }
         }
         if (this.passivationCapableBean && hasInterceptors()) {
-            for (InterceptorMetadata<?> interceptorMetadata : getBeanManager().getInterceptorModelRegistry().get(getType()).getAllInterceptors()) {
+            for (InterceptorMetadata<?> interceptorMetadata : getInterceptors().getAllInterceptors()) {
                 if (!Reflections.isSerializable(interceptorMetadata.getInterceptorClass().getJavaClass())) {
                     this.passivationCapableBean = false;
                     break;
@@ -213,7 +214,11 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
 //    }
 
     public List<Decorator<?>> getDecorators() {
-        return beanManager.resolveDecorators(getTypes(), getQualifiers());
+        if (isInterceptionCandidate()) {
+            return beanManager.resolveDecorators(getTypes(), getQualifiers());
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     /**
@@ -365,7 +370,11 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
 //
 
     public InterceptionModel<?, ?> getInterceptors() {
-        return beanManager.getInterceptorModelRegistry().get(getType());
+        if (isInterceptionCandidate()) {
+            return beanManager.getInterceptorModelRegistry().get(getType());
+        } else {
+            return null;
+        }
     }
 
     public boolean hasInterceptors() {

@@ -215,6 +215,8 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
 //        initInitializerMethods(beanManager);
 //        initInjectableFields(beanManager);
         this.proxiable = Proxies.isTypesProxyable(type.getTypeClosure());
+        setInjectionTarget(beanManager.createInjectionTarget(getEnhancedAnnotated(), this));
+        addInjectionPoints(getInjectionTarget().getInjectionPoints());
     }
 
     /**
@@ -262,7 +264,8 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
 //        if (this instanceof Decorator<?>) {
 //            setInjectionTarget(new ManagedBeanInjectionTarget<T>(this));
 //        } else {
-            setInjectionTarget(beanManager.createInjectionTarget(getEnhancedAnnotated(), this));
+//            setInjectionTarget(beanManager.createInjectionTarget(getEnhancedAnnotated(), this));
+//            addInjectionPoints(getInjectionTarget().getInjectionPoints());
 //        }
     }
 

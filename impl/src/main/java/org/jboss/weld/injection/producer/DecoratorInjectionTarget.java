@@ -16,27 +16,35 @@
  */
 package org.jboss.weld.injection.producer;
 
+import static org.jboss.weld.logging.messages.BeanMessage.ABSTRACT_METHOD_MUST_MATCH_DECORATED_TYPE;
+
 import java.util.Set;
 
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.AnnotatedField;
+import javax.enterprise.inject.spi.AnnotatedMethod;
 import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.InjectionPoint;
 
+import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedMethod;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
+import org.jboss.weld.annotated.enhanced.MethodSignature;
 import org.jboss.weld.annotated.runtime.RuntimeAnnotatedMembers;
 import org.jboss.weld.bean.proxy.DecoratorProxy;
 import org.jboss.weld.bean.proxy.DecoratorProxyFactory;
 import org.jboss.weld.bean.proxy.ProxyMethodHandler;
 import org.jboss.weld.bean.proxy.ProxyObject;
 import org.jboss.weld.bean.proxy.TargetBeanInstance;
+import org.jboss.weld.exceptions.DefinitionException;
 import org.jboss.weld.injection.ConstructorInjectionPoint;
 import org.jboss.weld.injection.FieldInjectionPoint;
 import org.jboss.weld.injection.InjectionPointFactory;
 import org.jboss.weld.injection.WeldInjectionPoint;
 import org.jboss.weld.manager.BeanManagerImpl;
+import org.jboss.weld.resources.ClassTransformer;
 import org.jboss.weld.util.Decorators;
+import org.jboss.weld.util.reflection.Reflections;
 
 public class DecoratorInjectionTarget<T> extends DefaultInjectionTarget<T> {
 
@@ -45,6 +53,19 @@ public class DecoratorInjectionTarget<T> extends DefaultInjectionTarget<T> {
     public DecoratorInjectionTarget(EnhancedAnnotatedType<T> type, Bean<T> bean, BeanManagerImpl beanManager) {
         super(type, bean, beanManager);
         this.delegateInjectionPoint = Decorators.findDelegateInjectionPoint(type, getInjectionPoints());
+        checkAbstractMethods(type);
+    }
+
+    private void checkAbstractMethods(EnhancedAnnotatedType<T> type) {
+        EnhancedAnnotatedType<?> delegateInjectionPointEnhancedAnnotatedType = ClassTransformer.instance(beanManager).getEnhancedAnnotatedType(Reflections.getRawType(delegateInjectionPoint.getType()));
+        for (EnhancedAnnotatedMethod<?, ?> method : type.getEnhancedMethods()) {
+            if (Reflections.isAbstract(((AnnotatedMethod<?>) method).getJavaMember())) {
+                MethodSignature methodSignature = method.getSignature();
+                if (delegateInjectionPointEnhancedAnnotatedType.getEnhancedMethod(methodSignature) == null) {
+                    throw new DefinitionException(ABSTRACT_METHOD_MUST_MATCH_DECORATED_TYPE, method.getSignature(), this, type.getName());
+                }
+            }
+        }
     }
 
     @Override
@@ -64,6 +85,11 @@ public class DecoratorInjectionTarget<T> extends DefaultInjectionTarget<T> {
             injectionPoints.addAll(instantiator.getConstructor().getParameterInjectionPoints());
             return instantiator;
         }
+    }
+
+    @Override
+    protected void checkDelegateInjectionPoints() {
+        // noop, delegate injection points are checked in Decorators#findDelegateInjectionPoint()
     }
 
     @Override

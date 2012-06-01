@@ -87,7 +87,7 @@ public class InjectionPoints {
         return null;
     }
 
-    public static <T, X> WeldInjectionPoint<T, ?> getWeldInjectionPoints(InjectionPoint injectionPoint) {
+    public static <T, X> WeldInjectionPoint<T, ?> getWeldInjectionPoint(InjectionPoint injectionPoint) {
         if (injectionPoint instanceof WeldInjectionPoint<?, ?>) {
             return Reflections.cast(injectionPoint);
         }

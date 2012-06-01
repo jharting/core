@@ -22,18 +22,26 @@ import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.BeanArchive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotated;
+import org.jboss.weld.bean.AbstractClassBean;
 import org.jboss.weld.bean.ManagedBean;
 import org.jboss.weld.bean.NewManagedBean;
+import org.jboss.weld.injection.MethodInjectionPoint;
 import org.jboss.weld.injection.WeldInjectionPoint;
+import org.jboss.weld.injection.producer.AbstractInjectionTarget;
 import org.jboss.weld.literal.NewLiteral;
 import org.jboss.weld.util.AnnotatedTypes;
+import org.jboss.weld.util.reflection.Reflections;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import javax.enterprise.inject.New;
+import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
+import javax.enterprise.inject.spi.InjectionTarget;
 import javax.inject.Inject;
+
+import java.util.List;
 import java.util.Set;
 
 @RunWith(Arquillian.class)
@@ -88,7 +96,17 @@ public class NewSimpleBeanTest {
     @Test
     public void testNewBeanHasSameInitializerMethodsAsWrappedBean() {
         initNewBean();
-        Assert.assertEquals(wrappedSimpleBean.getInitializerMethods(), newSimpleBean.getInitializerMethods());
+        Assert.assertEquals(getInitializerMethods(wrappedSimpleBean), getInitializerMethods(newSimpleBean));
+    }
+
+    private List<Set<MethodInjectionPoint<?, ?>>> getInitializerMethods(Bean<?> bean) {
+        if (bean instanceof AbstractClassBean<?>) {
+            InjectionTarget<?> injectionTarget = Reflections.<AbstractClassBean<?>>cast(bean).getInjectionTarget();
+            if (injectionTarget instanceof AbstractInjectionTarget<?>) {
+                return Reflections.<AbstractInjectionTarget<?>>cast(injectionTarget).getInitializerMethods();
+            }
+        }
+        throw new IllegalArgumentException(bean.toString());
     }
 
     // groups = { "new" }

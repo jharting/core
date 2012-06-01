@@ -104,17 +104,17 @@ public class DecoratorImpl<T> extends ManagedBean<T> implements WeldDecorator<T>
 
     private Map<MethodSignature, InvokableAnnotatedMethod<?>> decoratorMethods;
     private WeldInjectionPoint<?, ?> delegateInjectionPoint;
-    private FieldInjectionPoint<?, ?> delegateFieldInjectionPoint;
+//    private FieldInjectionPoint<?, ?> delegateFieldInjectionPoint;
     private Set<Annotation> delegateBindings;
     private Type delegateType;
     private Set<Type> delegateTypes;
     private Set<Type> decoratedTypes;
 
-    private final boolean subclassed;
+//    private final boolean subclassed;
 
     protected DecoratorImpl(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> type, BeanManagerImpl beanManager, ServiceRegistry services) {
         super(attributes, type, new StringBuilder().append(Decorator.class.getSimpleName()).append(BEAN_ID_SEPARATOR).append(type.getName()).toString(), beanManager, services);
-        this.subclassed = type.isAbstract();
+//        this.subclassed = type.isAbstract();
     }
 
     @Override
@@ -125,7 +125,7 @@ public class DecoratorImpl<T> extends ManagedBean<T> implements WeldDecorator<T>
         initDelegateBindings();
         initDelegateType();
         checkDelegateType();
-        checkAbstractMethods();
+//        checkAbstractMethods();
     }
 
     protected void initDecoratedTypes() {
@@ -136,13 +136,20 @@ public class DecoratorImpl<T> extends ManagedBean<T> implements WeldDecorator<T>
         this.decoratorMethods = Decorators.getDecoratorMethods(beanManager, decoratedTypes, getEnhancedAnnotated());
     }
 
-    protected void initDelegateInjectionPoint() {
-        this.delegateInjectionPoint = getDelegateInjectionPoints().iterator().next();
-        if(delegateInjectionPoint instanceof FieldInjectionPoint) {
-            this.delegateFieldInjectionPoint = (FieldInjectionPoint<?, ?>) delegateInjectionPoint;
-        }
-    }
+//    protected void initDelegateInjectionPoint() {
+//        this.delegateInjectionPoint = getDelegateInjectionPoints().iterator().next();
+//        if(delegateInjectionPoint instanceof FieldInjectionPoint) {
+//            this.delegateFieldInjectionPoint = (FieldInjectionPoint<?, ?>) delegateInjectionPoint;
+//        }
+//    }
 
+    protected void initDelegateInjectionPoint() {
+        // TODO: findDelegateInjectionPoint is called also from DecoratorInjectionTarget. Try to avoid calling the method multiple times
+        this.delegateInjectionPoint = Decorators.findDelegateInjectionPoint(getEnhancedAnnotated(), getInjectionPoints());
+//        if(delegateInjectionPoint instanceof FieldInjectionPoint) {
+//            this.delegateFieldInjectionPoint = (FieldInjectionPoint<?, ?>) delegateInjectionPoint;
+//        }
+    }
 
     protected Class<T> createEnhancedSubclass() {
         return new DecoratorProxyFactory<T>(getEnhancedAnnotated().getJavaClass(), delegateInjectionPoint, this).getProxyClass();
@@ -153,19 +160,19 @@ public class DecoratorImpl<T> extends ManagedBean<T> implements WeldDecorator<T>
 //        return subclassed;
 //    }
 
-    @Override
-    protected void checkDelegateInjectionPoints() {
-        for (WeldInjectionPoint<?, ?> injectionPoint : getDelegateInjectionPoints()) {
-            if (injectionPoint instanceof MethodInjectionPoint<?, ?> && !injectionPoint.getAnnotated().isAnnotationPresent(Inject.class)) {
-                throw new DefinitionException(DELEGATE_ON_NON_INITIALIZER_METHOD, injectionPoint);
-            }
-        }
-        if (getDelegateInjectionPoints().size() == 0) {
-            throw new DefinitionException(NO_DELEGATE_FOR_DECORATOR, getEnhancedAnnotated());
-        } else if (getDelegateInjectionPoints().size() > 1) {
-            throw new DefinitionException(TOO_MANY_DELEGATES_FOR_DECORATOR, getEnhancedAnnotated());
-        }
-    }
+//    @Override
+//    protected void checkDelegateInjectionPoints() {
+//        for (WeldInjectionPoint<?, ?> injectionPoint : getDelegateInjectionPoints()) {
+//            if (injectionPoint instanceof MethodInjectionPoint<?, ?> && !injectionPoint.getAnnotated().isAnnotationPresent(Inject.class)) {
+//                throw new DefinitionException(DELEGATE_ON_NON_INITIALIZER_METHOD, injectionPoint);
+//            }
+//        }
+//        if (getDelegateInjectionPoints().size() == 0) {
+//            throw new DefinitionException(NO_DELEGATE_FOR_DECORATOR, getEnhancedAnnotated());
+//        } else if (getDelegateInjectionPoints().size() > 1) {
+//            throw new DefinitionException(TOO_MANY_DELEGATES_FOR_DECORATOR, getEnhancedAnnotated());
+//        }
+//    }
 
     protected void initDelegateBindings() {
         this.delegateBindings = new HashSet<Annotation>();
@@ -202,53 +209,53 @@ public class DecoratorImpl<T> extends ManagedBean<T> implements WeldDecorator<T>
         }
     }
 
-    private void checkAbstractMethods() {
-        if (isSubclassed()) {
-            EnhancedAnnotatedType<?> delegateInjectionPointEnhancedAnnotatedType = ClassTransformer.instance(beanManager).getEnhancedAnnotatedType(Reflections.getRawType(delegateInjectionPoint.getType()));
-            for (EnhancedAnnotatedMethod<?, ?> method : getEnhancedAnnotated().getEnhancedMethods()) {
-                if (Reflections.isAbstract(((AnnotatedMethod<?>) method).getJavaMember())) {
-                    MethodSignature methodSignature = method.getSignature();
-                    if (delegateInjectionPointEnhancedAnnotatedType.getEnhancedMethod(methodSignature) == null) {
-                        throw new DefinitionException(ABSTRACT_METHOD_MUST_MATCH_DECORATED_TYPE, method.getSignature(), this, getEnhancedAnnotated().getName());
-                    }
-                }
-            }
-        }
-    }
+//    private void checkAbstractMethods() {
+//        if (isSubclassed()) {
+//            EnhancedAnnotatedType<?> delegateInjectionPointEnhancedAnnotatedType = ClassTransformer.instance(beanManager).getEnhancedAnnotatedType(Reflections.getRawType(delegateInjectionPoint.getType()));
+//            for (EnhancedAnnotatedMethod<?, ?> method : getEnhancedAnnotated().getEnhancedMethods()) {
+//                if (Reflections.isAbstract(((AnnotatedMethod<?>) method).getJavaMember())) {
+//                    MethodSignature methodSignature = method.getSignature();
+//                    if (delegateInjectionPointEnhancedAnnotatedType.getEnhancedMethod(methodSignature) == null) {
+//                        throw new DefinitionException(ABSTRACT_METHOD_MUST_MATCH_DECORATED_TYPE, method.getSignature(), this, getEnhancedAnnotated().getName());
+//                    }
+//                }
+//            }
+//        }
+//    }
 
-    @Override
-    public InjectionTarget<T> getInjectionTarget() {
-        final InjectionTarget<T> delegate = super.getInjectionTarget();
-        if(delegateFieldInjectionPoint != null) {
-            return new ForwardingInjectionTarget<T>() {
-                @Override
-                protected InjectionTarget<T> delegate() {
-                    return delegate;
-                }
-
-                @Override
-                public void inject(final T instance, final CreationalContext<T> ctx) {
-                    super.inject(instance, ctx);
-
-                    if(delegateFieldInjectionPoint != null) {
-                        if(instance instanceof DecoratorProxy) {
-
-                            //this code is only applicable if the delegate is injected into a field
-                            //as the proxy can't intercept the delegate when setting the field
-                            //we need to now read the delegate from the field
-
-                            //this is only needed for fields, as constructor and method injection are handed
-                            //at injection time
-                            final Object delegate = RuntimeAnnotatedMembers.getFieldValue(delegateFieldInjectionPoint.getAnnotated(), instance);
-                            final ProxyMethodHandler handler = new ProxyMethodHandler(new TargetBeanInstance(delegate), DecoratorImpl.this);
-                            ((ProxyObject)instance).setHandler(handler);
-                        }
-                    }
-                }
-            };
-        }
-        return delegate;
-    }
+//    @Override
+//    public InjectionTarget<T> getInjectionTarget() {
+//        final InjectionTarget<T> delegate = super.getInjectionTarget();
+//        if(delegateFieldInjectionPoint != null) {
+//            return new ForwardingInjectionTarget<T>() {
+//                @Override
+//                protected InjectionTarget<T> delegate() {
+//                    return delegate;
+//                }
+//
+//                @Override
+//                public void inject(final T instance, final CreationalContext<T> ctx) {
+//                    super.inject(instance, ctx);
+//
+//                    if(delegateFieldInjectionPoint != null) {
+//                        if(instance instanceof DecoratorProxy) {
+//
+//                            //this code is only applicable if the delegate is injected into a field
+//                            //as the proxy can't intercept the delegate when setting the field
+//                            //we need to now read the delegate from the field
+//
+//                            //this is only needed for fields, as constructor and method injection are handed
+//                            //at injection time
+//                            final Object delegate = RuntimeAnnotatedMembers.getFieldValue(delegateFieldInjectionPoint.getAnnotated(), instance);
+//                            final ProxyMethodHandler handler = new ProxyMethodHandler(new TargetBeanInstance(delegate), DecoratorImpl.this);
+//                            ((ProxyObject)instance).setHandler(handler);
+//                        }
+//                    }
+//                }
+//            };
+//        }
+//        return delegate;
+//    }
 
     public Set<Annotation> getDelegateQualifiers() {
         return delegateBindings;

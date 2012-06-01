@@ -40,6 +40,7 @@ import javax.enterprise.inject.Specializes;
 import javax.enterprise.inject.Typed;
 import javax.enterprise.inject.spi.Annotated;
 import javax.enterprise.inject.spi.BeanAttributes;
+import javax.enterprise.inject.spi.InjectionPoint;
 import javax.enterprise.inject.spi.InjectionTarget;
 import javax.enterprise.inject.spi.ProcessBeanAttributes;
 import javax.enterprise.inject.spi.Producer;
@@ -54,6 +55,7 @@ import org.jboss.weld.injection.WeldInjectionPoint;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.metadata.cache.MetaAnnotationStore;
 import org.jboss.weld.util.BeansClosure;
+import org.jboss.weld.util.InjectionPoints;
 import org.jboss.weld.util.collections.ArraySet;
 import org.slf4j.cal10n.LocLogger;
 
@@ -85,7 +87,7 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
      */
     public AbstractBean(BeanAttributes<T> attributes, String idSuffix, BeanManagerImpl beanManager, ServiceRegistry services) {
         super(attributes, idSuffix, beanManager);
-        this.injectionPoints = new ArraySet<WeldInjectionPoint<?, ?>>();
+        this.injectionPoints = new ArraySet<WeldInjectionPoint<?, ?>>(); // TODO: remove this entirely and delegate to underlying producer instead
         this.delegateInjectionPoints = new ArraySet<WeldInjectionPoint<?, ?>>();
         this.newInjectionPoints = new ArraySet<WeldInjectionPoint<?, ?>>();
         this.services = services;
@@ -123,7 +125,7 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
     public void internalInitialize(BeanDeployerEnvironment environment) {
         preInitialize();
         log.trace(CREATING_BEAN, getType());
-        checkDelegateInjectionPoints();
+//        checkDelegateInjectionPoints();
         if (getScope() != null) {
             proxyRequired = getBeanManager().getServices().get(MetaAnnotationStore.class).getScopeModel(getScope()).isNormal();
         } else {
@@ -134,11 +136,11 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
         log.trace(USING_SCOPE, getScope(), this);
     }
 
-    protected void checkDelegateInjectionPoints() {
-        if (this.delegateInjectionPoints.size() > 0) {
-            throw new DefinitionException(DELEGATE_NOT_ON_DECORATOR, this);
-        }
-    }
+//    protected void checkDelegateInjectionPoints() {
+//        if (this.delegateInjectionPoints.size() > 0) {
+//            throw new DefinitionException(DELEGATE_NOT_ON_DECORATOR, this);
+//        }
+//    }
 
     @Override
     public void initializeAfterBeanDiscovery() {
@@ -146,6 +148,10 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
     }
 
     protected abstract void checkType();
+
+    protected void addInjectionPoint(InjectionPoint injectionPoint) {
+        addInjectionPoint(InjectionPoints.getWeldInjectionPoint(injectionPoint));
+    }
 
     protected void addInjectionPoint(WeldInjectionPoint<?, ?> injectionPoint) {
         if (injectionPoint.isDelegate()) {
@@ -157,8 +163,8 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
         injectionPoints.add(injectionPoint);
     }
 
-    protected void addInjectionPoints(Iterable<? extends WeldInjectionPoint<?, ?>> injectionPoints) {
-        for (WeldInjectionPoint<?, ?> injectionPoint : injectionPoints) {
+    protected void addInjectionPoints(Iterable<? extends InjectionPoint> injectionPoints) {
+        for (InjectionPoint injectionPoint : injectionPoints) {
             addInjectionPoint(injectionPoint);
         }
     }

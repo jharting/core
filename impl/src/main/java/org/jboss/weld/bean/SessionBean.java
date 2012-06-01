@@ -138,6 +138,8 @@ public class SessionBean<T> extends AbstractClassBean<T> {
         this.ejbDescriptor = ejbDescriptor;
 //        initInitializerMethods(beanManager);
 //        initInjectableFields(beanManager);
+      setInjectionTarget(beanManager.createInjectionTarget(getEnhancedAnnotated(), this));
+      addInjectionPoints(getInjectionTarget().getInjectionPoints());
     }
 
     /**
@@ -151,7 +153,8 @@ public class SessionBean<T> extends AbstractClassBean<T> {
         checkConflictingRoles();
         checkObserverMethods();
         checkScopeAllowed();
-        setInjectionTarget(beanManager.createInjectionTarget(getEnhancedAnnotated(), this));
+//        setInjectionTarget(beanManager.createInjectionTarget(getEnhancedAnnotated(), this));
+//        addInjectionPoints(getInjectionTarget().getInjectionPoints());
     }
 
 //    private class SessionBeanInjectionTarget implements InjectionTarget<T> {
@@ -187,11 +190,11 @@ public class SessionBean<T> extends AbstractClassBean<T> {
 //        }
 //    }
 
-    @Override
-    public void initializeAfterBeanDiscovery() {
-        super.initializeAfterBeanDiscovery();
-        registerInterceptors();
-    }
+//    @Override
+//    public void initializeAfterBeanDiscovery() {
+//        super.initializeAfterBeanDiscovery();
+//        registerInterceptors();
+//    }
 
 //    protected T createInstance(CreationalContext<T> ctx) {
 //        return getConstructor().newInstance(beanManager, ctx);
@@ -380,12 +383,12 @@ public class SessionBean<T> extends AbstractClassBean<T> {
         return true;
     }
 
-    protected void registerInterceptors() {
-        InterceptionModel<ClassMetadata<?>, ?> model = beanManager.getInterceptorModelRegistry().get(ejbDescriptor.getBeanClass());
-        if (model != null) {
-            getBeanManager().getServices().get(EjbServices.class).registerInterceptors(getEjbDescriptor().delegate(), new InterceptorBindingsAdapter(model));
-        }
-    }
+//    protected void registerInterceptors() {
+//        InterceptionModel<ClassMetadata<?>, ?> model = beanManager.getInterceptorModelRegistry().get(ejbDescriptor.getBeanClass());
+//        if (model != null) {
+//            getBeanManager().getServices().get(EjbServices.class).registerInterceptors(getEjbDescriptor().delegate(), new InterceptorBindingsAdapter(model));
+//        }
+//    }
 
     @Override
     public String toString() {

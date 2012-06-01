@@ -124,7 +124,7 @@ public class Decorators {
                 if (injectionPoint instanceof MethodInjectionPoint<?, ?> && !injectionPoint.getAnnotated().isAnnotationPresent(Inject.class)) {
                     throw new DefinitionException(DELEGATE_ON_NON_INITIALIZER_METHOD, injectionPoint);
                 }
-                result = InjectionPoints.getWeldInjectionPoints(injectionPoint);
+                result = InjectionPoints.getWeldInjectionPoint(injectionPoint);
             }
         }
         if (result == null) {
