@@ -114,6 +114,7 @@ import org.jboss.weld.exceptions.InconsistentSpecializationException;
 import org.jboss.weld.exceptions.NullableDependencyException;
 import org.jboss.weld.exceptions.UnproxyableResolutionException;
 import org.jboss.weld.exceptions.UnserializableDependencyException;
+import org.jboss.weld.injection.producer.AbstractMemberProducer;
 import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionModel;
@@ -191,12 +192,18 @@ public class Validator implements Service {
                 }
             }
             // for each producer bean validate its disposer method
-            if (bean instanceof AbstractProducerBean<?, ?, ?> && ((AbstractProducerBean<?, ?, ?>)bean).getDisposalMethod() != null) {
-                DisposalMethod<?, ?> disposalMethod = ((AbstractProducerBean<?, ?, ?>)bean).getDisposalMethod();
-                for (InjectionPoint ip : disposalMethod.getInjectionPoints()) {
-                    // pass the producer bean instead of the disposal method bean
-                    validateInjectionPointForDefinitionErrors(ip, bean, beanManager);
-                    validateInjectionPointForDeploymentProblems(ip, bean, beanManager);
+            // TODO enable disposer method validation again
+            if (bean instanceof AbstractProducerBean<?, ?, ?>) {
+                AbstractProducerBean<?, ?, ?> producerBean = Reflections.<AbstractProducerBean<?, ?, ?>>cast(bean);
+                if (producerBean.getProducer() instanceof AbstractMemberProducer<?, ?>) {
+                    AbstractMemberProducer<?, ?> producer = Reflections.<AbstractMemberProducer<?, ?>>cast(producerBean.getProducer());
+                    if (producer.getDisposalMethod() != null) {
+                        for (InjectionPoint ip : producer.getDisposalMethod().getInjectionPoints()) {
+                            // pass the producer bean instead of the disposal method bean
+                            validateInjectionPointForDefinitionErrors(ip, bean, beanManager);
+                            validateInjectionPointForDeploymentProblems(ip, bean, beanManager);
+                        }
+                    }
                 }
             }
         }

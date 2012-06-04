@@ -31,6 +31,7 @@ import javax.enterprise.inject.spi.BeanAttributes;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedField;
 import org.jboss.weld.bean.AbstractClassBean;
+import org.jboss.weld.bean.DisposalMethod;
 import org.jboss.weld.bean.ProducerField;
 import org.jboss.weld.bean.builtin.CallableMethodHandler;
 import org.jboss.weld.bean.proxy.BeanInstance;
@@ -96,8 +97,8 @@ public class EEResourceProducerField<X, T> extends ProducerField<X, T> {
      * @param manager       the current manager
      * @return A producer field
      */
-    public static <X, T> EEResourceProducerField<X, T> of(BeanAttributes<T> attributes, EnhancedAnnotatedField<T, ? super X> field, AbstractClassBean<X> declaringBean, BeanManagerImpl manager, ServiceRegistry services) {
-        return new EEResourceProducerField<X, T>(attributes, field, declaringBean, manager, services);
+    public static <X, T> EEResourceProducerField<X, T> of(BeanAttributes<T> attributes, EnhancedAnnotatedField<T, ? super X> field, AbstractClassBean<X> declaringBean, DisposalMethod<X, ?> disposalMethod, BeanManagerImpl manager, ServiceRegistry services) {
+        return new EEResourceProducerField<X, T>(attributes, field, declaringBean, disposalMethod, manager, services);
     }
 
     private final WeldInjectionPoint<?, ?> injectionPoint;
@@ -106,8 +107,8 @@ public class EEResourceProducerField<X, T> extends ProducerField<X, T> {
 
     private final Class<T> rawType;
 
-    protected EEResourceProducerField(BeanAttributes<T> attributes, EnhancedAnnotatedField<T, ? super X> field, AbstractClassBean<X> declaringBean, BeanManagerImpl manager, ServiceRegistry services) {
-        super(attributes, field, declaringBean, manager, services);
+    protected EEResourceProducerField(BeanAttributes<T> attributes, EnhancedAnnotatedField<T, ? super X> field, AbstractClassBean<X> declaringBean, DisposalMethod<X, ?> disposalMethod, BeanManagerImpl manager, ServiceRegistry services) {
+        super(attributes, field, declaringBean, disposalMethod, manager, services);
         this.rawType = field.getJavaClass();
         this.injectionPoint = InjectionPointFactory.instance().createFieldInjectionPoint(field, declaringBean, declaringBean.getBeanClass(), manager);
     }

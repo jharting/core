@@ -102,11 +102,11 @@ public abstract class RIBean<T> extends CommonBean<T> implements PassivationCapa
 
     public abstract boolean isProxyRequired();
 
-    public abstract Set<WeldInjectionPoint<?, ?>> getWeldInjectionPoints();
+//    public abstract Set<WeldInjectionPoint<?, ?>> getWeldInjectionPoints();
 
-    public Set<InjectionPoint> getInjectionPoints() {
-        return cast(getWeldInjectionPoints());
-    }
+//    public Set<InjectionPoint> getInjectionPoints() {
+//        return cast(getWeldInjectionPoints());
+//    }
 
     public abstract RIBean<?> getSpecializedBean();
 

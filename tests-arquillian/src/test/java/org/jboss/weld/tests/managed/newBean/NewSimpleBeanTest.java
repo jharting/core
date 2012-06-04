@@ -43,6 +43,7 @@ import javax.enterprise.inject.New;
 import javax.enterprise.inject.spi.AnnotatedConstructor;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
+import javax.enterprise.inject.spi.InjectionPoint;
 import javax.enterprise.inject.spi.InjectionTarget;
 import javax.inject.Inject;
 
@@ -130,8 +131,8 @@ public class NewSimpleBeanTest {
     @Test
     public void testNewBeanHasSameInjectedFieldsAsWrappedBean() {
         initNewBean();
-        Set<? extends WeldInjectionPoint<?, ?>> wrappedBeanInjectionPoints = wrappedSimpleBean.getWeldInjectionPoints();
-        Set<? extends WeldInjectionPoint<?, ?>> newBeanInjectionPoints = newSimpleBean.getWeldInjectionPoints();
+        Set<InjectionPoint> wrappedBeanInjectionPoints = wrappedSimpleBean.getInjectionPoints();
+        Set<InjectionPoint> newBeanInjectionPoints = newSimpleBean.getInjectionPoints();
         Assert.assertEquals(wrappedBeanInjectionPoints, newBeanInjectionPoints);
     }
 

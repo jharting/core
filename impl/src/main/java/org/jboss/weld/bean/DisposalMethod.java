@@ -25,6 +25,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import javax.enterprise.context.spi.CreationalContext;
@@ -47,6 +48,7 @@ import org.jboss.weld.injection.MethodInjectionPoint;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.util.Beans;
 import org.jboss.weld.util.InjectionPoints;
+import org.jboss.weld.util.collections.ListToSet;
 import org.jboss.weld.util.reflection.Reflections;
 import org.jboss.weld.util.reflection.SecureReflections;
 
@@ -69,7 +71,7 @@ public class DisposalMethod<X, T> extends AbstractReceiverBean<X, T, Method> {
         this.disposalMethodInjectionPoint = InjectionPointFactory.instance().createMethodInjectionPoint(disposalMethod, declaringBean, declaringBean.getBeanClass(), true, beanManager);
         this.enhancedAnnotatedMethod = disposalMethod;
         initType(disposalMethod);
-        addInjectionPoints(InjectionPoints.filterOutSpecialParameterInjectionPoints(disposalMethodInjectionPoint.getParameterInjectionPoints()));
+//        addInjectionPoints(InjectionPoints.filterOutSpecialParameterInjectionPoints(disposalMethodInjectionPoint.getParameterInjectionPoints()));
         checkDisposalMethod();
     }
 
@@ -115,7 +117,7 @@ public class DisposalMethod<X, T> extends AbstractReceiverBean<X, T, Method> {
 
     @Override
     public void cleanupAfterBoot() {
-        super.cleanupAfterBoot();
+//        super.cleanupAfterBoot();
         this.enhancedAnnotatedMethod = null;
     }
 
@@ -219,6 +221,11 @@ public class DisposalMethod<X, T> extends AbstractReceiverBean<X, T, Method> {
     @Override
     public String toString() {
         return "Disposer method [" + getDisposesParameter().getDeclaringCallable() + "]";
+    }
+
+    @Override
+    public Set<InjectionPoint> getInjectionPoints() {
+        return disposalMethodInjectionPoint.getInjectionPoints();
     }
 
 //    @Override

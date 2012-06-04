@@ -151,9 +151,9 @@ public class DecoratorImpl<T> extends ManagedBean<T> implements WeldDecorator<T>
 //        }
     }
 
-    protected Class<T> createEnhancedSubclass() {
-        return new DecoratorProxyFactory<T>(getEnhancedAnnotated().getJavaClass(), delegateInjectionPoint, this).getProxyClass();
-    }
+//    protected Class<T> createEnhancedSubclass() {
+//        return new DecoratorProxyFactory<T>(getEnhancedAnnotated().getJavaClass(), delegateInjectionPoint, this).getProxyClass();
+//    }
 
 //    @Override
 //    protected boolean isSubclassed() {

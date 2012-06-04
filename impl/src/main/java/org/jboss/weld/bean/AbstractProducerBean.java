@@ -55,6 +55,7 @@ import org.jboss.weld.exceptions.DefinitionException;
 import org.jboss.weld.exceptions.IllegalProductException;
 import org.jboss.weld.exceptions.WeldException;
 import org.jboss.weld.injection.CurrentInjectionPoint;
+import org.jboss.weld.injection.producer.AbstractMemberProducer;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.metadata.cache.MetaAnnotationStore;
 import org.jboss.weld.util.Beans;
@@ -93,9 +94,9 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
     // Serialization cache for produced types at runtime
     private ConcurrentMap<Class<?>, Boolean> serializationCheckCache;
 
-    private DisposalMethod<X, ?> disposalMethodBean;
+//    private DisposalMethod<X, ?> disposalMethodBean;
 
-    private CurrentInjectionPoint currentInjectionPoint;
+//    private CurrentInjectionPoint currentInjectionPoint;
 
     /**
      * Constructor
@@ -106,6 +107,7 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
     public AbstractProducerBean(BeanAttributes<T> attributes, String idSuffix, AbstractClassBean<X> declaringBean, BeanManagerImpl beanManager, ServiceRegistry services) {
         super(attributes, idSuffix, declaringBean, beanManager, services);
         serializationCheckCache = new MapMaker().makeComputingMap(SERIALIZABLE_CHECK);
+//        currentInjectionPoint = beanManager.getServices().get(CurrentInjectionPoint.class);
     }
 
     @Override
@@ -153,8 +155,8 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
         super.internalInitialize(environment);
         checkProducerReturnType();
         initPassivationCapable();
-        initDisposalMethod(environment);
-        currentInjectionPoint = getBeanManager().getServices().get(CurrentInjectionPoint.class);
+//        initDisposalMethod(environment);
+//        currentInjectionPoint = getBeanManager().getServices().get(CurrentInjectionPoint.class);
     }
 
     private void initPassivationCapable() {
@@ -163,7 +165,7 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
         } else {
             this.passivationCapableBean = true;
         }
-        if (getBeanManager().getServices().get(MetaAnnotationStore.class).getScopeModel(getScope()).isNormal()) {
+        if (isNormalScoped()) {
             this.passivationCapableDependency = true;
         } else if (getScope().equals(Dependent.class) && passivationCapableBean) {
             this.passivationCapableDependency = true;
@@ -201,7 +203,7 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
             if (passivating && !instanceSerializable) {
                 throw new IllegalProductException(NON_SERIALIZABLE_PRODUCT_ERROR, getProducer());
             }
-            InjectionPoint injectionPoint = currentInjectionPoint.peek();
+            InjectionPoint injectionPoint = beanManager.getServices().get(CurrentInjectionPoint.class).peek();
             if (injectionPoint != null && injectionPoint.getBean() != null) {
                 if (!instanceSerializable && Beans.isPassivatingScope(injectionPoint.getBean(), beanManager)) {
                     if (injectionPoint.getMember() instanceof Field) {
@@ -253,7 +255,7 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
      * @returns The instance
      */
     public T create(final CreationalContext<T> creationalContext) {
-        storeMetadata(creationalContext);
+//        storeMetadata(creationalContext);
 
         T instance = getProducer().produce(creationalContext);
         checkReturnValue(instance);
@@ -261,130 +263,117 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
     }
 
     public void destroy(T instance, CreationalContext<T> creationalContext) {
-        boolean loadMetadata = (disposalMethodBean != null) && (disposalMethodBean.hasInjectionPointMetadataParameter());
+//        boolean loadMetadata = (disposalMethodBean != null) && (disposalMethodBean.hasInjectionPointMetadataParameter());
         // load InjectionPoint from CreationalContext
-        if (loadMetadata) {
-            WeldCreationalContext<T> ctx = getWeldCreationalContext(creationalContext);
-            InjectionPoint ip = ctx.loadInjectionPoint();
-            if (ip == null) {
-                throw new IllegalStateException("Unable to restore InjectionPoint instance.");
-            }
-            currentInjectionPoint.push(ip);
-        }
+//        if (loadMetadata) {
+//            WeldCreationalContext<T> ctx = getWeldCreationalContext(creationalContext);
+//            InjectionPoint ip = ctx.loadInjectionPoint();
+//            if (ip == null) {
+//                throw new IllegalStateException("Unable to restore InjectionPoint instance.");
+//            }
+//            currentInjectionPoint.push(ip);
+//        }
         try {
-            if (producer instanceof AbstractProducerBean.AbstractProducer) {
-                Reflections.<AbstractProducer>cast(producer).dispose(instance, creationalContext);
+            if (producer instanceof AbstractMemberProducer<?, ?>) {
+                Reflections.<AbstractMemberProducer<?, T>>cast(producer).dispose(instance, creationalContext);
             } else {
                 producer.dispose(instance);
             }
         } finally {
-            if (loadMetadata) {
-                currentInjectionPoint.pop();
-            }
+//            if (loadMetadata) {
+//                currentInjectionPoint.pop();
+//            }
             if (getDeclaringBean().isDependent()) {
                 creationalContext.release();
             }
         }
     }
 
-    /**
-     * If metadata is required by the disposer method, store it within the CreationalContext.
-     */
-    private void storeMetadata(CreationalContext<T> creationalContext) {
-        if (disposalMethodBean != null) {
-            if (disposalMethodBean.hasBeanMetadataParameter()) {
-                WeldCreationalContext<T> ctx = getWeldCreationalContext(creationalContext);
-                checkValue(ctx.getContextual());
-                ctx.storeContextual();
-            }
-            if (disposalMethodBean.hasInjectionPointMetadataParameter()) {
-                InjectionPoint ip = currentInjectionPoint.peek();
-                checkValue(ip);
-                getWeldCreationalContext(creationalContext).storeInjectionPoint(ip);
-            }
-        }
-    }
+//    /**
+//     * If metadata is required by the disposer method, store it within the CreationalContext.
+//     */
+//    private void storeMetadata(CreationalContext<T> creationalContext) {
+//        if (disposalMethodBean != null) {
+//            if (disposalMethodBean.hasBeanMetadataParameter()) {
+//                WeldCreationalContext<T> ctx = getWeldCreationalContext(creationalContext);
+//                checkValue(ctx.getContextual());
+//                ctx.storeContextual();
+//            }
+//            if (disposalMethodBean.hasInjectionPointMetadataParameter()) {
+//                InjectionPoint ip = currentInjectionPoint.peek();
+//                checkValue(ip);
+//                getWeldCreationalContext(creationalContext).storeInjectionPoint(ip);
+//            }
+//        }
+//    }
 
-    private <A> WeldCreationalContext<A> getWeldCreationalContext(CreationalContext<A> ctx) {
-        if (ctx instanceof WeldCreationalContext<?>) {
-            return Reflections.cast(ctx);
-        }
-        throw new IllegalArgumentException("Unable to store values in " + ctx);
-    }
+//    private <A> WeldCreationalContext<A> getWeldCreationalContext(CreationalContext<A> ctx) {
+//        if (ctx instanceof WeldCreationalContext<?>) {
+//            return Reflections.cast(ctx);
+//        }
+//        throw new IllegalArgumentException("Unable to store values in " + ctx);
+//    }
 
-    private void checkValue(Object object) {
-        InjectionPoint ip = currentInjectionPoint.peek();
-        if (ip != null && Beans.isPassivatingScope(ip.getBean(), beanManager) && !(isTypeSerializable(object.getClass()))) {
-            throw new IllegalArgumentException("Unable to store non-serializable " + object + " as a dependency of " + this);
-        }
-    }
-
-    /**
-     * Initializes the remove method
-     */
-    protected void initDisposalMethod(BeanDeployerEnvironment environment) {
-        Set<DisposalMethod<X, ?>> disposalBeans = environment.<X>resolveDisposalBeans(getTypes(), getQualifiers(), getDeclaringBean());
-
-        if (disposalBeans.size() == 1) {
-            this.disposalMethodBean = disposalBeans.iterator().next();
-        } else if (disposalBeans.size() > 1) {
-            throw new DefinitionException(MULTIPLE_DISPOSAL_METHODS, this, disposalBeans);
-        }
-    }
+//    private void checkValue(Object object) {
+//        InjectionPoint ip = currentInjectionPoint.peek();
+//        if (ip != null && Beans.isPassivatingScope(ip.getBean(), beanManager) && !(isTypeSerializable(object.getClass()))) {
+//            throw new IllegalArgumentException("Unable to store non-serializable " + object + " as a dependency of " + this);
+//        }
+//    }
 
     /**
      * Returns the disposal method
      *
      * @return The method representation
      */
-    public DisposalMethod<X, ?> getDisposalMethod() {
-        return disposalMethodBean;
-    }
+//    public DisposalMethod<X, ?> getDisposalMethod() {
+//        return disposalMethodBean;
+//    }
 
     /**
      * Partial implementation of the {@link Producer} for common functionality.
      *
      * @author Jozef Hartinger
      */
-    protected abstract class AbstractProducer implements Producer<T> {
-        // according to the spec, anyone may call this method
-        // we are not able to metadata since we do not have the CreationalContext of the producer bean
-        // we create a new CreationalContext just for the invocation of the disposer method
-        public void dispose(T instance) {
-            CreationalContext<T> ctx = beanManager.createCreationalContext(AbstractProducerBean.this);
-            try {
-                dispose(instance, ctx);
-            } finally {
-                ctx.release();
-            }
-        }
-
-        // invoke a disposer method - if exists
-        // if the disposer metod requires bean metadata, it can be loaded from the CreationalContext
-        public void dispose(T instance, CreationalContext<T> ctx) {
-            if (disposalMethodBean != null) {
-                disposalMethodBean.invokeDisposeMethod(instance, ctx);
-            }
-        }
-
-        public Set<InjectionPoint> getInjectionPoints() {
-            return cast(getWeldInjectionPoints());
-        }
-
-        @Override
-        public T produce(CreationalContext<T> ctx) {
-            CreationalContext<X> receiverCreationalContext = beanManager.createCreationalContext(getDeclaringBean());
-            Object receiver = getReceiver(ctx, receiverCreationalContext);
-
-            try {
-                return produce(receiver, ctx);
-            } finally {
-                receiverCreationalContext.release();
-            }
-        }
-
-        protected abstract T produce(Object receiver, CreationalContext<T> ctx);
-    }
+//    protected abstract class AbstractProducer implements Producer<T> {
+//        // according to the spec, anyone may call this method
+//        // we are not able to metadata since we do not have the CreationalContext of the producer bean
+//        // we create a new CreationalContext just for the invocation of the disposer method
+//        public void dispose(T instance) {
+//            CreationalContext<T> ctx = beanManager.createCreationalContext(AbstractProducerBean.this);
+//            try {
+//                dispose(instance, ctx);
+//            } finally {
+//                ctx.release();
+//            }
+//        }
+//
+//        // invoke a disposer method - if exists
+//        // if the disposer metod requires bean metadata, it can be loaded from the CreationalContext
+//        public void dispose(T instance, CreationalContext<T> ctx) {
+//            if (disposalMethodBean != null) {
+//                disposalMethodBean.invokeDisposeMethod(instance, ctx);
+//            }
+//        }
+//
+//        public Set<InjectionPoint> getInjectionPoints() {
+//            return cast(getWeldInjectionPoints());
+//        }
+//
+//        @Override
+//        public T produce(CreationalContext<T> ctx) {
+//            CreationalContext<X> receiverCreationalContext = beanManager.createCreationalContext(getDeclaringBean());
+//            Object receiver = getReceiver(ctx, receiverCreationalContext);
+//
+//            try {
+//                return produce(receiver, ctx);
+//            } finally {
+//                receiverCreationalContext.release();
+//            }
+//        }
+//
+//        protected abstract T produce(Object receiver, CreationalContext<T> ctx);
+//    }
 
 //    @Override
 //    public boolean hasDefaultProducer() {

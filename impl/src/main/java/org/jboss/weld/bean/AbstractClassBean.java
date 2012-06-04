@@ -275,7 +275,6 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
 
     @Override
     public void cleanupAfterBoot() {
-        super.cleanupAfterBoot();
         this.enhancedAnnotatedItem = null;
     }
 

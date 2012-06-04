@@ -38,6 +38,7 @@ import org.jboss.weld.context.SerializableContextualInstanceImpl;
 import org.jboss.weld.context.WeldCreationalContext;
 import org.jboss.weld.context.api.ContextualInstance;
 import org.jboss.weld.injection.producer.AbstractInjectionTarget;
+import org.jboss.weld.injection.producer.AbstractMemberProducer;
 import org.jboss.weld.serialization.spi.ContextualStore;
 
 /**
@@ -89,12 +90,14 @@ public class DependentContextImpl implements DependentContext {
                 }
             }
             if (contextual instanceof AbstractProducerBean<?, ?, ?>) {
-                AbstractProducerBean<?, ?, ?> producer = (AbstractProducerBean<?, ?, ?>) contextual;
-                if (producer.getDisposalMethod() == null) {
-                    // TODO: check if the we have the default producer
-                    // there is no disposal method to call when destroying this dependent instance
-                    // therefore, we do not need to keep the reference
-                    return;
+                AbstractProducerBean<?, ?, ?> producerBean = (AbstractProducerBean<?, ?, ?>) contextual;
+                if (producerBean.getProducer() instanceof AbstractMemberProducer<?, ?>) {
+                    AbstractMemberProducer<?, ?> producer = (AbstractMemberProducer<?, ?>) producerBean.getProducer();
+                    if (producer.getDisposalMethod() == null) {
+                        // there is no disposal method to call when destroying this dependent instance
+                        // therefore, we do not need to keep the reference
+                        return;
+                    }
                 }
             }
         }

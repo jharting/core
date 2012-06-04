@@ -73,10 +73,10 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
     private static final LocLogger log = loggerFactory().getLogger(BEAN);
     protected Class<T> type;
 
-    private Set<WeldInjectionPoint<?, ?>> injectionPoints;
-    private Set<WeldInjectionPoint<?, ?>> delegateInjectionPoints;
-    private Set<WeldInjectionPoint<?, ?>> newInjectionPoints;
-    private final ServiceRegistry services;
+//    private Set<WeldInjectionPoint<?, ?>> injectionPoints;
+//    private Set<WeldInjectionPoint<?, ?>> delegateInjectionPoints;
+//    private Set<WeldInjectionPoint<?, ?>> newInjectionPoints;
+//    private final ServiceRegistry services;
     private boolean preInitialized;
     private boolean proxyRequired;
 
@@ -87,18 +87,18 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
      */
     public AbstractBean(BeanAttributes<T> attributes, String idSuffix, BeanManagerImpl beanManager, ServiceRegistry services) {
         super(attributes, idSuffix, beanManager);
-        this.injectionPoints = new ArraySet<WeldInjectionPoint<?, ?>>(); // TODO: remove this entirely and delegate to underlying producer instead
-        this.delegateInjectionPoints = new ArraySet<WeldInjectionPoint<?, ?>>();
-        this.newInjectionPoints = new ArraySet<WeldInjectionPoint<?, ?>>();
-        this.services = services;
+//        this.injectionPoints = new ArraySet<WeldInjectionPoint<?, ?>>(); // TODO: remove this entirely and delegate to underlying producer instead
+//        this.delegateInjectionPoints = new ArraySet<WeldInjectionPoint<?, ?>>();
+//        this.newInjectionPoints = new ArraySet<WeldInjectionPoint<?, ?>>();
+//        this.services = services;
     }
-
-    @Override
-    public void cleanupAfterBoot() {
-        injectionPoints = immutableSet(injectionPoints);
-        delegateInjectionPoints = immutableSet(delegateInjectionPoints);
-        newInjectionPoints = immutableSet(newInjectionPoints);
-    }
+//
+//    @Override
+//    public void cleanupAfterBoot() {
+//        injectionPoints = immutableSet(injectionPoints);
+//        delegateInjectionPoints = immutableSet(delegateInjectionPoints);
+//        newInjectionPoints = immutableSet(newInjectionPoints);
+//    }
 
     /**
      * Initializes specialization. This method is called before {@link ProcessBeanAttributes} is fired and also after the event
@@ -153,25 +153,25 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
         addInjectionPoint(InjectionPoints.getWeldInjectionPoint(injectionPoint));
     }
 
-    protected void addInjectionPoint(WeldInjectionPoint<?, ?> injectionPoint) {
-        if (injectionPoint.isDelegate()) {
-            this.delegateInjectionPoints.add(injectionPoint);
-        }
-        if (injectionPoint.getQualifier(New.class) != null) {
-            this.newInjectionPoints.add(injectionPoint);
-        }
-        injectionPoints.add(injectionPoint);
-    }
-
-    protected void addInjectionPoints(Iterable<? extends InjectionPoint> injectionPoints) {
-        for (InjectionPoint injectionPoint : injectionPoints) {
-            addInjectionPoint(injectionPoint);
-        }
-    }
-
-    protected Set<WeldInjectionPoint<?, ?>> getDelegateInjectionPoints() {
-        return delegateInjectionPoints;
-    }
+//    protected void addInjectionPoint(WeldInjectionPoint<?, ?> injectionPoint) {
+//        if (injectionPoint.isDelegate()) {
+//            this.delegateInjectionPoints.add(injectionPoint);
+//        }
+//        if (injectionPoint.getQualifier(New.class) != null) {
+//            this.newInjectionPoints.add(injectionPoint);
+//        }
+//        injectionPoints.add(injectionPoint);
+//    }
+//
+//    protected void addInjectionPoints(Iterable<? extends InjectionPoint> injectionPoints) {
+//        for (InjectionPoint injectionPoint : injectionPoints) {
+//            addInjectionPoint(injectionPoint);
+//        }
+//    }
+//
+//    protected Set<WeldInjectionPoint<?, ?>> getDelegateInjectionPoints() {
+//        return delegateInjectionPoints;
+//    }
 
     protected static Set<Type> getTypedTypes(Map<Class<?>, Type> typeClosure, Class<?> rawType, Typed typed) {
         Set<Type> types = new HashSet<Type>();
@@ -251,14 +251,14 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
     @Override
     public abstract AbstractBean<?, ?> getSpecializedBean();
 
-    @Override
-    public Set<WeldInjectionPoint<?, ?>> getWeldInjectionPoints() {
-        return injectionPoints;
-    }
-
-    public Set<WeldInjectionPoint<?, ?>> getNewInjectionPoints() {
-        return newInjectionPoints;
-    }
+//    @Override
+//    public Set<WeldInjectionPoint<?, ?>> getWeldInjectionPoints() {
+//        return injectionPoints;
+//    }
+//
+//    public Set<WeldInjectionPoint<?, ?>> getNewInjectionPoints() {
+//        return newInjectionPoints;
+//    }
 
     /**
      * Gets the type of the bean
@@ -289,9 +289,9 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
         return proxyRequired;
     }
 
-    protected ServiceRegistry getServices() {
-        return services;
-    }
+//    protected ServiceRegistry getServices() {
+//        return services;
+//    }
 
 //    /**
 //     * Returns true if the bean uses the default {@link Producer} ( or {@link InjectionTarget}). The method returns false if the

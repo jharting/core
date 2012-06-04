@@ -139,7 +139,7 @@ public class SessionBean<T> extends AbstractClassBean<T> {
 //        initInitializerMethods(beanManager);
 //        initInjectableFields(beanManager);
       setInjectionTarget(beanManager.createInjectionTarget(getEnhancedAnnotated(), this));
-      addInjectionPoints(getInjectionTarget().getInjectionPoints());
+//      addInjectionPoints(getInjectionTarget().getInjectionPoints());
     }
 
     /**
