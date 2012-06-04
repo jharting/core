@@ -302,7 +302,7 @@ public class BeanDeployerEnvironment {
 
     public void addDisposesMethod(DisposalMethod<?, ?> bean) {
         allDisposalBeans.add(bean);
-        addNewBeansFromInjectionPoints(bean);
+        addNewBeansFromInjectionPoints(bean.getInjectionPoints());
     }
 
     public void addObserverMethod(ObserverInitializationContext<?, ?> observerInitializer) {

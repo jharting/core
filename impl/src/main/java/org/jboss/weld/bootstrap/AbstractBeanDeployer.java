@@ -239,7 +239,6 @@ public class AbstractBeanDeployer<E extends BeanDeployerEnvironment> {
     protected <X> void createDisposalMethods(AbstractClassBean<X> declaringBean, EnhancedAnnotatedType<X> annotatedClass) {
         for (EnhancedAnnotatedMethod<?, ? super X> method : annotatedClass.getDeclaredEnhancedMethodsWithAnnotatedParameters(Disposes.class)) {
             DisposalMethod<? super X, ?> disposalBean = DisposalMethod.of(manager, method, declaringBean);
-            disposalBean.initialize(getEnvironment());
             getEnvironment().addDisposesMethod(disposalBean);
         }
     }

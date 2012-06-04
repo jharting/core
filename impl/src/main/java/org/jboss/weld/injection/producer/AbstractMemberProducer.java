@@ -134,7 +134,8 @@ public abstract class AbstractMemberProducer<X, T> implements Producer<T> {
                 loadMetadataForDisposerInvocation(ctx);
             }
             try {
-                disposalMethod.invokeDisposeMethod(instance, ctx);
+                Object receiver = getReceiver(ctx, ctx);
+                disposalMethod.invokeDisposeMethod(receiver, instance, ctx);
             } finally {
                 if (disposalMethod.hasInjectionPointMetadataParameter()) {
                     currentInjectionPointService.pop();

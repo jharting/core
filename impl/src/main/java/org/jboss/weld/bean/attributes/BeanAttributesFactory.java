@@ -33,7 +33,6 @@ import java.util.Set;
 
 import javax.enterprise.context.Dependent;
 import javax.enterprise.context.NormalScope;
-import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.spi.BeanAttributes;
 import javax.inject.Named;
 import javax.inject.Qualifier;
@@ -42,7 +41,6 @@ import javax.inject.Scope;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotated;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedField;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedMethod;
-import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedParameter;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
 import org.jboss.weld.ejb.InternalEjbDescriptor;
 import org.jboss.weld.exceptions.DefinitionException;
@@ -79,26 +77,6 @@ public class BeanAttributesFactory {
         return new BeanAttributesBuilder<T>(annotated, Reflections.<InternalEjbDescriptor<T>> cast(descriptor), manager).build();
     }
 
-    /**
-     * Creates new {@link BeanAttributes} to represent a disposer method.
-     */
-    public static <T, X> BeanAttributes<T> forDisposerMethod(EnhancedAnnotatedMethod<T, ? super X> annotated, BeanManagerImpl manager) {
-        BeanAttributesBuilder<T> builder = new BeanAttributesBuilder<T>();
-        EnhancedAnnotatedParameter<?, ?> disposerParameter = null;
-        if (annotated.getEnhancedParameters(Disposes.class).isEmpty()) {
-            throw new IllegalArgumentException("Not a disposer method");
-        }
-        disposerParameter = annotated.getEnhancedParameters().get(0);
-        builder.nullable = false; // not relevant
-        builder.initStereotypes(annotated, manager);
-        builder.initAlternative(annotated);
-        builder.name = null; // not relevant
-        builder.qualifiers = disposerParameter.getMetaAnnotations(Qualifier.class);
-        builder.scope = null;
-        builder.types = disposerParameter.getTypeClosure();
-        return builder.build();
-    }
-
     public static <T> BeanAttributes<T> forNewBean(boolean nullable, Set<Type> types) {
         return new ImmutableBeanAttributes<T>(nullable, Collections.<Class<? extends Annotation>> emptySet(), false, null, Collections.<Annotation> emptySet(), types,
                 Dependent.class);
@@ -122,9 +100,6 @@ public class BeanAttributesFactory {
         private Set<Type> types;
         private Class<? extends Annotation> scope;
         private BeanManagerImpl manager;
-
-        private BeanAttributesBuilder() {
-        }
 
         private BeanAttributesBuilder(EnhancedAnnotated<T, ?> annotated, InternalEjbDescriptor<T> descriptor, BeanManagerImpl manager) {
             this.manager = manager;
