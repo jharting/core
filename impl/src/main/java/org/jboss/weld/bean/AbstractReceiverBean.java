@@ -16,29 +16,20 @@
  */
 package org.jboss.weld.bean;
 
-import static org.jboss.weld.logging.Category.BEAN;
-import static org.jboss.weld.logging.LoggerFactory.loggerFactory;
-import static org.jboss.weld.logging.messages.BeanMessage.CIRCULAR_CALL;
-
 import java.lang.reflect.Member;
 
-import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.AnnotatedMember;
 import javax.enterprise.inject.spi.BeanAttributes;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedMember;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
-import org.jboss.weld.context.WeldCreationalContext;
 import org.jboss.weld.manager.BeanManagerImpl;
-import org.slf4j.cal10n.LocLogger;
 
 /**
  * @author pmuir
  * @author alesj
  */
 public abstract class AbstractReceiverBean<X, T, S extends Member> extends AbstractBean<T, S> {
-
-    private static final LocLogger log = loggerFactory().getLogger(BEAN);
 
     private final AbstractClassBean<X> declaringBean;
 
@@ -55,24 +46,24 @@ public abstract class AbstractReceiverBean<X, T, S extends Member> extends Abstr
      * @param receiverCreationalCOntext the creational context of the receiver
      * @return The receiver
      */
-    protected Object getReceiver(CreationalContext<?> productCreationalContext, CreationalContext<?> receiverCreationalContext) {
-        // This is a bit dangerous, as it means that producer methods can end up
-        // executing on partially constructed instances. Also, it's not required
-        // by the spec...
-        if (getAnnotated().isStatic()) {
-            return null;
-        } else {
-            if (productCreationalContext instanceof WeldCreationalContext<?>) {
-                WeldCreationalContext<?> creationalContextImpl = (WeldCreationalContext<?>) productCreationalContext;
-                final X incompleteInstance = creationalContextImpl.getIncompleteInstance(getDeclaringBean());
-                if (incompleteInstance != null) {
-                    log.warn(CIRCULAR_CALL, getAnnotated(), getDeclaringBean());
-                    return incompleteInstance;
-                }
-            }
-            return beanManager.getReference(getDeclaringBean(), receiverCreationalContext, true);
-        }
-    }
+//    protected Object getReceiver(CreationalContext<?> productCreationalContext, CreationalContext<?> receiverCreationalContext) {
+//        // This is a bit dangerous, as it means that producer methods can end up
+//        // executing on partially constructed instances. Also, it's not required
+//        // by the spec...
+//        if (getAnnotated().isStatic()) {
+//            return null;
+//        } else {
+//            if (productCreationalContext instanceof WeldCreationalContext<?>) {
+//                WeldCreationalContext<?> creationalContextImpl = (WeldCreationalContext<?>) productCreationalContext;
+//                final X incompleteInstance = creationalContextImpl.getIncompleteInstance(getDeclaringBean());
+//                if (incompleteInstance != null) {
+//                    log.warn(CIRCULAR_CALL, getAnnotated(), getDeclaringBean());
+//                    return incompleteInstance;
+//                }
+//            }
+//            return beanManager.getReference(getDeclaringBean(), receiverCreationalContext, true);
+//        }
+//    }
 
 
     /**

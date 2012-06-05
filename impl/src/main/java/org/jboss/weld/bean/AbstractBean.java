@@ -73,10 +73,6 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
     private static final LocLogger log = loggerFactory().getLogger(BEAN);
     protected Class<T> type;
 
-//    private Set<WeldInjectionPoint<?, ?>> injectionPoints;
-//    private Set<WeldInjectionPoint<?, ?>> delegateInjectionPoints;
-//    private Set<WeldInjectionPoint<?, ?>> newInjectionPoints;
-//    private final ServiceRegistry services;
     private boolean preInitialized;
     private boolean proxyRequired;
 

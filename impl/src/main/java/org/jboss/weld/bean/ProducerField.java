@@ -100,7 +100,6 @@ public class ProducerField<X, T> extends AbstractProducerBean<X, T, Field> {
             protected boolean isTypeSerializable(Object object) {
                 return isTypeSerializable(object.getClass());
             }
-
         });
     }
 
@@ -154,7 +153,6 @@ public class ProducerField<X, T> extends AbstractProducerBean<X, T, Field> {
 
     @Override
     public void cleanupAfterBoot() {
-//        super.cleanupAfterBoot();
         this.enhancedAnnotatedField = null;
     }
 

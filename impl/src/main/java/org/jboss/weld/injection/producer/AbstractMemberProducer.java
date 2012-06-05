@@ -26,7 +26,6 @@ import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.AnnotatedMember;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.InjectionPoint;
-import javax.enterprise.inject.spi.Producer;
 
 import org.jboss.weld.bean.DisposalMethod;
 import org.jboss.weld.context.WeldCreationalContext;
@@ -36,7 +35,7 @@ import org.jboss.weld.util.Beans;
 import org.jboss.weld.util.reflection.Reflections;
 import org.slf4j.cal10n.LocLogger;
 
-public abstract class AbstractMemberProducer<X, T> implements Producer<T> {
+public abstract class AbstractMemberProducer<X, T> extends AbstractProducer<T> {
 
     private static final LocLogger log = loggerFactory().getLogger(BEAN);
 

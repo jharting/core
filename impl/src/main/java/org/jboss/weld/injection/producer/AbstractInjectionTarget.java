@@ -16,7 +16,6 @@
  */
 package org.jboss.weld.injection.producer;
 
-import static org.jboss.weld.logging.messages.BeanMessage.DELEGATE_NOT_ON_DECORATOR;
 import static org.jboss.weld.logging.messages.BeanMessage.FINAL_BEAN_CLASS_WITH_DECORATORS_NOT_ALLOWED;
 import static org.jboss.weld.logging.messages.BeanMessage.FINAL_BEAN_CLASS_WITH_INTERCEPTORS_NOT_ALLOWED;
 import static org.jboss.weld.logging.messages.BeanMessage.INVOCATION_ERROR;
@@ -60,7 +59,7 @@ import org.jboss.weld.util.collections.WeldCollections;
  * @author Pete Muir
  * @author Jozef Hartinger
  */
-public abstract class AbstractInjectionTarget<T> implements InjectionTarget<T> {
+public abstract class AbstractInjectionTarget<T> extends AbstractProducer<T> implements InjectionTarget<T> {
 
     protected final BeanManagerImpl beanManager;
     private final AnnotatedType<T> type;
@@ -101,14 +100,6 @@ public abstract class AbstractInjectionTarget<T> implements InjectionTarget<T> {
     protected void checkType(EnhancedAnnotatedType<T> type) {
         if (type.isAnonymousClass() || (type.isMemberClass() && !type.isStatic())) {
             throw new DefinitionException(SIMPLE_BEAN_AS_NON_STATIC_INNER_CLASS_NOT_ALLOWED, type);
-        }
-    }
-
-    protected void checkDelegateInjectionPoints() {
-        for (InjectionPoint injectionPoint : injectionPoints) {
-            if (injectionPoint.isDelegate()) {
-                throw new DefinitionException(DELEGATE_NOT_ON_DECORATOR, this);
-            }
         }
     }
 

@@ -46,6 +46,7 @@ public abstract class ProducerMethodProducer<X, T> extends AbstractMemberProduce
         super(disposalMethod);
         this.method = InjectionPointFactory.instance().createMethodInjectionPoint(enhancedAnnotatedMethod, getBean(), getDeclaringBean().getBeanClass(), false, getBeanManager());
         checkProducerMethod(enhancedAnnotatedMethod);
+        checkDelegateInjectionPoints();
     }
 
     /**
