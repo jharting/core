@@ -41,11 +41,13 @@ import java.util.concurrent.ConcurrentMap;
 import javax.enterprise.context.Dependent;
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.Produces;
+import javax.enterprise.inject.spi.AnnotatedMember;
 import javax.enterprise.inject.spi.BeanAttributes;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.enterprise.inject.spi.Producer;
 import javax.inject.Inject;
 
+import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedMember;
 import org.jboss.weld.bootstrap.BeanDeployerEnvironment;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
 import org.jboss.weld.exceptions.DefinitionException;
@@ -71,7 +73,7 @@ import com.google.common.collect.MapMaker;
  * @author David Allen
  * @author Jozef Hartinger
  */
-public abstract class AbstractProducerBean<X, T, S extends Member> extends AbstractReceiverBean<X, T, S> {
+public abstract class AbstractProducerBean<X, T, S extends Member> extends AbstractBean<T, S> {
 
     private static final Function<Class<?>, Boolean> SERIALIZABLE_CHECK = new Function<Class<?>, Boolean>() {
 
@@ -83,6 +85,8 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
 
     // Underlying Producer represented by this bean
     private Producer<T> producer;
+
+    private final AbstractClassBean<X> declaringBean;
 
     // Passivation flags
     private boolean passivationCapableBean;
@@ -98,7 +102,8 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
      * @param beanManager   The Bean manager
      */
     public AbstractProducerBean(BeanAttributes<T> attributes, String idSuffix, AbstractClassBean<X> declaringBean, BeanManagerImpl beanManager, ServiceRegistry services) {
-        super(attributes, idSuffix, declaringBean, beanManager, services);
+        super(attributes, idSuffix, beanManager);
+        this.declaringBean = declaringBean;
         serializationCheckCache = new MapMaker().makeComputingMap(SERIALIZABLE_CHECK);
     }
 
@@ -263,4 +268,19 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
             }
         }
     }
+
+    /**
+     * Returns the declaring bean
+     *
+     * @return The bean representation
+     */
+    public AbstractClassBean<X> getDeclaringBean() {
+        return declaringBean;
+    }
+
+    @Override
+    public abstract AnnotatedMember<? super X> getAnnotated();
+
+    @Override
+    public abstract EnhancedAnnotatedMember<T, ?, S> getEnhancedAnnotated();
 }

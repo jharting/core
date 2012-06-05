@@ -119,8 +119,8 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
      * @param type        The type
      * @param beanManager The Bean manager
      */
-    protected AbstractClassBean(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> type, String idSuffix, BeanManagerImpl beanManager, ServiceRegistry services) {
-        super(attributes, idSuffix, beanManager, services);
+    protected AbstractClassBean(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> type, String idSuffix, BeanManagerImpl beanManager) {
+        super(attributes, idSuffix, beanManager);
         this.enhancedAnnotatedItem = type;
         this.annotatedType = type.slim();
         initType();

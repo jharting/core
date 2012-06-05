@@ -184,11 +184,11 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
      * @param beanManager the current manager
      * @return A Web Bean
      */
-    public static <T> ManagedBean<T> of(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> clazz, BeanManagerImpl beanManager, ServiceRegistry services) {
+    public static <T> ManagedBean<T> of(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> clazz, BeanManagerImpl beanManager) {
         if (clazz.isDiscovered()) {
-            return new ManagedBean<T>(attributes, clazz, createSimpleId(ManagedBean.class.getSimpleName(), clazz), beanManager, services);
+            return new ManagedBean<T>(attributes, clazz, createSimpleId(ManagedBean.class.getSimpleName(), clazz), beanManager);
         } else {
-            return new ManagedBean<T>(attributes, clazz, createId(ManagedBean.class.getSimpleName(), clazz), beanManager, services);
+            return new ManagedBean<T>(attributes, clazz, createId(ManagedBean.class.getSimpleName(), clazz), beanManager);
         }
     }
 
@@ -210,8 +210,8 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
      * @param type        The type of the bean
      * @param beanManager The Bean manager
      */
-    protected ManagedBean(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> type, String idSuffix, BeanManagerImpl beanManager, ServiceRegistry services) {
-        super(attributes, type, idSuffix, beanManager, services);
+    protected ManagedBean(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> type, String idSuffix, BeanManagerImpl beanManager) {
+        super(attributes, type, idSuffix, beanManager);
 //        initInitializerMethods(beanManager);
 //        initInjectableFields(beanManager);
         this.proxiable = Proxies.isTypesProxyable(type.getTypeClosure());

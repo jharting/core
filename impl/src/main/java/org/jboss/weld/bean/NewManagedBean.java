@@ -42,11 +42,11 @@ public class NewManagedBean<T> extends ManagedBean<T> implements NewBean {
      * @param beanManager The Bean manager
      * @return a new NewSimpleBean instance
      */
-    public static <T> NewManagedBean<T> of(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> clazz, BeanManagerImpl beanManager, ServiceRegistry services) {
+    public static <T> NewManagedBean<T> of(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> clazz, BeanManagerImpl beanManager) {
         if (clazz.isDiscovered()) {
-            return new NewManagedBean<T>(attributes, clazz, createSimpleId(NewManagedBean.class.getSimpleName(), clazz), beanManager, services);
+            return new NewManagedBean<T>(attributes, clazz, createSimpleId(NewManagedBean.class.getSimpleName(), clazz), beanManager);
         } else {
-            return new NewManagedBean<T>(attributes, clazz, createId(NewManagedBean.class.getSimpleName(), clazz), beanManager, services);
+            return new NewManagedBean<T>(attributes, clazz, createId(NewManagedBean.class.getSimpleName(), clazz), beanManager);
         }
     }
 
@@ -58,8 +58,8 @@ public class NewManagedBean<T> extends ManagedBean<T> implements NewBean {
      * @param type        An annotated class
      * @param beanManager The Bean manager
      */
-    protected NewManagedBean(BeanAttributes<T> attributes, final EnhancedAnnotatedType<T> type, String idSuffix, BeanManagerImpl beanManager, ServiceRegistry services) {
-        super(attributes, type, idSuffix, beanManager, services);
+    protected NewManagedBean(BeanAttributes<T> attributes, final EnhancedAnnotatedType<T> type, String idSuffix, BeanManagerImpl beanManager) {
+        super(attributes, type, idSuffix, beanManager);
         this.bindings = new HashSet<Annotation>();
         this.bindings.add(new NewLiteral() {
 

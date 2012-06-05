@@ -89,7 +89,7 @@ import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedConstructor;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedMethod;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
 import org.jboss.weld.annotated.enhanced.MethodSignature;
-import org.jboss.weld.bean.AbstractReceiverBean;
+import org.jboss.weld.bean.AbstractProducerBean;
 import org.jboss.weld.bean.DecoratorImpl;
 import org.jboss.weld.bean.InterceptorImpl;
 import org.jboss.weld.bean.RIBean;
@@ -398,8 +398,8 @@ public class Beans {
                 }
                 return false;
             }
-        } else if (bean instanceof AbstractReceiverBean<?,?,?>) {
-            AbstractReceiverBean<?, ?, ?> receiverBean = (AbstractReceiverBean<?, ?, ?>) bean;
+        } else if (bean instanceof AbstractProducerBean<?,?,?>) {
+            AbstractProducerBean<?, ?, ?> receiverBean = (AbstractProducerBean<?, ?, ?>) bean;
             return isBeanEnabled(receiverBean.getDeclaringBean(), enabled);
         } else if (bean instanceof DecoratorImpl<?>) {
             return enabled.getDecorator(bean.getBeanClass()) != null;
@@ -476,9 +476,9 @@ public class Beans {
      * Check if the given producer/disposer method of producer field is defined on a specialized bean and is therefore disabled.
      */
     public static boolean isSuppressedBySpecialization(Bean<?> bean, BeanManagerImpl manager) {
-        if (bean instanceof AbstractReceiverBean<?, ?, ?>) {
+        if (bean instanceof AbstractProducerBean<?, ?, ?>) {
             BeansClosure closure = BeansClosure.getClosure(manager);
-            if (closure.isSpecialized(Reflections.<AbstractReceiverBean<?, ?, ?>>cast(bean).getDeclaringBean())) {
+            if (closure.isSpecialized(Reflections.<AbstractProducerBean<?, ?, ?>>cast(bean).getDeclaringBean())) {
                 // if a bean is specialized, its producer methods are not enabled (WELD-977)
                 return true;
             }

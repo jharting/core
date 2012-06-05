@@ -81,7 +81,7 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
      *
      * @param beanManager The Bean manager
      */
-    public AbstractBean(BeanAttributes<T> attributes, String idSuffix, BeanManagerImpl beanManager, ServiceRegistry services) {
+    public AbstractBean(BeanAttributes<T> attributes, String idSuffix, BeanManagerImpl beanManager) {
         super(attributes, idSuffix, beanManager);
 //        this.injectionPoints = new ArraySet<WeldInjectionPoint<?, ?>>(); // TODO: remove this entirely and delegate to underlying producer instead
 //        this.delegateInjectionPoints = new ArraySet<WeldInjectionPoint<?, ?>>();

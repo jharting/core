@@ -61,7 +61,7 @@ public class AccessibleManagerResolutionTest {
 
     private <T> void addBean(BeanManagerImpl manager, Class<T> c) {
         EnhancedAnnotatedType<T> clazz = classTransformer.getEnhancedAnnotatedType(c);
-        RIBean<?> bean = ManagedBean.of(BeanAttributesFactory.forBean(clazz, manager), clazz, manager, services);
+        RIBean<?> bean = ManagedBean.of(BeanAttributesFactory.forBean(clazz, manager), clazz, manager);
         manager.addBean(bean);
         manager.getBeanResolver().clear();
         BeanDeployerEnvironment environment = BeanDeployerEnvironment.newEnvironment(new EjbDescriptors(), manager);

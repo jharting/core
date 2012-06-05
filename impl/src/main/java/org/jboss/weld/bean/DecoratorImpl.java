@@ -98,8 +98,8 @@ public class DecoratorImpl<T> extends ManagedBean<T> implements WeldDecorator<T>
      * @param beanManager the current manager
      * @return a Bean
      */
-    public static <T> DecoratorImpl<T> of(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> clazz, BeanManagerImpl beanManager, ServiceRegistry services) {
-        return new DecoratorImpl<T>(attributes, clazz, beanManager, services);
+    public static <T> DecoratorImpl<T> of(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> clazz, BeanManagerImpl beanManager) {
+        return new DecoratorImpl<T>(attributes, clazz, beanManager);
     }
 
     private Map<MethodSignature, InvokableAnnotatedMethod<?>> decoratorMethods;
@@ -112,8 +112,8 @@ public class DecoratorImpl<T> extends ManagedBean<T> implements WeldDecorator<T>
 
 //    private final boolean subclassed;
 
-    protected DecoratorImpl(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> type, BeanManagerImpl beanManager, ServiceRegistry services) {
-        super(attributes, type, new StringBuilder().append(Decorator.class.getSimpleName()).append(BEAN_ID_SEPARATOR).append(type.getName()).toString(), beanManager, services);
+    protected DecoratorImpl(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> type, BeanManagerImpl beanManager) {
+        super(attributes, type, new StringBuilder().append(Decorator.class.getSimpleName()).append(BEAN_ID_SEPARATOR).append(type.getName()).toString(), beanManager);
 //        this.subclassed = type.isAbstract();
     }
 

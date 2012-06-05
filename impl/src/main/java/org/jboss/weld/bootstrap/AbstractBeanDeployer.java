@@ -289,25 +289,25 @@ public class AbstractBeanDeployer<E extends BeanDeployerEnvironment> {
 
     protected <T> ManagedBean<T> createManagedBean(EnhancedAnnotatedType<T> weldClass) {
         BeanAttributes<T> attributes = BeanAttributesFactory.forBean(weldClass, getManager());
-        ManagedBean<T> bean = ManagedBean.of(attributes, weldClass, manager, services);
+        ManagedBean<T> bean = ManagedBean.of(attributes, weldClass, manager);
         getEnvironment().addManagedBean(bean);
         return bean;
     }
 
     protected <T> void createNewManagedBean(EnhancedAnnotatedType<T> annotatedClass) {
         // TODO resolve existing beans first
-        getEnvironment().addManagedBean(NewManagedBean.of(BeanAttributesFactory.forNewManagedBean(annotatedClass, manager), annotatedClass, manager, services));
+        getEnvironment().addManagedBean(NewManagedBean.of(BeanAttributesFactory.forNewManagedBean(annotatedClass, manager), annotatedClass, manager));
     }
 
     protected <T> void createDecorator(EnhancedAnnotatedType<T> weldClass) {
         BeanAttributes<T> attributes = BeanAttributesFactory.forBean(weldClass, getManager());
-        DecoratorImpl<T> bean = DecoratorImpl.of(attributes, weldClass, manager, services);
+        DecoratorImpl<T> bean = DecoratorImpl.of(attributes, weldClass, manager);
         getEnvironment().addDecorator(bean);
     }
 
     protected <T> void createInterceptor(EnhancedAnnotatedType<T> weldClass) {
         BeanAttributes<T> attributes = BeanAttributesFactory.forBean(weldClass, getManager());
-        InterceptorImpl<T> bean = InterceptorImpl.of(attributes, weldClass, manager, services);
+        InterceptorImpl<T> bean = InterceptorImpl.of(attributes, weldClass, manager);
         getEnvironment().addInterceptor(bean);
     }
 
@@ -317,14 +317,14 @@ public class AbstractBeanDeployer<E extends BeanDeployerEnvironment> {
     protected <T> SessionBean<T> createSessionBean(InternalEjbDescriptor<T> descriptor, EnhancedAnnotatedType<T> weldClass) {
         // TODO Don't create enterprise bean if it has no local interfaces!
         BeanAttributes<T> attributes = BeanAttributesFactory.forSessionBean(weldClass, descriptor, getManager());
-        SessionBean<T> bean = SessionBean.of(attributes, descriptor, manager, weldClass, services);
+        SessionBean<T> bean = SessionBean.of(attributes, descriptor, manager, weldClass);
         getEnvironment().addSessionBean(bean);
         return bean;
     }
 
     protected <T> void createNewSessionBean(InternalEjbDescriptor<T> ejbDescriptor, BeanAttributes<?> originalAttributes) {
         BeanAttributes<T> attributes = Reflections.cast(BeanAttributesFactory.forNewSessionBean(originalAttributes));
-        getEnvironment().addSessionBean(NewSessionBean.of(attributes, ejbDescriptor, manager, services));
+        getEnvironment().addSessionBean(NewSessionBean.of(attributes, ejbDescriptor, manager));
     }
 
     protected boolean isEEResourceProducerField(EnhancedAnnotatedField<?, ?> field) {

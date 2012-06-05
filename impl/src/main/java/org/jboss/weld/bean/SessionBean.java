@@ -111,8 +111,8 @@ public class SessionBean<T> extends AbstractClassBean<T> {
      * @param type        the AnnotatedType to use
      * @return An Enterprise Web Bean
      */
-    public static <T> SessionBean<T> of(BeanAttributes<T> attributes, InternalEjbDescriptor<T> ejbDescriptor, BeanManagerImpl beanManager, EnhancedAnnotatedType<T> type, ServiceRegistry services) {
-        return new SessionBean<T>(attributes, type, ejbDescriptor, createId(SessionBean.class.getSimpleName(), ejbDescriptor, type), beanManager, services);
+    public static <T> SessionBean<T> of(BeanAttributes<T> attributes, InternalEjbDescriptor<T> ejbDescriptor, BeanManagerImpl beanManager, EnhancedAnnotatedType<T> type) {
+        return new SessionBean<T>(attributes, type, ejbDescriptor, createId(SessionBean.class.getSimpleName(), ejbDescriptor, type), beanManager);
     }
 
     protected static String createId(String beanType, InternalEjbDescriptor<?> ejbDescriptor) {
@@ -133,8 +133,8 @@ public class SessionBean<T> extends AbstractClassBean<T> {
      * @param type    The type of the bean
      * @param manager The Bean manager
      */
-    protected SessionBean(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> type, InternalEjbDescriptor<T> ejbDescriptor, String idSuffix, BeanManagerImpl manager, ServiceRegistry services) {
-        super(attributes, type, idSuffix, manager, services);
+    protected SessionBean(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> type, InternalEjbDescriptor<T> ejbDescriptor, String idSuffix, BeanManagerImpl manager) {
+        super(attributes, type, idSuffix, manager);
         this.ejbDescriptor = ejbDescriptor;
 //        initInitializerMethods(beanManager);
 //        initInjectableFields(beanManager);

@@ -44,9 +44,9 @@ public class NewSessionBean<T> extends SessionBean<T> implements NewBean {
      * @param beanManager The Bean manager
      * @return a new NewEnterpriseBean instance
      */
-    public static <T> NewSessionBean<T> of(BeanAttributes<T> attributes, InternalEjbDescriptor<T> ejbDescriptor, BeanManagerImpl beanManager, ServiceRegistry services) {
+    public static <T> NewSessionBean<T> of(BeanAttributes<T> attributes, InternalEjbDescriptor<T> ejbDescriptor, BeanManagerImpl beanManager) {
         EnhancedAnnotatedType<T> type = beanManager.getServices().get(ClassTransformer.class).getEnhancedAnnotatedType(ejbDescriptor.getBeanClass());
-        return new NewSessionBean<T>(attributes, type, ejbDescriptor, createId(NewSessionBean.class.getSimpleName(), ejbDescriptor), beanManager, services);
+        return new NewSessionBean<T>(attributes, type, ejbDescriptor, createId(NewSessionBean.class.getSimpleName(), ejbDescriptor), beanManager);
     }
 
     private Set<Annotation> bindings;
@@ -57,8 +57,8 @@ public class NewSessionBean<T> extends SessionBean<T> implements NewBean {
      * @param type        An annotated class
      * @param beanManager The Bean manager
      */
-    protected NewSessionBean(BeanAttributes<T> attributes, final EnhancedAnnotatedType<T> type, InternalEjbDescriptor<T> ejbDescriptor, String idSuffix, BeanManagerImpl beanManager, ServiceRegistry services) {
-        super(attributes, type, ejbDescriptor, idSuffix, beanManager, services);
+    protected NewSessionBean(BeanAttributes<T> attributes, final EnhancedAnnotatedType<T> type, InternalEjbDescriptor<T> ejbDescriptor, String idSuffix, BeanManagerImpl beanManager) {
+        super(attributes, type, ejbDescriptor, idSuffix, beanManager);
         this.bindings = new HashSet<Annotation>();
         this.bindings.add(new NewLiteral() {
 
