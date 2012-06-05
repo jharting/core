@@ -89,6 +89,7 @@ import javax.enterprise.inject.spi.InjectionPoint;
 import javax.enterprise.inject.spi.InjectionTarget;
 import javax.enterprise.inject.spi.Interceptor;
 import javax.enterprise.inject.spi.PassivationCapable;
+import javax.enterprise.inject.spi.Producer;
 import javax.inject.Named;
 import javax.inject.Scope;
 
@@ -376,14 +377,14 @@ public class Validator implements Service {
         }
     }
 
-    public void validateInjectionTargets(Collection<InjectionTarget<?>> injectionTargets, BeanManagerImpl beanManager) {
-        for (InjectionTarget<?> injectionTarget : injectionTargets) {
-            validateInjectionTarget(injectionTarget, beanManager);
+    public void validateProducers(Collection<Producer<?>> producers, BeanManagerImpl beanManager) {
+        for (Producer<?> producer : producers) {
+            validateProducer(producer, beanManager);
         }
     }
 
-    public void validateInjectionTarget(InjectionTarget<?> injectionTarget, BeanManagerImpl beanManager) {
-        for (InjectionPoint injectionPoint : injectionTarget.getInjectionPoints()) {
+    public void validateProducer(Producer<?> producer, BeanManagerImpl beanManager) {
+        for (InjectionPoint injectionPoint : producer.getInjectionPoints()) {
             validateInjectionPoint(injectionPoint, beanManager);
         }
     }
