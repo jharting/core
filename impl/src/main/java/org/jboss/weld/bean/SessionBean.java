@@ -20,72 +20,47 @@ import static org.jboss.weld.logging.messages.BeanMessage.CANNOT_DESTROY_ENTERPR
 import static org.jboss.weld.logging.messages.BeanMessage.CANNOT_DESTROY_NULL_BEAN;
 import static org.jboss.weld.logging.messages.BeanMessage.EJB_CANNOT_BE_DECORATOR;
 import static org.jboss.weld.logging.messages.BeanMessage.EJB_CANNOT_BE_INTERCEPTOR;
-import static org.jboss.weld.logging.messages.BeanMessage.EJB_NOT_FOUND;
 import static org.jboss.weld.logging.messages.BeanMessage.GENERIC_SESSION_BEAN_MUST_BE_DEPENDENT;
 import static org.jboss.weld.logging.messages.BeanMessage.MESSAGE_DRIVEN_BEANS_CANNOT_BE_MANAGED;
 import static org.jboss.weld.logging.messages.BeanMessage.OBSERVER_METHOD_MUST_BE_STATIC_OR_BUSINESS;
 import static org.jboss.weld.logging.messages.BeanMessage.PASSIVATING_BEAN_NEEDS_SERIALIZABLE_IMPL;
-import static org.jboss.weld.logging.messages.BeanMessage.PROXY_INSTANTIATION_BEAN_ACCESS_FAILED;
-import static org.jboss.weld.logging.messages.BeanMessage.PROXY_INSTANTIATION_FAILED;
 import static org.jboss.weld.logging.messages.BeanMessage.SCOPE_NOT_ALLOWED_ON_SINGLETON_BEAN;
 import static org.jboss.weld.logging.messages.BeanMessage.SCOPE_NOT_ALLOWED_ON_STATELESS_SESSION_BEAN;
 import static org.jboss.weld.logging.messages.BeanMessage.SPECIALIZING_ENTERPRISE_BEAN_MUST_EXTEND_AN_ENTERPRISE_BEAN;
-import static org.jboss.weld.util.reflection.Reflections.cast;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import javax.decorator.Decorator;
 import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.Dependent;
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanAttributes;
-import javax.enterprise.inject.spi.InjectionPoint;
-import javax.enterprise.inject.spi.InjectionTarget;
 import javax.interceptor.Interceptor;
 
-import org.jboss.weld.annotated.enhanced.MethodSignature;
-import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedMethod;
+import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
+import org.jboss.weld.annotated.enhanced.MethodSignature;
 import org.jboss.weld.annotated.enhanced.jlr.MethodSignatureImpl;
-import org.jboss.weld.bean.interceptor.InterceptorBindingsAdapter;
-import org.jboss.weld.bean.proxy.DecorationHelper;
 import org.jboss.weld.bean.proxy.EnterpriseBeanInstance;
-import org.jboss.weld.bean.proxy.EnterpriseBeanProxyMethodHandler;
-import org.jboss.weld.bean.proxy.EnterpriseProxyFactory;
-import org.jboss.weld.bean.proxy.EnterpriseTargetBeanInstance;
 import org.jboss.weld.bean.proxy.Marker;
-import org.jboss.weld.bean.proxy.ProxyFactory;
-import org.jboss.weld.bean.proxy.TargetBeanInstance;
 import org.jboss.weld.bootstrap.BeanDeployerEnvironment;
-import org.jboss.weld.bootstrap.api.ServiceRegistry;
 import org.jboss.weld.ejb.InternalEjbDescriptor;
 import org.jboss.weld.ejb.api.SessionObjectReference;
 import org.jboss.weld.ejb.spi.BusinessInterfaceDescriptor;
 import org.jboss.weld.ejb.spi.EjbServices;
-import org.jboss.weld.exceptions.CreationException;
 import org.jboss.weld.exceptions.DefinitionException;
 import org.jboss.weld.exceptions.DeploymentException;
 import org.jboss.weld.exceptions.IllegalArgumentException;
 import org.jboss.weld.exceptions.IllegalStateException;
-import org.jboss.weld.exceptions.WeldException;
-import org.jboss.weld.injection.InjectionContextImpl;
-import org.jboss.weld.injection.producer.ejb.SessionBeanInjectionTarget;
-import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
-import org.jboss.weld.interceptor.spi.model.InterceptionModel;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.metadata.cache.MetaAnnotationStore;
-import org.jboss.weld.serialization.spi.ContextualStore;
 import org.jboss.weld.util.AnnotatedTypes;
 import org.jboss.weld.util.Beans;
 import org.jboss.weld.util.BeansClosure;
 import org.jboss.weld.util.reflection.Formats;
-import org.jboss.weld.util.reflection.SecureReflections;
 
 /**
  * An enterprise bean representation
@@ -98,8 +73,6 @@ import org.jboss.weld.util.reflection.SecureReflections;
 public class SessionBean<T> extends AbstractClassBean<T> {
     // The EJB descriptor
     private final InternalEjbDescriptor<T> ejbDescriptor;
-
-//    private Class<T> proxyClass;
 
     private SessionBean<?> specializedBean;
 
@@ -136,10 +109,7 @@ public class SessionBean<T> extends AbstractClassBean<T> {
     protected SessionBean(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> type, InternalEjbDescriptor<T> ejbDescriptor, String idSuffix, BeanManagerImpl manager) {
         super(attributes, type, idSuffix, manager);
         this.ejbDescriptor = ejbDescriptor;
-//        initInitializerMethods(beanManager);
-//        initInjectableFields(beanManager);
-      setProducer(beanManager.createInjectionTarget(getEnhancedAnnotated(), this));
-//      addInjectionPoints(getInjectionTarget().getInjectionPoints());
+        setProducer(beanManager.createInjectionTarget(getEnhancedAnnotated(), this));
     }
 
     /**
@@ -148,61 +118,11 @@ public class SessionBean<T> extends AbstractClassBean<T> {
     @Override
     public void internalInitialize(BeanDeployerEnvironment environment) {
         super.internalInitialize(environment);
-//        initProxyClass();
         checkEJBTypeAllowed();
         checkConflictingRoles();
         checkObserverMethods();
         checkScopeAllowed();
-//        setInjectionTarget(beanManager.createInjectionTarget(getEnhancedAnnotated(), this));
-//        addInjectionPoints(getInjectionTarget().getInjectionPoints());
     }
-
-//    private class SessionBeanInjectionTarget implements InjectionTarget<T> {
-//
-//        public void inject(final T instance, final CreationalContext<T> ctx) {
-//            new InjectionContextImpl<T>(getBeanManager(), this, getAnnotated(), instance) {
-//
-//                public void proceed() {
-//                    Beans.injectFieldsAndInitializers(instance, ctx, getBeanManager(), getInjectableFields(), getInitializerMethods());
-//                }
-//
-//            }.run();
-//        }
-//
-//        public void postConstruct(T instance) {
-//            defaultPostConstruct(instance);
-//        }
-//
-//        public void preDestroy(T instance) {
-//            defaultPreDestroy(instance);
-//        }
-//
-//        public void dispose(T instance) {
-//            // No-op
-//        }
-//
-//        public Set<InjectionPoint> getInjectionPoints() {
-//            return cast(getWeldInjectionPoints());
-//        }
-//
-//        public T produce(CreationalContext<T> ctx) {
-//            return SessionBean.this.createInstance(ctx);
-//        }
-//    }
-
-//    @Override
-//    public void initializeAfterBeanDiscovery() {
-//        super.initializeAfterBeanDiscovery();
-//        registerInterceptors();
-//    }
-
-//    protected T createInstance(CreationalContext<T> ctx) {
-//        return getConstructor().newInstance(beanManager, ctx);
-//    }
-
-//    protected void initProxyClass() {
-//        this.proxyClass = new EnterpriseProxyFactory<T>(getEnhancedAnnotated().getJavaClass(), this).getProxyClass();
-//    }
 
     /**
      * Validates for non-conflicting roles
@@ -263,43 +183,7 @@ public class SessionBean<T> extends AbstractClassBean<T> {
      */
     public T create(final CreationalContext<T> creationalContext) {
         return getProducer().produce(creationalContext);
-//        try {
-//            T instance = SecureReflections.newInstance(proxyClass);
-//            creationalContext.push(instance);
-//            ProxyFactory.setBeanInstance(instance, new EnterpriseTargetBeanInstance(getAnnotated().getJavaClass(), new EnterpriseBeanProxyMethodHandler<T>(SessionBean.this, creationalContext)), this);
-//            if (hasDecorators()) {
-//                instance = applyDecorators(instance, creationalContext, null);
-//            }
-//            return instance;
-//        } catch (InstantiationException e) {
-//            throw new WeldException(PROXY_INSTANTIATION_FAILED, e, this);
-//        } catch (IllegalAccessException e) {
-//            throw new WeldException(PROXY_INSTANTIATION_BEAN_ACCESS_FAILED, e, this);
-//        } catch (Exception e) {
-//            throw new CreationException(EJB_NOT_FOUND, e, proxyClass);
-//        }
-
     }
-
-//    @Override
-//    protected T applyDecorators(T instance, CreationalContext<T> creationalContext, InjectionPoint originalInjectionPoint) {
-//        assert hasDecorators() : "Bean does not have decorators";
-//        //for EJBs, we apply decorators through a proxy
-//        T proxy = null;
-//        TargetBeanInstance beanInstance = new TargetBeanInstance(this, instance);
-//        DecorationHelper<T> decorationHelper = new DecorationHelper<T>(beanInstance, this, decoratorProxyFactory.getProxyClass(), beanManager, getServices().get(ContextualStore.class), getDecorators());
-//        DecorationHelper.push(decorationHelper);
-//        try {
-//            proxy = decorationHelper.getNextDelegate(originalInjectionPoint, creationalContext);
-//        } finally {
-//            DecorationHelper.pop();
-//        }
-//
-//        if (proxy == null) {
-//            throw new WeldException(PROXY_INSTANTIATION_FAILED, this);
-//        }
-//        return proxy;
-//    }
 
     public void destroy(T instance, CreationalContext<T> creationalContext) {
         if (instance == null) {
@@ -383,13 +267,6 @@ public class SessionBean<T> extends AbstractClassBean<T> {
         return true;
     }
 
-//    protected void registerInterceptors() {
-//        InterceptionModel<ClassMetadata<?>, ?> model = beanManager.getInterceptorModelRegistry().get(ejbDescriptor.getBeanClass());
-//        if (model != null) {
-//            getBeanManager().getServices().get(EjbServices.class).registerInterceptors(getEjbDescriptor().delegate(), new InterceptorBindingsAdapter(model));
-//        }
-//    }
-
     @Override
     public String toString() {
         return "Session bean [" + getBeanClass() + " with qualifiers [" + Formats.formatAnnotations(getQualifiers()) + "]; local interfaces are [" + Formats.formatBusinessInterfaceDescriptors(getEjbDescriptor().getLocalBusinessInterfaces()) + "]";
@@ -400,10 +277,5 @@ public class SessionBean<T> extends AbstractClassBean<T> {
     public boolean isProxyable() {
         return true;
     }
-
-//    @Override
-//    public boolean hasDefaultProducer() {
-//        return getInjectionTarget() instanceof SessionBeanInjectionTarget;
-//    }
 }
 
