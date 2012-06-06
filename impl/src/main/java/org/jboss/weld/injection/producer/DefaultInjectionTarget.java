@@ -113,10 +113,4 @@ public class DefaultInjectionTarget<T> extends AbstractInjectionTarget<T> {
             }
         }
     }
-
-    @Override
-    public String toString() {
-        return "WeldInjectionTarget for " + getType().getJavaClass();
-    }
-
 }

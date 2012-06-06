@@ -242,4 +242,18 @@ public abstract class AbstractInjectionTarget<T> extends AbstractProducer<T> imp
      * injection points within the injectionPoints set passed in as a parameter.
      */
     protected abstract Instantiator<T> initInstantiator(EnhancedAnnotatedType<T> type, Bean<T> bean, BeanManagerImpl beanManager, Set<InjectionPoint> injectionPoints);
+
+    @Override
+    public AnnotatedType<T> getAnnotated() {
+        return type;
+    }
+
+    @Override
+    public String toString() {
+        if (getBean() == null) {
+             return "InjectionTarget for " + getAnnotated();
+        } else {
+            return "InjectionTarget for " + getBean();
+        }
+    }
 }

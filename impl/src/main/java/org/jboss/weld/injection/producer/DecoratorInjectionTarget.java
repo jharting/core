@@ -26,6 +26,7 @@ import javax.enterprise.inject.spi.AnnotatedMethod;
 import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.InjectionPoint;
+import javax.enterprise.inject.spi.InjectionTarget;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedMethod;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
@@ -46,6 +47,13 @@ import org.jboss.weld.resources.ClassTransformer;
 import org.jboss.weld.util.Decorators;
 import org.jboss.weld.util.reflection.Reflections;
 
+/**
+ * {@link InjectionTarget} implementation used for decorators.
+ *
+ * @author Jozef Hartinger
+ *
+ * @param <T>
+ */
 public class DecoratorInjectionTarget<T> extends DefaultInjectionTarget<T> {
 
     private final WeldInjectionPoint<?, ?> delegateInjectionPoint;
@@ -89,7 +97,7 @@ public class DecoratorInjectionTarget<T> extends DefaultInjectionTarget<T> {
 
     @Override
     protected void checkDelegateInjectionPoints() {
-        // noop, delegate injection points are checked in Decorators#findDelegateInjectionPoint()
+        // noop, delegate injection points are checked in Decorators#findDelegateInjectionPoint() called within the constructor
     }
 
     @Override
@@ -98,7 +106,6 @@ public class DecoratorInjectionTarget<T> extends DefaultInjectionTarget<T> {
 
         if (delegateInjectionPoint instanceof FieldInjectionPoint<?, ?>) {
             if (instance instanceof DecoratorProxy) {
-
                 // this code is only applicable if the delegate is injected into a field
                 // as the proxy can't intercept the delegate when setting the field
                 // we need to now read the delegate from the field

@@ -35,6 +35,7 @@ import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.AnnotatedMember;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.InjectionPoint;
+import javax.enterprise.inject.spi.Producer;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedMember;
 import org.jboss.weld.bean.DisposalMethod;
@@ -46,6 +47,11 @@ import org.jboss.weld.util.Beans;
 import org.jboss.weld.util.reflection.Reflections;
 import org.slf4j.cal10n.LocLogger;
 
+/**
+ * Common functionality for {@link Producer}s backing producer fields and producer methods.
+ *
+ * @author Jozef Hartinger
+ */
 public abstract class AbstractMemberProducer<X, T> extends AbstractProducer<T> {
 
     private static final LocLogger log = loggerFactory().getLogger(BEAN);
@@ -213,4 +219,14 @@ public abstract class AbstractMemberProducer<X, T> extends AbstractProducer<T> {
 
     protected abstract T produce(Object receiver, CreationalContext<T> ctx);
 
+    @Override
+    public String toString() {
+        if (getDeclaringBean() == null) {
+            return "Producer for " + getAnnotated();
+        } else if (getBean() == null) {
+            return "Producer for " + getAnnotated() + " declared on " + getDeclaringBean();
+        } else {
+            return "Producer for " + getBean() + " declared on " + getDeclaringBean();
+        }
+    }
 }

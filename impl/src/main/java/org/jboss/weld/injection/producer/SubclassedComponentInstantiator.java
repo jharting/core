@@ -33,7 +33,6 @@ import org.jboss.weld.annotated.enhanced.jlr.EnhancedAnnotatedConstructorImpl;
 import org.jboss.weld.annotated.enhanced.jlr.MethodSignatureImpl;
 import org.jboss.weld.bean.proxy.InterceptedSubclassFactory;
 import org.jboss.weld.injection.ConstructorInjectionPoint;
-import org.jboss.weld.injection.InjectionPointFactory;
 import org.jboss.weld.injection.ProxyClassConstructorInjectionPointWrapper;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.resources.ClassTransformer;
