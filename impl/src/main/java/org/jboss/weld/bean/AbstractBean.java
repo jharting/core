@@ -139,8 +139,8 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
      */
     public void checkSpecialization() {
         if (isSpecializing()) {
-            if (getEnhancedAnnotated().isAnnotationPresent(Named.class) && getSpecializedBean().getName() != null) {
-                throw new DefinitionException(NAME_NOT_ALLOWED_ON_SPECIALIZATION, getEnhancedAnnotated());
+            if (getAnnotated().isAnnotationPresent(Named.class) && getSpecializedBean().getName() != null) {
+                throw new DefinitionException(NAME_NOT_ALLOWED_ON_SPECIALIZATION, getAnnotated());
             }
             for (Type type : getSpecializedBean().getTypes()) {
                 if (!getTypes().contains(type)) {
@@ -219,7 +219,7 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
 
     @Override
     public boolean isSpecializing() {
-        return getEnhancedAnnotated().isAnnotationPresent(Specializes.class);
+        return getAnnotated().isAnnotationPresent(Specializes.class);
     }
 
     @Override
