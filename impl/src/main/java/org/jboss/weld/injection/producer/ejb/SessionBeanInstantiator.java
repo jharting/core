@@ -34,6 +34,11 @@ import org.jboss.weld.injection.producer.Instantiator;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.util.reflection.SecureReflections;
 
+/**
+ * Instantiator implementation that instantiates a proxy for a session bean.
+ *
+ * @author Jozef Hartinger
+ */
 public class SessionBeanInstantiator<T> implements Instantiator<T> {
 
     private final Class<T> proxyClass;

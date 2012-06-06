@@ -25,6 +25,7 @@ import java.util.Set;
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.AnnotatedField;
 import javax.enterprise.inject.spi.InjectionPoint;
+import javax.enterprise.inject.spi.Producer;
 import javax.inject.Inject;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedField;
@@ -35,6 +36,12 @@ import org.jboss.weld.exceptions.DefinitionException;
 import org.jboss.weld.interceptor.util.proxy.TargetInstanceProxy;
 import org.jboss.weld.util.reflection.Reflections;
 
+/**
+ * {@link Producer} implementation for producer fields.
+ *
+ * @author Jozef Hartinger
+ *
+ */
 public abstract class ProducerFieldProducer<X, T> extends AbstractMemberProducer<X, T> {
 
     public ProducerFieldProducer(EnhancedAnnotatedField<T, ? super X> enhancedField, DisposalMethod<?, ?> disposalMethod) {

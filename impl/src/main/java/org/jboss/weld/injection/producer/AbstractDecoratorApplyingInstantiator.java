@@ -25,8 +25,17 @@ import javax.enterprise.inject.spi.InjectionPoint;
 
 import org.jboss.weld.bean.proxy.ProxyFactory;
 import org.jboss.weld.injection.CurrentInjectionPoint;
+import org.jboss.weld.injection.producer.ejb.ProxyDecoratorApplyingSessionBeanInstantiator;
 import org.jboss.weld.manager.BeanManagerImpl;
 
+/**
+ * Common functionality for an instantiator capable of applying decorators to a given instance.
+ *
+ * @author Jozef Hartinger
+ *
+ * @see SubclassDecoratorApplyingInstantiator
+ * @see ProxyDecoratorApplyingSessionBeanInstantiator
+ */
 public abstract class AbstractDecoratorApplyingInstantiator<T> implements Instantiator<T> {
 
     private final Instantiator<T> delegate;

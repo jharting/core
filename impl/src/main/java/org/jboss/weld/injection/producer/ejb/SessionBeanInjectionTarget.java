@@ -87,7 +87,7 @@ public class SessionBeanInjectionTarget<T> extends AbstractInjectionTarget<T> {
             injectionPoints.addAll(originalConstructor.getParameterInjectionPoints());
             return new SessionBeanInstantiator<T>(type, (SessionBean<T>) bean);
         } else {
-            throw new IllegalArgumentException(); // TODO
+            throw new IllegalArgumentException("Cannot create SessionBeanInjectionTarget for " + bean);
         }
     }
 

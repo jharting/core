@@ -65,6 +65,8 @@ public class InjectionTargetService implements Service {
     }
 
     public void cleanup() {
+        producersToValidate.clear();
+        injectionTargetsToInitialize.clear();
     }
 
 }

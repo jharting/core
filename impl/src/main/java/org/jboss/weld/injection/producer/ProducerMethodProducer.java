@@ -28,6 +28,7 @@ import javax.enterprise.inject.CreationException;
 import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.spi.AnnotatedMember;
 import javax.enterprise.inject.spi.InjectionPoint;
+import javax.enterprise.inject.spi.Producer;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedMethod;
 import org.jboss.weld.bean.DisposalMethod;
@@ -37,6 +38,12 @@ import org.jboss.weld.injection.InjectionPointFactory;
 import org.jboss.weld.injection.MethodInjectionPoint;
 import org.jboss.weld.util.reflection.SecureReflections;
 
+/**
+ * {@link Producer} implementation for producer methods.
+ *
+ * @author Jozef Hartinger
+ *
+ */
 public abstract class ProducerMethodProducer<X, T> extends AbstractMemberProducer<X, T> {
 
     // The underlying method

@@ -42,7 +42,7 @@ public class DefaultInstantiator<T> implements Instantiator<T> {
             throw new DefinitionException(BeanMessage.INJECTION_TARGET_CANNOT_BE_CREATED_FOR_INTERFACE, type);
         }
         if (type.isAbstract()) {
-            throw new IllegalArgumentException(); // TODO
+            throw new DefinitionException(BeanMessage.INJECTION_TARGET_CANNOT_BE_CREATED_FOR_ABSTRACT_CLASS, type);
         }
         constructor = InjectionPointFactory.instance().createConstructorInjectionPoint(bean, type, manager);
     }
