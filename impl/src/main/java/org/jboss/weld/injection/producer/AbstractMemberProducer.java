@@ -22,6 +22,7 @@ import static org.jboss.weld.logging.messages.BeanMessage.CIRCULAR_CALL;
 import static org.jboss.weld.logging.messages.BeanMessage.PRODUCER_METHOD_CANNOT_HAVE_A_WILDCARD_RETURN_TYPE;
 import static org.jboss.weld.logging.messages.BeanMessage.PRODUCER_METHOD_WITH_TYPE_VARIABLE_RETURN_TYPE_MUST_BE_DEPENDENT;
 import static org.jboss.weld.logging.messages.BeanMessage.RETURN_TYPE_MUST_BE_CONCRETE;
+import static org.jboss.weld.logging.messages.BeanMessage.DECLARING_BEAN_MISSING;
 
 import java.io.Serializable;
 import java.lang.reflect.Member;
@@ -61,7 +62,7 @@ public abstract class AbstractMemberProducer<X, T> extends AbstractProducer<T> {
 
     protected void checkDeclaringBean() {
         if (getDeclaringBean() == null && !getAnnotated().isStatic()) {
-            throw new IllegalArgumentException(); // TODO
+            throw new org.jboss.weld.exceptions.IllegalArgumentException(DECLARING_BEAN_MISSING, getAnnotated());
         }
     }
 

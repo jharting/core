@@ -37,7 +37,11 @@ public class Factory {
         return new Toy("Buzz Lightyear");
     }
 
-    public static <T> T invalidProducerMethod(T t) {
+    public static <T> T invalidProducerMethod1(T t) {
         return null;
+    }
+
+    public Toy invalidProducerMethod2() {
+        return new Toy("nonStaticNonBean");
     }
 }

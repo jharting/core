@@ -104,8 +104,14 @@ public class SyntheticProducerTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testInvalidProducerMethod() {
-        AnnotatedMethod<?> method = this.<Factory, AnnotatedMethod<Factory>>getAnnotatedMember(Factory.class, "invalidProducerMethod");
+    public void testInvalidProducerMethod1() {
+        AnnotatedMethod<?> method = this.<Factory, AnnotatedMethod<Factory>>getAnnotatedMember(Factory.class, "invalidProducerMethod1");
+        manager.createProducer(method);
+    }
+
+    @Test
+    public void testInvalidProducerMethod2() {
+        AnnotatedMethod<?> method = this.<Factory, AnnotatedMethod<Factory>>getAnnotatedMember(Factory.class, "invalidProducerMethod2");
         manager.createProducer(method);
     }
 
