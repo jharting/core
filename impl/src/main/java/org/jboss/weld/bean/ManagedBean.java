@@ -215,7 +215,7 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
 //        initInitializerMethods(beanManager);
 //        initInjectableFields(beanManager);
         this.proxiable = Proxies.isTypesProxyable(type.getTypeClosure());
-        setInjectionTarget(beanManager.createInjectionTarget(getEnhancedAnnotated(), this));
+        setProducer(beanManager.createInjectionTarget(getEnhancedAnnotated(), this));
 //        addInjectionPoints(getInjectionTarget().getInjectionPoints());
     }
 
@@ -225,9 +225,9 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
      * @return The instance
      */
     public T create(CreationalContext<T> creationalContext) {
-        T instance = getInjectionTarget().produce(creationalContext);
-        getInjectionTarget().inject(instance, creationalContext);
-        getInjectionTarget().postConstruct(instance);
+        T instance = getProducer().produce(creationalContext);
+        getProducer().inject(instance, creationalContext);
+        getProducer().postConstruct(instance);
         return instance;
     }
 
@@ -238,7 +238,7 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
      */
     public void destroy(T instance, CreationalContext<T> creationalContext) {
         try {
-            getInjectionTarget().preDestroy(instance);
+            getProducer().preDestroy(instance);
             // WELD-1010 hack?
             if (creationalContext instanceof CreationalContextImpl) {
                 ((CreationalContextImpl<T>) creationalContext).release(this, instance);

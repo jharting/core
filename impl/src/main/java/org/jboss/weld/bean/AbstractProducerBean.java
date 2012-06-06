@@ -77,9 +77,6 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
 
     };
 
-    // Underlying Producer represented by this bean
-    private Producer<T> producer;
-
     private final AbstractClassBean<X> declaringBean;
 
     // Passivation flags
@@ -204,20 +201,6 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
 
     protected boolean isTypeSerializable(final Class<?> clazz) {
         return serializationCheckCache.get(clazz);
-    }
-
-    /**
-     * This operation is *not* threadsafe, and should not be called outside
-     * bootstrap
-     *
-     * @param producer
-     */
-    public void setProducer(Producer<T> producer) {
-        this.producer = producer;
-    }
-
-    public Producer<T> getProducer() {
-        return producer;
     }
 
     /**

@@ -80,8 +80,8 @@ public class DependentContextImpl implements DependentContext {
         if (creationalContext.getDependentInstances().isEmpty()) {
             if (contextual instanceof ManagedBean<?> && ! isInterceptorOrDecorator(contextual)) {
                 ManagedBean<?> managedBean = (ManagedBean<?>) contextual;
-                if (managedBean.getInjectionTarget() instanceof AbstractInjectionTarget<?>) {
-                    AbstractInjectionTarget<?> injectionTarget = (AbstractInjectionTarget<?>) managedBean.getInjectionTarget();
+                if (managedBean.getProducer() instanceof AbstractInjectionTarget<?>) {
+                    AbstractInjectionTarget<?> injectionTarget = (AbstractInjectionTarget<?>) managedBean.getProducer();
                     if (injectionTarget.getPreDestroyMethods().isEmpty() && !injectionTarget.hasInterceptors()) {
                         // there is no @PreDestroy callback to call when destroying this dependent instance
                         // therefore, we do not need to keep the reference
@@ -122,5 +122,4 @@ public class DependentContextImpl implements DependentContext {
     public Class<? extends Annotation> getScope() {
         return Dependent.class;
     }
-
 }

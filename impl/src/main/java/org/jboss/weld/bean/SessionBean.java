@@ -138,7 +138,7 @@ public class SessionBean<T> extends AbstractClassBean<T> {
         this.ejbDescriptor = ejbDescriptor;
 //        initInitializerMethods(beanManager);
 //        initInjectableFields(beanManager);
-      setInjectionTarget(beanManager.createInjectionTarget(getEnhancedAnnotated(), this));
+      setProducer(beanManager.createInjectionTarget(getEnhancedAnnotated(), this));
 //      addInjectionPoints(getInjectionTarget().getInjectionPoints());
     }
 
@@ -262,7 +262,7 @@ public class SessionBean<T> extends AbstractClassBean<T> {
      * @return The instance
      */
     public T create(final CreationalContext<T> creationalContext) {
-        return getInjectionTarget().produce(creationalContext);
+        return getProducer().produce(creationalContext);
 //        try {
 //            T instance = SecureReflections.newInstance(proxyClass);
 //            creationalContext.push(instance);

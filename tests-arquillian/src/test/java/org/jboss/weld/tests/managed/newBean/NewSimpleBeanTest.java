@@ -107,7 +107,7 @@ public class NewSimpleBeanTest {
 
     private List<Set<MethodInjectionPoint<?, ?>>> getInitializerMethods(Bean<?> bean) {
         if (bean instanceof AbstractClassBean<?>) {
-            InjectionTarget<?> injectionTarget = Reflections.<AbstractClassBean<?>>cast(bean).getInjectionTarget();
+            InjectionTarget<?> injectionTarget = Reflections.<AbstractClassBean<?>>cast(bean).getProducer();
             if (injectionTarget instanceof AbstractInjectionTarget<?>) {
                 return Reflections.<AbstractInjectionTarget<?>>cast(injectionTarget).getInitializerMethods();
             }
@@ -116,7 +116,7 @@ public class NewSimpleBeanTest {
     }
 
     private AnnotatedConstructor<?> getConstructor(AbstractClassBean<?> bean) {
-        InjectionTarget<?> target = bean.getInjectionTarget();
+        InjectionTarget<?> target = bean.getProducer();
         if (target instanceof AbstractInjectionTarget<?>) {
             AbstractInjectionTarget<?> weldTarget = (AbstractInjectionTarget<?>) target;
             Instantiator<?> instantiator = weldTarget.getInstantiator();

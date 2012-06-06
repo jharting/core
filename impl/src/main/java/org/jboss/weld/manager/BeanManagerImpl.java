@@ -1077,7 +1077,7 @@ public class BeanManagerImpl implements WeldManager, Serializable {
             getServices().get(InjectionTargetService.class).validateProducer(injectionTarget);
             return injectionTarget;
         } else {
-            InjectionTarget<T> injectionTarget = getBean(descriptor).getInjectionTarget();
+            InjectionTarget<T> injectionTarget = getBean(descriptor).getProducer();
             getServices().get(InjectionTargetService.class).validateProducer(injectionTarget);
             return injectionTarget;
         }

@@ -92,7 +92,7 @@ public class NewEnterpriseBeanTest {
 
     private List<Set<MethodInjectionPoint<?, ?>>> getInitializerMethods(Bean<?> bean) {
         if (bean instanceof AbstractClassBean<?>) {
-            InjectionTarget<?> injectionTarget = Reflections.<AbstractClassBean<?>>cast(bean).getInjectionTarget();
+            InjectionTarget<?> injectionTarget = Reflections.<AbstractClassBean<?>>cast(bean).getProducer();
             if (injectionTarget instanceof AbstractInjectionTarget<?>) {
                 return Reflections.<AbstractInjectionTarget<?>>cast(injectionTarget).getInitializerMethods();
             }

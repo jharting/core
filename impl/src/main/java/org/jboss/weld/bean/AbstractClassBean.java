@@ -38,6 +38,7 @@ import javax.enterprise.inject.spi.Decorator;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.enterprise.inject.spi.InjectionTarget;
 import javax.enterprise.inject.spi.PassivationCapable;
+import javax.enterprise.inject.spi.Producer;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedConstructor;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
@@ -84,23 +85,8 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
     protected final AnnotatedType<T> annotatedType;
     protected volatile EnhancedAnnotatedType<T> enhancedAnnotatedItem;
 
-    // The injectable fields of each type in the type hierarchy, with the actual
-    // type at the bottom
-//    private List<Set<FieldInjectionPoint<?, ?>>> injectableFields;
-
-    // The initializer methods of each type in the type hierarchy, with the
-    // actual type at the bottom
-//    private List<Set<MethodInjectionPoint<?, ?>>> initializerMethods;
-
-    // Decorators
-//    private List<Decorator<?>> decorators;
-
-    // Bean callback methods
-//    private List<AnnotatedMethod<? super T>> postConstructMethods;
-//    private List<AnnotatedMethod<? super T>> preDestroyMethods;
-
     // Injection target for the bean
-    private InjectionTarget<T> injectionTarget;
+    protected InjectionTarget<T> producer;
 
 //    private final ConstructorInjectionPoint<T> constructor;
 
@@ -328,17 +314,9 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
 
     protected abstract boolean isInterceptionCandidate();
 
-    public void setInjectionTarget(InjectionTarget<T> injectionTarget) {
-        this.injectionTarget = injectionTarget;
-    }
-
-    public InjectionTarget<T> getInjectionTarget() {
-        return injectionTarget;
-    }
-
     @Override
     public Set<InjectionPoint> getInjectionPoints() {
-        return getInjectionTarget().getInjectionPoints();
+        return getProducer().getInjectionPoints();
     }
 
 //    protected void defaultPreDestroy(T instance) {
@@ -440,7 +418,28 @@ public abstract class AbstractClassBean<T> extends AbstractBean<T, Class<T>> {
         return passivationCapableDependency;
     }
 
-//    private ContextualStore getContextualStore() {
-//        return getServices().get(ContextualStore.class);
-//    }
+    @Override
+    public InjectionTarget<T> getProducer() {
+        return producer;
+    }
+
+    public void setProducer(InjectionTarget<T> producer) {
+        this.producer = producer;
+    }
+
+    /**
+     * Duplicate of {@link #getProducer()} - kept to retain backwards compatibility.
+     */
+    public InjectionTarget<T> getInjectionTarget() {
+        return getProducer();
+    }
+
+    public void setInjectionTarget(InjectionTarget<T> injectionTarget) {
+        setProducer(injectionTarget);
+    }
+
+    @Override
+    public void setProducer(Producer<T> producer) {
+        throw new IllegalArgumentException("Class bean " + this + " requires an InjectionTarget but a Producer was provided instead " + producer);
+    }
 }
