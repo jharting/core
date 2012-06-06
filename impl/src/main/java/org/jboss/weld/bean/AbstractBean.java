@@ -22,19 +22,16 @@ import static org.jboss.weld.logging.messages.BeanMessage.CREATING_BEAN;
 import static org.jboss.weld.logging.messages.BeanMessage.NAME_NOT_ALLOWED_ON_SPECIALIZATION;
 import static org.jboss.weld.logging.messages.BeanMessage.QUALIFIERS_USED;
 import static org.jboss.weld.logging.messages.BeanMessage.SPECIALIZING_BEAN_MISSING_SPECIALIZED_TYPE;
-import static org.jboss.weld.logging.messages.BeanMessage.TYPED_CLASS_NOT_IN_HIERARCHY;
 import static org.jboss.weld.logging.messages.BeanMessage.USING_NAME;
 import static org.jboss.weld.logging.messages.BeanMessage.USING_SCOPE;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Specializes;
-import javax.enterprise.inject.Typed;
 import javax.enterprise.inject.spi.Annotated;
 import javax.enterprise.inject.spi.BeanAttributes;
 import javax.enterprise.inject.spi.ProcessBeanAttributes;
@@ -119,20 +116,6 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
     }
 
     protected abstract void checkType();
-
-    protected static Set<Type> getTypedTypes(Map<Class<?>, Type> typeClosure, Class<?> rawType, Typed typed) {
-        Set<Type> types = new HashSet<Type>();
-        for (Class<?> specifiedClass : typed.value()) {
-            Type tmp = typeClosure.get(specifiedClass);
-            if (tmp != null) {
-                types.add(tmp);
-            } else {
-                throw new DefinitionException(TYPED_CLASS_NOT_IN_HIERARCHY, specifiedClass.getName(), rawType);
-            }
-        }
-        types.add(Object.class);
-        return types;
-    }
 
     /**
      * Validates specialization if this bean specializes another bean.
