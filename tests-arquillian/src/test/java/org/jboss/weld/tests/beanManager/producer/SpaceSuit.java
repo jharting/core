@@ -16,6 +16,6 @@
  */
 package org.jboss.weld.tests.beanManager.producer;
 
-public class SpaceSuit {
+public class SpaceSuit<T> {
 
 }

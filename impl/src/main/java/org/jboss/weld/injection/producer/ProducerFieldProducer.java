@@ -16,22 +16,43 @@
  */
 package org.jboss.weld.injection.producer;
 
+import static org.jboss.weld.logging.messages.BeanMessage.INJECTED_FIELD_CANNOT_BE_PRODUCER;
+import static org.jboss.weld.logging.messages.BeanMessage.PRODUCER_FIELD_ON_SESSION_BEAN_MUST_BE_STATIC;
+
 import java.util.Collections;
 import java.util.Set;
 
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.AnnotatedField;
 import javax.enterprise.inject.spi.InjectionPoint;
+import javax.inject.Inject;
 
+import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedField;
 import org.jboss.weld.annotated.runtime.RuntimeAnnotatedMembers;
 import org.jboss.weld.bean.DisposalMethod;
+import org.jboss.weld.bean.SessionBean;
+import org.jboss.weld.exceptions.DefinitionException;
 import org.jboss.weld.interceptor.util.proxy.TargetInstanceProxy;
 import org.jboss.weld.util.reflection.Reflections;
 
 public abstract class ProducerFieldProducer<X, T> extends AbstractMemberProducer<X, T> {
 
-    public ProducerFieldProducer(DisposalMethod<?, ?> disposalMethod) {
-        super(disposalMethod);
+    public ProducerFieldProducer(EnhancedAnnotatedField<T, ? super X> enhancedField, DisposalMethod<?, ?> disposalMethod) {
+        super(enhancedField, disposalMethod);
+        checkProducerField(enhancedField);
+    }
+
+    protected void checkProducerField(EnhancedAnnotatedField<T, ? super X> enhancedField) {
+        if (getDeclaringBean() instanceof SessionBean<?> && !enhancedField.isStatic()) {
+            throw new DefinitionException(PRODUCER_FIELD_ON_SESSION_BEAN_MUST_BE_STATIC, enhancedField, enhancedField.getDeclaringType());
+        }
+        if (enhancedField.isAnnotationPresent(Inject.class)) {
+            if (getDeclaringBean() != null) {
+                throw new DefinitionException(INJECTED_FIELD_CANNOT_BE_PRODUCER, enhancedField, getDeclaringBean());
+            } else {
+                throw new DefinitionException(INJECTED_FIELD_CANNOT_BE_PRODUCER, enhancedField, enhancedField.getDeclaringType());
+            }
+        }
     }
 
     @Override

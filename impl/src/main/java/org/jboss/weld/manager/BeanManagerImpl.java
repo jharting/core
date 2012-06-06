@@ -1086,9 +1086,10 @@ public class BeanManagerImpl implements WeldManager, Serializable {
     /**
      * Creates a new {@link Producer} implementation for a given field. This method is required by the specification.
      */
-    public Producer<?> createProducer(AnnotatedField<?> field) {
+    public <X> Producer<?> createProducer(AnnotatedField<X> field) {
         try {
-            Producer<?> producer = createProducer(field, null, null, null);
+            EnhancedAnnotatedField<?, X> enhancedField = getServices().get(MemberTransformer.class).loadEnhancedMember(field);
+            Producer<?> producer = createProducer(enhancedField, null, null, null);
             getServices().get(InjectionTargetService.class).validateProducer(producer);
             return producer;
         } catch (Throwable e) {
@@ -1096,8 +1097,9 @@ public class BeanManagerImpl implements WeldManager, Serializable {
         }
     }
 
-    public <X, T> Producer<T> createProducer(final AnnotatedField<X> field, DisposalMethod<X, T> disposalMethod, final Bean<X> declaringBean, final Bean<T> bean) {
-        return new ProducerFieldProducer<X, T>(disposalMethod) {
+    public <X, T> Producer<T> createProducer(EnhancedAnnotatedField<T, X> enhancedField, DisposalMethod<X, T> disposalMethod, final Bean<X> declaringBean, final Bean<T> bean) {
+        final AnnotatedField<X> field = enhancedField.slim();
+        return new ProducerFieldProducer<X, T>(enhancedField, disposalMethod) {
 
             @Override
             public AnnotatedField<? super X> getAnnotated() {

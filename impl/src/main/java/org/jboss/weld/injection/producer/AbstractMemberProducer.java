@@ -19,16 +19,26 @@ package org.jboss.weld.injection.producer;
 import static org.jboss.weld.logging.Category.BEAN;
 import static org.jboss.weld.logging.LoggerFactory.loggerFactory;
 import static org.jboss.weld.logging.messages.BeanMessage.CIRCULAR_CALL;
+import static org.jboss.weld.logging.messages.BeanMessage.PRODUCER_METHOD_CANNOT_HAVE_A_WILDCARD_RETURN_TYPE;
+import static org.jboss.weld.logging.messages.BeanMessage.PRODUCER_METHOD_WITH_TYPE_VARIABLE_RETURN_TYPE_MUST_BE_DEPENDENT;
+import static org.jboss.weld.logging.messages.BeanMessage.RETURN_TYPE_MUST_BE_CONCRETE;
 
 import java.io.Serializable;
+import java.lang.reflect.Member;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.AnnotatedMember;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.InjectionPoint;
 
+import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedMember;
 import org.jboss.weld.bean.DisposalMethod;
 import org.jboss.weld.context.WeldCreationalContext;
+import org.jboss.weld.exceptions.DefinitionException;
 import org.jboss.weld.injection.CurrentInjectionPoint;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.util.Beans;
@@ -42,15 +52,34 @@ public abstract class AbstractMemberProducer<X, T> extends AbstractProducer<T> {
     private final DisposalMethod<?, ?> disposalMethod;
     private final CurrentInjectionPoint currentInjectionPointService;
 
-    public AbstractMemberProducer(DisposalMethod<?, ?> disposalMethod) {
+    public AbstractMemberProducer(EnhancedAnnotatedMember<T, ? super X, ? extends Member> enhancedMember, DisposalMethod<?, ?> disposalMethod) {
         this.disposalMethod = disposalMethod;
         this.currentInjectionPointService = getBeanManager().getServices().get(CurrentInjectionPoint.class);
         checkDeclaringBean();
+        checkProducerReturnType(enhancedMember);
     }
 
     protected void checkDeclaringBean() {
         if (getDeclaringBean() == null && !getAnnotated().isStatic()) {
             throw new IllegalArgumentException(); // TODO
+        }
+    }
+
+    /**
+     * Validates the producer method
+     */
+    protected void checkProducerReturnType(EnhancedAnnotatedMember<T, ? super X, ? extends Member> enhancedMember) {
+        if ((enhancedMember.getBaseType() instanceof TypeVariable<?>) || (enhancedMember.getBaseType() instanceof WildcardType)) {
+            throw new DefinitionException(RETURN_TYPE_MUST_BE_CONCRETE, enhancedMember.getBaseType());
+        } else if (enhancedMember.isParameterizedType()) {
+            boolean dependent = getBean() != null && Dependent.class.equals(getBean().getScope());
+            for (Type type : enhancedMember.getActualTypeArguments()) {
+                if (!dependent && type instanceof TypeVariable<?>) {
+                    throw new DefinitionException(PRODUCER_METHOD_WITH_TYPE_VARIABLE_RETURN_TYPE_MUST_BE_DEPENDENT, enhancedMember);
+                } else if (type instanceof WildcardType) {
+                    throw new DefinitionException(PRODUCER_METHOD_CANNOT_HAVE_A_WILDCARD_RETURN_TYPE, enhancedMember);
+                }
+            }
         }
     }
 

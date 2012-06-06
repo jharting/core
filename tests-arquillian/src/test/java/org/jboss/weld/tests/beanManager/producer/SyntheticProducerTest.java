@@ -72,7 +72,7 @@ public class SyntheticProducerTest {
 
     @Test
     public void testProducerField() {
-        AnnotatedField<?> field = this.getAnnotatedMember(Factory.class, "WOODY");
+        AnnotatedField<?> field = this.<Factory, AnnotatedField<Factory>>getAnnotatedMember(Factory.class, "WOODY");
         Producer<Toy> producer = cast(manager.createProducer(field));
         assertNotNull(producer);
         assertTrue(producer.getInjectionPoints().isEmpty());
@@ -82,7 +82,7 @@ public class SyntheticProducerTest {
 
     @Test
     public void testProducerMethod() {
-        AnnotatedMethod<?> method = this.getAnnotatedMember(Factory.class, "getBuzz");
+        AnnotatedMethod<?> method = this.<Factory, AnnotatedMethod<Factory>>getAnnotatedMember(Factory.class, "getBuzz");
         Producer<Toy> producer = cast(manager.createProducer(method));
         assertNotNull(producer);
         assertEquals(2, producer.getInjectionPoints().size());
@@ -91,7 +91,7 @@ public class SyntheticProducerTest {
             if (parameter.getPosition() == 0) {
                 assertEquals(BeanManager.class, parameter.getBaseType());
             } else if (parameter.getPosition() == 1) {
-                assertEquals(SpaceSuit.class, parameter.getBaseType());
+                assertEquals(SpaceSuit.class, Reflections.getRawType(parameter.getBaseType()));
             } else {
                 Assert.fail("Unexpected injection point " + ip);
             }
@@ -101,6 +101,24 @@ public class SyntheticProducerTest {
         }
         Toy buzz = producer.produce(manager.<Toy>createCreationalContext(null));
         assertEquals("Buzz Lightyear", buzz.getName());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testInvalidProducerMethod() {
+        AnnotatedMethod<?> method = this.<Factory, AnnotatedMethod<Factory>>getAnnotatedMember(Factory.class, "invalidProducerMethod");
+        manager.createProducer(method);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testInvalidProducerField1() {
+        AnnotatedField<?> field = this.<Factory, AnnotatedField<Factory>>getAnnotatedMember(Factory.class, "INVALID_FIELD1");
+        manager.createProducer(field);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testInvalidProducerField2() {
+        AnnotatedField<?> field = this.<Factory, AnnotatedField<Factory>>getAnnotatedMember(Factory.class, "INVALID_FIELD2");
+        manager.createProducer(field);
     }
 }
 

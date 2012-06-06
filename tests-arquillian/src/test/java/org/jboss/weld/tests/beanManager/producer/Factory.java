@@ -18,15 +18,26 @@ package org.jboss.weld.tests.beanManager.producer;
 
 import static org.junit.Assert.assertNotNull;
 
+import javax.enterprise.inject.Veto;
 import javax.enterprise.inject.spi.BeanManager;
+import javax.inject.Inject;
 
+@Veto
 public class Factory {
 
     public static final Toy WOODY = new Toy("Woody");
 
-    public static Toy getBuzz(BeanManager manager, SpaceSuit suit) {
+    public static final SpaceSuit<?> INVALID_FIELD1 = new SpaceSuit<Object>();
+    @Inject
+    public static final Toy INVALID_FIELD2 = null;
+
+    public static Toy getBuzz(BeanManager manager, SpaceSuit<Toy> suit) {
         assertNotNull(manager);
         assertNotNull(suit);
         return new Toy("Buzz Lightyear");
+    }
+
+    public static <T> T invalidProducerMethod(T t) {
+        return null;
     }
 }

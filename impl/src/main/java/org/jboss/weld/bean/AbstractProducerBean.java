@@ -23,9 +23,6 @@ import static org.jboss.weld.logging.messages.BeanMessage.NON_SERIALIZABLE_PRODU
 import static org.jboss.weld.logging.messages.BeanMessage.NON_SERIALIZABLE_PRODUCT_ERROR;
 import static org.jboss.weld.logging.messages.BeanMessage.NULL_NOT_ALLOWED_FROM_PRODUCER;
 import static org.jboss.weld.logging.messages.BeanMessage.PRODUCER_CAST_ERROR;
-import static org.jboss.weld.logging.messages.BeanMessage.PRODUCER_METHOD_CANNOT_HAVE_A_WILDCARD_RETURN_TYPE;
-import static org.jboss.weld.logging.messages.BeanMessage.PRODUCER_METHOD_WITH_TYPE_VARIABLE_RETURN_TYPE_MUST_BE_DEPENDENT;
-import static org.jboss.weld.logging.messages.BeanMessage.RETURN_TYPE_MUST_BE_CONCRETE;
 
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
@@ -33,8 +30,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.lang.reflect.WildcardType;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
@@ -50,7 +45,6 @@ import javax.inject.Inject;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedMember;
 import org.jboss.weld.bootstrap.BeanDeployerEnvironment;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
-import org.jboss.weld.exceptions.DefinitionException;
 import org.jboss.weld.exceptions.IllegalProductException;
 import org.jboss.weld.exceptions.WeldException;
 import org.jboss.weld.injection.CurrentInjectionPoint;
@@ -127,30 +121,12 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
     }
 
     /**
-     * Validates the producer method
-     */
-    protected void checkProducerReturnType() {
-        if ((getEnhancedAnnotated().getBaseType() instanceof TypeVariable<?>) || (getEnhancedAnnotated().getBaseType() instanceof WildcardType)) {
-            throw new DefinitionException(RETURN_TYPE_MUST_BE_CONCRETE, getEnhancedAnnotated().getBaseType());
-        } else if (getEnhancedAnnotated().isParameterizedType()) {
-            for (Type type : getEnhancedAnnotated().getActualTypeArguments()) {
-                if (!Dependent.class.equals(getScope()) && type instanceof TypeVariable<?>) {
-                    throw new DefinitionException(PRODUCER_METHOD_WITH_TYPE_VARIABLE_RETURN_TYPE_MUST_BE_DEPENDENT, getEnhancedAnnotated());
-                } else if (type instanceof WildcardType) {
-                    throw new DefinitionException(PRODUCER_METHOD_CANNOT_HAVE_A_WILDCARD_RETURN_TYPE, getEnhancedAnnotated());
-                }
-            }
-        }
-    }
-
-    /**
      * Initializes the bean and its metadata
      */
     @Override
     public void internalInitialize(BeanDeployerEnvironment environment) {
         getDeclaringBean().initialize(environment);
         super.internalInitialize(environment);
-        checkProducerReturnType();
         initPassivationCapable();
     }
 

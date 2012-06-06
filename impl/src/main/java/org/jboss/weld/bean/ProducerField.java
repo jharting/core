@@ -16,8 +16,6 @@
  */
 package org.jboss.weld.bean;
 
-import static org.jboss.weld.logging.messages.BeanMessage.PRODUCER_FIELD_ON_SESSION_BEAN_MUST_BE_STATIC;
-
 import java.lang.reflect.Field;
 
 import javax.enterprise.inject.spi.AnnotatedField;
@@ -27,7 +25,6 @@ import javax.enterprise.inject.spi.BeanAttributes;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedField;
 import org.jboss.weld.bootstrap.BeanDeployerEnvironment;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
-import org.jboss.weld.exceptions.DefinitionException;
 import org.jboss.weld.injection.producer.ProducerFieldProducer;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.util.AnnotatedTypes;
@@ -74,7 +71,7 @@ public class ProducerField<X, T> extends AbstractProducerBean<X, T, Field> {
         this.annotatedField = field.slim();
         initType();
         this.proxiable = Proxies.isTypesProxyable(field.getTypeClosure());
-        setProducer(new ProducerFieldProducer<X, T>(disposalMethod) {
+        setProducer(new ProducerFieldProducer<X, T>(field, disposalMethod) {
 
             @Override
             public AnnotatedField<? super X> getAnnotated() {
@@ -120,19 +117,6 @@ public class ProducerField<X, T> extends AbstractProducerBean<X, T, Field> {
             sb.append(".");
             sb.append(AnnotatedTypes.createFieldId(field));
             return sb.toString();
-        }
-    }
-
-    @Override
-    public void internalInitialize(BeanDeployerEnvironment environment) {
-        super.internalInitialize(environment);
-        checkProducerField();
-    }
-
-
-    protected void checkProducerField() {
-        if (getDeclaringBean() instanceof SessionBean<?> && !getEnhancedAnnotated().isStatic()) {
-            throw new DefinitionException(PRODUCER_FIELD_ON_SESSION_BEAN_MUST_BE_STATIC, getEnhancedAnnotated(), getEnhancedAnnotated().getDeclaringType());
         }
     }
 
