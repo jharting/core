@@ -69,7 +69,7 @@ public class DefaultInjectionTarget<T> extends AbstractInjectionTarget<T> {
     }
 
     public void postConstruct(T instance) {
-        if (getInstantiator().hasInterceptors()) {
+        if (getInstantiator().hasInterceptorSupport()) {
             InterceptionUtils.executePostConstruct(instance);
         } else {
             super.postConstruct(instance);
@@ -77,7 +77,7 @@ public class DefaultInjectionTarget<T> extends AbstractInjectionTarget<T> {
     }
 
     public void preDestroy(T instance) {
-        if (getInstantiator().hasInterceptors()) {
+        if (getInstantiator().hasInterceptorSupport()) {
             InterceptionUtils.executePredestroy(instance);
         } else {
             super.preDestroy(instance);

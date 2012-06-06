@@ -62,12 +62,12 @@ public class DefaultInstantiator<T> implements Instantiator<T> {
     }
 
     @Override
-    public boolean hasInterceptors() {
+    public boolean hasInterceptorSupport() {
         return false;
     }
 
     @Override
-    public boolean hasDecorators() {
+    public boolean hasDecoratorSupport() {
         return false;
     }
 }

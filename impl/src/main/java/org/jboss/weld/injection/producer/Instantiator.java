@@ -32,7 +32,13 @@ public interface Instantiator<T> {
 
     T newInstance(CreationalContext<T> ctx, BeanManagerImpl manager);
 
-    boolean hasInterceptors();
+    /**
+     * Indicates whether instances created by this Instantiator support interception.
+     */
+    boolean hasInterceptorSupport();
 
-    boolean hasDecorators();
+    /**
+     * Indicates whether instances created by this Instantiator support decorators.
+     */
+    boolean hasDecoratorSupport();
 }

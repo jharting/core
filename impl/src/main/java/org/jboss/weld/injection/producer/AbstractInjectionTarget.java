@@ -142,7 +142,7 @@ public abstract class AbstractInjectionTarget<T> extends AbstractProducer<T> imp
 
     public T produce(CreationalContext<T> ctx) {
         T instance = instantiator.newInstance(ctx, beanManager);
-        if (bean != null && !bean.getScope().equals(Dependent.class) && !instantiator.hasDecorators()) {
+        if (bean != null && !bean.getScope().equals(Dependent.class) && !instantiator.hasDecoratorSupport()) {
             // This should be safe, but needs verification PLM
             // Without this, the chaining of decorators will fail as the
             // incomplete instance will be resolved
@@ -214,11 +214,11 @@ public abstract class AbstractInjectionTarget<T> extends AbstractProducer<T> imp
     }
 
     public boolean hasInterceptors() {
-        return instantiator.hasInterceptors();
+        return instantiator.hasInterceptorSupport();
     }
 
     public boolean hasDecorators() {
-        return instantiator.hasDecorators();
+        return instantiator.hasDecoratorSupport();
     }
 
     public List<AnnotatedMethod<? super T>> getPostConstructMethods() {

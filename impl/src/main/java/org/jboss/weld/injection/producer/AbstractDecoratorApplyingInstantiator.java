@@ -68,12 +68,12 @@ public abstract class AbstractDecoratorApplyingInstantiator<T> implements Instan
     }
 
     @Override
-    public boolean hasInterceptors() {
-        return delegate.hasInterceptors();
+    public boolean hasInterceptorSupport() {
+        return delegate.hasInterceptorSupport();
     }
 
     @Override
-    public boolean hasDecorators() {
+    public boolean hasDecoratorSupport() {
         return true;
     }
 }
