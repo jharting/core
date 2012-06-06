@@ -298,9 +298,6 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
      */
     @Override
     protected void checkType() {
-//        if (getEnhancedAnnotated().isAnonymousClass() || (getEnhancedAnnotated().isMemberClass() && !getEnhancedAnnotated().isStatic())) {
-//            throw new DefinitionException(SIMPLE_BEAN_AS_NON_STATIC_INNER_CLASS_NOT_ALLOWED, type);
-//        }
         if (!isDependent() && getEnhancedAnnotated().isParameterizedType()) {
             throw new DefinitionException(BEAN_MUST_BE_DEPENDENT, type);
         }

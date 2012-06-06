@@ -324,7 +324,7 @@ public class SessionBean<T> extends AbstractClassBean<T> {
 
     @Override
     protected void checkType() {
-        if (!getScope().equals(Dependent.class) && getEnhancedAnnotated().isGeneric()) {
+        if (!isDependent() && getEnhancedAnnotated().isGeneric()) {
             throw new DefinitionException(GENERIC_SESSION_BEAN_MUST_BE_DEPENDENT, this);
         }
         boolean passivating = beanManager.getServices().get(MetaAnnotationStore.class).getScopeModel(getScope()).isPassivating();

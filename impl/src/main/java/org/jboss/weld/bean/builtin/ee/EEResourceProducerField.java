@@ -141,8 +141,6 @@ public class EEResourceProducerField<X, T> extends ProducerField<X, T> {
 
     @Override
     protected void checkType() {
-        super.checkType();
-
         // check JPA resources
         PersistenceApiAbstraction persistenceApiAbstraction = beanManager.getServices().get(PersistenceApiAbstraction.class);
         if (getAnnotated().isAnnotationPresent(persistenceApiAbstraction.PERSISTENCE_UNIT_ANNOTATION_CLASS)) {
