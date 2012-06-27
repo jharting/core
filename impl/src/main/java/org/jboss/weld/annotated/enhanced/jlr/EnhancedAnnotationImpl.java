@@ -60,7 +60,7 @@ public class EnhancedAnnotationImpl<T extends Annotation> extends EnhancedAnnota
         annotationMap.putAll(buildAnnotationMap(classTransformer.getTypeStore().get(annotationType)));
 
         Map<Class<? extends Annotation>, Annotation> declaredAnnotationMap = new HashMap<Class<? extends Annotation>, Annotation>();
-        declaredAnnotationMap.putAll(buildAnnotationMap(annotationType.getDeclaredAnnotations()));
+        declaredAnnotationMap.putAll(buildAnnotationMap(classTransformer.getReflectionCache().getDeclaredAnnotations(annotationType)));
         declaredAnnotationMap.putAll(buildAnnotationMap(classTransformer.getTypeStore().get(annotationType)));
         return new EnhancedAnnotationImpl<A>(annotatedType, annotationMap, declaredAnnotationMap, classTransformer);
     }
