@@ -22,6 +22,7 @@ import org.jboss.weld.annotated.slim.backed.BackedAnnotatedType;
 import org.jboss.weld.annotated.slim.unbacked.UnbackedAnnotatedType;
 import org.jboss.weld.metadata.TypeStore;
 import org.jboss.weld.resources.ClassTransformer;
+import org.jboss.weld.resources.ReflectionCache;
 import org.jboss.weld.resources.SharedObjectCache;
 import org.jboss.weld.util.reflection.HierarchyDiscovery;
 import org.junit.Assert;
@@ -39,7 +40,7 @@ import java.util.Set;
 //@Artifact
 public class WeldClassTest {
 
-    private final ClassTransformer transformer = new ClassTransformer(new TypeStore(), new SharedObjectCache());
+    private final ClassTransformer transformer = new ClassTransformer(new TypeStore(), new SharedObjectCache(), new ReflectionCache());
 
     /*
     * description = "WELD-216"

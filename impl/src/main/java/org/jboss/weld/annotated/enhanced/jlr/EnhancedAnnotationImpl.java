@@ -56,7 +56,7 @@ public class EnhancedAnnotationImpl<T extends Annotation> extends EnhancedAnnota
     public static <A extends Annotation> EnhancedAnnotation<A> create(SlimAnnotatedType<A> annotatedType, ClassTransformer classTransformer) {
         Class<A> annotationType = annotatedType.getJavaClass();
         Map<Class<? extends Annotation>, Annotation> annotationMap = new HashMap<Class<? extends Annotation>, Annotation>();
-        annotationMap.putAll(buildAnnotationMap(annotationType.getAnnotations()));
+        annotationMap.putAll(buildAnnotationMap(classTransformer.getReflectionCache().getAnnotations(annotationType)));
         annotationMap.putAll(buildAnnotationMap(classTransformer.getTypeStore().get(annotationType)));
 
         Map<Class<? extends Annotation>, Annotation> declaredAnnotationMap = new HashMap<Class<? extends Annotation>, Annotation>();
