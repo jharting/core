@@ -48,7 +48,11 @@ public class LoggerFactory {
 
     public static LoggerFactory loggerFactory() {
         if (INSTANCE == null) {
-            INSTANCE = new LoggerFactory("WELD");
+            synchronized (LoggerFactory.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new LoggerFactory("WELD");
+                }
+            }
         }
         return INSTANCE;
     }

@@ -30,7 +30,11 @@ public abstract class MessageConveyorFactory {
 
     public static MessageConveyorFactory messageConveyerFactory() {
         if (INSTANCE == null) {
-            INSTANCE = load();
+            synchronized (MessageConveyorFactory.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = load();
+                }
+            }
         }
         return INSTANCE;
     }
