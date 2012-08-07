@@ -18,6 +18,7 @@ package org.jboss.weld.resources;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
+import java.util.Set;
 
 import org.jboss.weld.bootstrap.api.Service;
 
@@ -27,4 +28,7 @@ public interface ReflectionCache extends Service {
 
     Annotation[] getDeclaredAnnotations(AnnotatedElement element);
 
+    Annotation getCanonicalAnnotationInstance(Annotation annotation);
+
+    Set<Annotation> getSharedAnnotationSet(Annotation[] annotations);
 }

@@ -17,12 +17,9 @@ import javax.enterprise.inject.spi.AnnotatedParameter;
 import org.jboss.weld.exceptions.InvalidObjectException;
 import org.jboss.weld.resources.ClassTransformer;
 import org.jboss.weld.resources.SharedObjectCache;
-import org.jboss.weld.resources.SharedObjectFacade;
 import org.jboss.weld.util.LazyValueHolder;
 import org.jboss.weld.util.reflection.Formats;
 import org.jboss.weld.util.reflection.RawType;
-
-import com.google.common.collect.ImmutableSet;
 
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
@@ -41,7 +38,7 @@ public class BackedAnnotatedParameter<X> extends BackedAnnotated implements Anno
         super(baseType, transformer);
         this.position = position;
         this.declaringCallable = declaringCallable;
-        this.annotations = SharedObjectFacade.wrap(ImmutableSet.copyOf(annotations));
+        this.annotations = transformer.getReflectionCache().getSharedAnnotationSet(annotations);
     }
 
     @Override
