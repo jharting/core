@@ -28,6 +28,7 @@ import javax.enterprise.inject.spi.Bean;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedParameter;
 import org.jboss.weld.manager.BeanManagerImpl;
+import org.jboss.weld.resources.ReflectionCache;
 import org.jboss.weld.resources.SharedObjectCache;
 import org.jboss.weld.util.AnnotatedTypes;
 import org.jboss.weld.util.reflection.Reflections;
@@ -49,7 +50,7 @@ public class InferingParameterInjectionPointAttributes<T, X> extends AbstractInf
     private final AnnotatedParameter<X> parameter;
 
     protected InferingParameterInjectionPointAttributes(EnhancedAnnotatedParameter<T, X> parameter, Bean<?> bean, Class<?> declaringComponentClass, BeanManagerImpl manager) {
-        super(bean, SharedObjectCache.instance(manager).getSharedSet(parameter.getQualifiers()), declaringComponentClass);
+        super(bean, manager.getServices().get(ReflectionCache.class).getSharedAnnotationSet(parameter.getQualifiers()), declaringComponentClass);
         this.parameter = parameter.slim();
     }
 

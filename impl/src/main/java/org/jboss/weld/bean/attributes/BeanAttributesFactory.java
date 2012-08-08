@@ -50,6 +50,7 @@ import org.jboss.weld.literal.NamedLiteral;
 import org.jboss.weld.literal.NewLiteral;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.metadata.cache.MergedStereotypes;
+import org.jboss.weld.resources.ReflectionCache;
 import org.jboss.weld.resources.SharedObjectCache;
 import org.jboss.weld.util.Beans;
 import org.jboss.weld.util.collections.ArraySet;
@@ -180,7 +181,7 @@ public class BeanAttributesFactory {
                 if (name != null && normalizedQualifiers.remove(NamedLiteral.DEFAULT)) {
                     normalizedQualifiers.add(new NamedLiteral(name));
                 }
-                this.qualifiers = SharedObjectCache.instance(manager).getSharedSet(normalizedQualifiers);
+                this.qualifiers = manager.getServices().get(ReflectionCache.class).getSharedAnnotationSet(normalizedQualifiers);
             }
         }
 

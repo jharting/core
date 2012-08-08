@@ -18,6 +18,7 @@ package org.jboss.weld.util.collections;
 
 import static org.jboss.weld.util.reflection.Reflections.cast;
 
+import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.util.AbstractSet;
 import java.util.Arrays;
@@ -28,7 +29,9 @@ import java.util.Set;
 import org.jboss.weld.interceptor.util.ArrayIterator;
 import org.jboss.weld.resources.ReflectionCache;
 
-public class ImmutableIdentityArraySet<T> extends AbstractSet<T> {
+public class ImmutableIdentityArraySet<T> extends AbstractSet<T> implements Serializable {
+
+    private static final long serialVersionUID = 7469940310665094245L;
 
     public static ImmutableIdentityArraySet<Annotation> of(Set<Annotation> annotations, ReflectionCache cache) {
         if (annotations instanceof ImmutableIdentityArraySet<?>) {

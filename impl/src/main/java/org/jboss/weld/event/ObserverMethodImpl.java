@@ -58,6 +58,7 @@ import org.jboss.weld.injection.ParameterInjectionPoint;
 import org.jboss.weld.injection.WeldInjectionPoint;
 import org.jboss.weld.injection.attributes.SpecialParameterInjectionPoint;
 import org.jboss.weld.manager.BeanManagerImpl;
+import org.jboss.weld.resources.ReflectionCache;
 import org.jboss.weld.resources.SharedObjectCache;
 import org.jboss.weld.util.Observers;
 import org.jboss.weld.util.reflection.TypeVariableResolver;
@@ -107,7 +108,7 @@ public class ObserverMethodImpl<T, X> implements ObserverMethod<T> {
         EnhancedAnnotatedParameter<?, ? super X> eventParameter = observer.getEnhancedParameters(Observes.class).get(0);
         this.eventType = TypeVariableResolver.resolveVariables(declaringBean.getBeanClass(), eventParameter.getBaseType());
         this.id = new StringBuilder().append(ID_PREFIX).append(ID_SEPARATOR)/*.append(manager.getId()).append(ID_SEPARATOR)*/.append(ObserverMethod.class.getSimpleName()).append(ID_SEPARATOR).append(declaringBean.getBeanClass().getName()).append(".").append(observer.getSignature()).toString();
-        this.bindings = manager.getServices().get(SharedObjectCache.class).getSharedSet(observer.getEnhancedParameters(Observes.class).get(0).getMetaAnnotations(Qualifier.class));
+        this.bindings = manager.getServices().get(ReflectionCache.class).getSharedAnnotationSet(observer.getEnhancedParameters(Observes.class).get(0).getMetaAnnotations(Qualifier.class));
         Observes observesAnnotation = observer.getEnhancedParameters(Observes.class).get(0).getAnnotation(Observes.class);
         this.reception = observesAnnotation.notifyObserver();
         transactionPhase = ObserverFactory.getTransactionalPhase(observer);

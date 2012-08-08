@@ -16,15 +16,14 @@
  */
 package org.jboss.weld.resources;
 
+import java.lang.reflect.Type;
+import java.util.Map;
+import java.util.Set;
+
 import org.jboss.weld.Container;
 import org.jboss.weld.annotated.enhanced.TypeClosureLazyValueHolder;
 import org.jboss.weld.util.LazyValueHolder;
 import org.jboss.weld.util.collections.ArraySetMultimap;
-import org.jboss.weld.util.reflection.HierarchyDiscovery;
-
-import java.lang.reflect.Type;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Convenience methods to access the shared object cache
