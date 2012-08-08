@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.jboss.weld.Container;
 import org.jboss.weld.interceptor.util.ArrayIterator;
 import org.jboss.weld.resources.ReflectionCache;
 
@@ -51,6 +52,10 @@ public class ImmutableIdentityArraySet<T> extends AbstractSet<T> implements Seri
             canonicalAnnotations[i] = cache.getCanonicalAnnotationInstance(annotations[i]);
         }
         return new ImmutableIdentityArraySet<Annotation>(canonicalAnnotations);
+    }
+
+    private Object readResolve() {
+        return of((Annotation[]) values, Container.instance().services().get(ReflectionCache.class)); // TODO: fix this
     }
 
     private final T[] values;
