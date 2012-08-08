@@ -16,20 +16,45 @@
  */
 package org.jboss.weld.util.collections;
 
+import static org.jboss.weld.util.reflection.Reflections.cast;
+
+import java.lang.annotation.Annotation;
 import java.util.AbstractSet;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Set;
 
 import org.jboss.weld.interceptor.util.ArrayIterator;
+import org.jboss.weld.resources.ReflectionCache;
 
 public class ImmutableIdentityArraySet<T> extends AbstractSet<T> {
+
+    public static ImmutableIdentityArraySet<Annotation> of(Set<Annotation> annotations, ReflectionCache cache) {
+        if (annotations instanceof ImmutableIdentityArraySet<?>) {
+            return cast(annotations);
+        }
+        Annotation[] canonicalAnnotations = new Annotation[annotations.size()];
+        int i = 0;
+        for (Annotation annotation : annotations) {
+            canonicalAnnotations[i++] = cache.getCanonicalAnnotationInstance(annotation);
+        }
+        return new ImmutableIdentityArraySet<Annotation>(canonicalAnnotations);
+    }
+
+    public static ImmutableIdentityArraySet<Annotation> of(Annotation[] annotations, ReflectionCache cache) {
+        Annotation[] canonicalAnnotations = new Annotation[annotations.length];
+        for (int i = 0; i < annotations.length; i++) {
+            canonicalAnnotations[i] = cache.getCanonicalAnnotationInstance(annotations[i]);
+        }
+        return new ImmutableIdentityArraySet<Annotation>(canonicalAnnotations);
+    }
 
     private final T[] values;
     private final int hashCode;
 
-    public ImmutableIdentityArraySet(T[] values) {
-        this.values = values; // TODO defensive copy
+    private ImmutableIdentityArraySet(T[] values) {
+        this.values = values;
         this.hashCode = Arrays.hashCode(values);
     }
 

@@ -31,4 +31,6 @@ public interface ReflectionCache extends Service {
     Annotation getCanonicalAnnotationInstance(Annotation annotation);
 
     Set<Annotation> getSharedAnnotationSet(Annotation[] annotations);
+
+    Set<Annotation> getSharedAnnotationSet(Set<Annotation> annotations);
 }

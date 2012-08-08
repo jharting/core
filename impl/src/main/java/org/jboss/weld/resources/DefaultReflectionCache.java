@@ -49,13 +49,13 @@ public class DefaultReflectionCache implements Service, ReflectionCache {
         this.annotations = maker.makeComputingMap(new Function<AnnotatedElement, Set<Annotation>>() {
             @Override
             public Set<Annotation> apply(AnnotatedElement input) {
-                return sharedAnnotationSets.get(new ImmutableIdentityArraySet<Annotation>(internalGetAnnotations(input)));
+                return sharedAnnotationSets.get(ImmutableIdentityArraySet.of(internalGetAnnotations(input), DefaultReflectionCache.this));
             }
         });
         this.declaredAnnotations = maker.makeComputingMap(new Function<AnnotatedElement, Set<Annotation>>() {
             @Override
             public Set<Annotation> apply(AnnotatedElement input) {
-                return sharedAnnotationSets.get(new ImmutableIdentityArraySet<Annotation>(internalGetDeclaredAnnotations(input)));
+                return sharedAnnotationSets.get(ImmutableIdentityArraySet.of(internalGetDeclaredAnnotations(input), DefaultReflectionCache.this));
             }
         });
         this.canonicalAnnotations = maker.makeComputingMap(new Function<Annotation, Annotation>() {
@@ -99,11 +99,11 @@ public class DefaultReflectionCache implements Service, ReflectionCache {
 
     @Override
     public Set<Annotation> getSharedAnnotationSet(Annotation[] annotations) {
-        Annotation[] canonicalAnnotations = new Annotation[annotations.length];
-        for (int i = 0; i < annotations.length; i++) {
-            canonicalAnnotations[i] = getCanonicalAnnotationInstance(annotations[i]);
-        }
-        Set<Annotation> key = new ImmutableIdentityArraySet<Annotation>(canonicalAnnotations);
-        return sharedAnnotationSets.get(key);
+        return sharedAnnotationSets.get(ImmutableIdentityArraySet.of(annotations, this));
+    }
+
+    @Override
+    public Set<Annotation> getSharedAnnotationSet(Set<Annotation> annotations) {
+        return sharedAnnotationSets.get(ImmutableIdentityArraySet.of(annotations, this));
     }
 }
