@@ -20,17 +20,11 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 import org.jboss.weld.bootstrap.api.Service;
-import org.jboss.weld.exceptions.WeldException;
 import org.jboss.weld.util.collections.ImmutableIdentityArraySet;
 
 import com.google.common.base.Function;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.MapMaker;
 
 public class DefaultReflectionCache implements Service, ReflectionCache {
@@ -43,25 +37,25 @@ public class DefaultReflectionCache implements Service, ReflectionCache {
         return element.getDeclaredAnnotations();
     }
 
-    private final Map<AnnotatedElement, Annotation[]> annotations;
-    private final Map<AnnotatedElement, Annotation[]> declaredAnnotations;
-    private final Map<Set<Annotation>, Set<Annotation>> sharedAnnotationSets;
-
     private final Map<Annotation, Annotation> canonicalAnnotationsByIdentity;
     private final Map<Annotation, Annotation> canonicalAnnotations;
 
+    private final Map<AnnotatedElement, Set<Annotation>> annotations;
+    private final Map<AnnotatedElement, Set<Annotation>> declaredAnnotations;
+    private final Map<Set<Annotation>, Set<Annotation>> sharedAnnotationSets;
+
     public DefaultReflectionCache() {
         MapMaker maker = new MapMaker();
-        this.annotations = maker.makeComputingMap(new Function<AnnotatedElement, Annotation[]>() {
+        this.annotations = maker.makeComputingMap(new Function<AnnotatedElement, Set<Annotation>>() {
             @Override
-            public Annotation[] apply(AnnotatedElement input) {
-                return internalGetAnnotations(input);
+            public Set<Annotation> apply(AnnotatedElement input) {
+                return sharedAnnotationSets.get(new ImmutableIdentityArraySet<Annotation>(internalGetAnnotations(input)));
             }
         });
-        this.declaredAnnotations = maker.makeComputingMap(new Function<AnnotatedElement, Annotation[]>() {
+        this.declaredAnnotations = maker.makeComputingMap(new Function<AnnotatedElement, Set<Annotation>>() {
             @Override
-            public Annotation[] apply(AnnotatedElement input) {
-                return internalGetDeclaredAnnotations(input);
+            public Set<Annotation> apply(AnnotatedElement input) {
+                return sharedAnnotationSets.get(new ImmutableIdentityArraySet<Annotation>(internalGetDeclaredAnnotations(input)));
             }
         });
         this.canonicalAnnotations = maker.makeComputingMap(new Function<Annotation, Annotation>() {
@@ -84,11 +78,11 @@ public class DefaultReflectionCache implements Service, ReflectionCache {
         });
     }
 
-    public Annotation[] getAnnotations(AnnotatedElement element) {
+    public Set<Annotation> getAnnotations(AnnotatedElement element) {
         return annotations.get(element);
     }
 
-    public Annotation[] getDeclaredAnnotations(AnnotatedElement element) {
+    public Set<Annotation> getDeclaredAnnotations(AnnotatedElement element) {
         return declaredAnnotations.get(element);
     }
 
