@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.jboss.weld.bean.proxy.MethodHandler;
 import org.jboss.weld.bean.proxy.ProxyObject;
@@ -40,7 +41,7 @@ public class InterceptorMethodHandler implements MethodHandler, Serializable {
         }
     };
 
-    private final Map<InterceptorMetadata<?>, Object> interceptorHandlerInstances = new HashMap<InterceptorMetadata<?>, Object>();
+    private final Map<InterceptorMetadata<?>, Object> interceptorHandlerInstances;
     private InterceptorMetadata<ClassMetadata<?>> targetClassInterceptorMetadata;
     private InterceptionModel<ClassMetadata<?>, ?> interceptionModel;
     private final Object targetInstance;
@@ -60,7 +61,9 @@ public class InterceptorMethodHandler implements MethodHandler, Serializable {
             throw new IllegalArgumentException("Interception handler factory must not be null");
         }
         this.interceptionModel = interceptionModel;
-        for (InterceptorMetadata interceptorMetadata : this.interceptionModel.getAllInterceptors()) {
+        Set<? extends InterceptorMetadata<?>> allInterceptors = this.interceptionModel.getAllInterceptors();
+        interceptorHandlerInstances = new HashMap<InterceptorMetadata<?>, Object>(allInterceptors.size());
+        for (InterceptorMetadata interceptorMetadata : allInterceptors) {
             interceptorHandlerInstances.put(interceptorMetadata, interceptorInstantiator.createFor(interceptorMetadata.getInterceptorReference()));
         }
         targetClassInterceptorMetadata = InterceptorMetadataUtils.readMetadataForTargetClass(targetClassMetadata);
