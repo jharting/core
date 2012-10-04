@@ -335,7 +335,7 @@ public class WeldBootstrap implements Bootstrap {
                 services.add(Validator.class, new ConcurrentValidator(executor));
             }
             if (configuration.isPreloaderEnabled()) {
-                services.add(ContainerLifecycleEventPreloader.class, new ContainerLifecycleEventPreloader(configuration, null));
+//                services.add(ContainerLifecycleEventPreloader.class, new ContainerLifecycleEventPreloader(configuration, null));
             }
         }
         if (!services.contains(Validator.class)) {
