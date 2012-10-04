@@ -63,6 +63,7 @@ import org.jboss.weld.bootstrap.events.AfterBeanDiscoveryImpl;
 import org.jboss.weld.bootstrap.events.AfterDeploymentValidationImpl;
 import org.jboss.weld.bootstrap.events.BeforeBeanDiscoveryImpl;
 import org.jboss.weld.bootstrap.events.BeforeShutdownImpl;
+import org.jboss.weld.bootstrap.events.ContainerLifecycleEventObservers;
 import org.jboss.weld.bootstrap.events.ProcessModuleImpl;
 import org.jboss.weld.bootstrap.spi.BeanDeploymentArchive;
 import org.jboss.weld.bootstrap.spi.BeansXml;
@@ -287,6 +288,7 @@ public class WeldBootstrap implements Bootstrap {
             deploymentServices.add(ContextualStore.class, implementationServices.get(ContextualStore.class));
             deploymentServices.add(CurrentInjectionPoint.class, implementationServices.get(CurrentInjectionPoint.class));
             deploymentServices.add(GlobalObserverNotifierService.class, observerNotificationService);
+            deploymentServices.add(ContainerLifecycleEventObservers.class, new ContainerLifecycleEventObservers());
 
             this.environment = environment;
             this.deploymentManager = BeanManagerImpl.newRootManager("deployment", deploymentServices, EMPTY_ENABLED);

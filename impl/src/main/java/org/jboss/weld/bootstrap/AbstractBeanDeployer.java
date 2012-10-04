@@ -38,6 +38,7 @@ import javax.enterprise.inject.spi.ProcessProducer;
 import javax.enterprise.inject.spi.ProcessProducerField;
 import javax.enterprise.inject.spi.ProcessProducerMethod;
 
+import org.jboss.weld.Container;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedField;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedMethod;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
@@ -60,6 +61,7 @@ import org.jboss.weld.bean.attributes.ExternalBeanAttributesFactory;
 import org.jboss.weld.bean.builtin.AbstractBuiltInBean;
 import org.jboss.weld.bean.builtin.ee.EEResourceProducerField;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
+import org.jboss.weld.bootstrap.events.ContainerLifecycleEventObservers;
 import org.jboss.weld.bootstrap.events.ProcessBeanAttributesImpl;
 import org.jboss.weld.bootstrap.events.ProcessBeanImpl;
 import org.jboss.weld.bootstrap.events.ProcessBeanInjectionTarget;
@@ -95,11 +97,13 @@ public class AbstractBeanDeployer<E extends BeanDeployerEnvironment> {
     private final BeanManagerImpl manager;
     private final ServiceRegistry services;
     private final E environment;
+    protected final ContainerLifecycleEventObservers containerLifecycleEventObservers;
 
     public AbstractBeanDeployer(BeanManagerImpl manager, ServiceRegistry services, E environment) {
         this.manager = manager;
         this.services = services;
         this.environment = environment;
+        this.containerLifecycleEventObservers = Container.instance().deploymentManager().getServices().get(ContainerLifecycleEventObservers.class);
     }
 
     protected BeanManagerImpl getManager() {
@@ -160,16 +164,18 @@ public class AbstractBeanDeployer<E extends BeanDeployerEnvironment> {
             } else if (bean instanceof AbstractClassBean<?>) {
                 ProcessBeanInjectionTarget.fire(manager, (AbstractClassBean<?>) bean);
             }
-            if (bean instanceof ManagedBean<?>) {
-                ProcessManagedBeanImpl.fire(manager, (ManagedBean<?>) bean);
-            } else if (bean instanceof SessionBean<?>) {
-                ProcessSessionBeanImpl.fire(manager, Reflections.<SessionBean<Object>>cast(bean));
-            } else if (bean instanceof ProducerField<?, ?>) {
-                ProcessProducerFieldImpl.fire(manager, (ProducerField<?, ?>) bean);
-            } else if (bean instanceof ProducerMethod<?, ?>) {
-                ProcessProducerMethodImpl.fire(manager, (ProducerMethod<?, ?>) bean);
-            } else {
-                ProcessBeanImpl.fire(getManager(), bean);
+            if (containerLifecycleEventObservers.isProcessBeanObserved()) {
+                if (bean instanceof ManagedBean<?>) {
+                    ProcessManagedBeanImpl.fire(manager, (ManagedBean<?>) bean);
+                } else if (bean instanceof SessionBean<?>) {
+                    ProcessSessionBeanImpl.fire(manager, Reflections.<SessionBean<Object>> cast(bean));
+                } else if (bean instanceof ProducerField<?, ?>) {
+                    ProcessProducerFieldImpl.fire(manager, (ProducerField<?, ?>) bean);
+                } else if (bean instanceof ProducerMethod<?, ?>) {
+                    ProcessProducerMethodImpl.fire(manager, (ProducerMethod<?, ?>) bean);
+                } else {
+                    ProcessBeanImpl.fire(getManager(), bean);
+                }
             }
         }
     }
@@ -247,8 +253,12 @@ public class AbstractBeanDeployer<E extends BeanDeployerEnvironment> {
         BeanAttributes<T> attributes = BeanAttributesFactory.forBean(annotatedMethod, getManager());
         DisposalMethod<X, ?> disposalMethod = resolveDisposalMethod(attributes, declaringBean);
         ProducerMethod<? super X, T> bean = ProducerMethod.of(attributes, annotatedMethod, declaringBean, disposalMethod, manager, services);
-        preloadContainerLifecycleEvent(ProcessBeanAttributes.class, bean.getType());
-        preloadContainerLifecycleEvent(ProcessProducerMethod.class, annotatedMethod.getBaseType(), bean.getBeanClass());
+        if (containerLifecycleEventObservers.isProcessBeanAttributesObserved()) {
+            preloadContainerLifecycleEvent(ProcessBeanAttributes.class, bean.getType());
+        }
+        if (containerLifecycleEventObservers.isProcessBeanObserved()) {
+            preloadContainerLifecycleEvent(ProcessProducerMethod.class, annotatedMethod.getBaseType(), bean.getBeanClass());
+        }
         preloadContainerLifecycleEvent(ProcessProducer.class, bean.getBeanClass(), annotatedMethod.getBaseType());
         getEnvironment().addProducerMethod(bean);
     }
@@ -262,8 +272,12 @@ public class AbstractBeanDeployer<E extends BeanDeployerEnvironment> {
         } else {
             bean = ProducerField.of(attributes, field, declaringBean, disposalMethod, manager, services);
         }
-        preloadContainerLifecycleEvent(ProcessBeanAttributes.class, bean.getType());
-        preloadContainerLifecycleEvent(ProcessProducerField.class, field.getBaseType(), bean.getBeanClass());
+        if (containerLifecycleEventObservers.isProcessBeanAttributesObserved()) {
+            preloadContainerLifecycleEvent(ProcessBeanAttributes.class, bean.getType());
+        }
+        if (containerLifecycleEventObservers.isProcessBeanObserved()) {
+            preloadContainerLifecycleEvent(ProcessProducerField.class, field.getBaseType(), bean.getBeanClass());
+        }
         preloadContainerLifecycleEvent(ProcessProducer.class, bean.getBeanClass(), field.getBaseType());
         getEnvironment().addProducerField(bean);
     }
@@ -344,6 +358,9 @@ public class AbstractBeanDeployer<E extends BeanDeployerEnvironment> {
     }
 
     protected <T, S> boolean fireProcessBeanAttributes(AbstractBean<T, S> bean) {
+        if (!containerLifecycleEventObservers.isProcessBeanAttributesObserved()) {
+            return false;
+        }
         if (!manager.getServices().get(SpecializationAndEnablementRegistry.class).isCandidateForLifecycleEvent(bean)) {
             return false;
         }

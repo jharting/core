@@ -39,6 +39,7 @@ import javax.enterprise.inject.spi.ProcessInjectionTarget;
 import javax.enterprise.inject.spi.ProcessManagedBean;
 import javax.interceptor.Interceptor;
 
+import org.jboss.weld.Container;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
 import org.jboss.weld.annotated.slim.SlimAnnotatedType;
 import org.jboss.weld.bean.AbstractBean;
@@ -47,6 +48,7 @@ import org.jboss.weld.bean.RIBean;
 import org.jboss.weld.bean.attributes.BeanAttributesFactory;
 import org.jboss.weld.bean.interceptor.InterceptorBindingsAdapter;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
+import org.jboss.weld.bootstrap.events.ContainerLifecycleEventObservers;
 import org.jboss.weld.bootstrap.events.ProcessAnnotatedTypeFactory;
 import org.jboss.weld.bootstrap.events.ProcessAnnotatedTypeImpl;
 import org.jboss.weld.ejb.EjbDescriptors;
@@ -103,7 +105,9 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
         }
 
         if (clazz != null && !clazz.isAnnotation() && !Beans.isVetoed(clazz)) {
-            preloadContainerLifecycleEvent(ProcessAnnotatedType.class, clazz);
+            if (containerLifecycleEventObservers.isProcessAnnotatedTypeObserved()) {
+                preloadContainerLifecycleEvent(ProcessAnnotatedType.class, clazz);
+            }
             AnnotatedType<?> annotatedType = null;
             try {
                 annotatedType = classTransformer.getAnnotatedType(clazz);
@@ -132,6 +136,10 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
     }
 
     public void processAnnotatedTypes() {
+        if (!containerLifecycleEventObservers.isProcessAnnotatedTypeObserved()) {
+            return;
+        }
+
         Set<AnnotatedType<?>> classesToBeAdded = new HashSet<AnnotatedType<?>>();
         Set<AnnotatedType<?>> classesToBeRemoved = new HashSet<AnnotatedType<?>>();
 
@@ -208,18 +216,26 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
         boolean managedBeanOrDecorator = !getEnvironment().getEjbDescriptors().contains(annotatedType.getJavaClass()) && Beans.isTypeManagedBeanOrDecoratorOrInterceptor(annotatedType);
         if (managedBeanOrDecorator) {
             preloadContainerLifecycleEvent(ProcessInjectionTarget.class, annotatedType.getJavaClass());
-            preloadContainerLifecycleEvent(ProcessBeanAttributes.class, annotatedType.getJavaClass());
+            if (containerLifecycleEventObservers.isProcessBeanAttributesObserved()) {
+                preloadContainerLifecycleEvent(ProcessBeanAttributes.class, annotatedType.getJavaClass());
+            }
             EnhancedAnnotatedType<?> weldClass = classTransformer.getEnhancedAnnotatedType(annotatedType);
             if (weldClass.isAnnotationPresent(Decorator.class)) {
-                preloadContainerLifecycleEvent(ProcessBean.class, annotatedType.getJavaClass());
+                if (containerLifecycleEventObservers.isProcessBeanObserved()) {
+                    preloadContainerLifecycleEvent(ProcessBean.class, annotatedType.getJavaClass());
+                }
                 validateDecorator(weldClass);
                 createDecorator(weldClass);
             } else if (weldClass.isAnnotationPresent(Interceptor.class)) {
-                preloadContainerLifecycleEvent(ProcessBean.class, annotatedType.getJavaClass());
+                if (containerLifecycleEventObservers.isProcessBeanObserved()) {
+                    preloadContainerLifecycleEvent(ProcessBean.class, annotatedType.getJavaClass());
+                }
                 validateInterceptor(weldClass);
                 createInterceptor(weldClass);
             } else if (!weldClass.isAbstract()) {
-                preloadContainerLifecycleEvent(ProcessManagedBean.class, annotatedType.getJavaClass());
+                if (containerLifecycleEventObservers.isProcessBeanObserved()) {
+                    preloadContainerLifecycleEvent(ProcessManagedBean.class, annotatedType.getJavaClass());
+                }
                 createManagedBean(weldClass);
             }
         } else {
