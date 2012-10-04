@@ -16,23 +16,33 @@
  */
 package org.jboss.weld.bootstrap.events;
 
+import java.lang.reflect.Member;
 import java.lang.reflect.Type;
 
 import javax.enterprise.inject.spi.Annotated;
+import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanAttributes;
+import javax.enterprise.inject.spi.InjectionTarget;
 import javax.enterprise.inject.spi.ObserverMethod;
 import javax.enterprise.inject.spi.ProcessAnnotatedType;
 import javax.enterprise.inject.spi.ProcessBean;
 import javax.enterprise.inject.spi.ProcessBeanAttributes;
+import javax.enterprise.inject.spi.ProcessInjectionPoint;
+import javax.enterprise.inject.spi.ProcessInjectionTarget;
 import javax.enterprise.inject.spi.ProcessObserverMethod;
+import javax.enterprise.inject.spi.ProcessProducer;
 
+import org.jboss.weld.bean.AbstractClassBean;
+import org.jboss.weld.bean.AbstractProducerBean;
 import org.jboss.weld.bean.ManagedBean;
 import org.jboss.weld.bean.ProducerField;
 import org.jboss.weld.bean.ProducerMethod;
 import org.jboss.weld.bean.SessionBean;
 import org.jboss.weld.bootstrap.api.Service;
 import org.jboss.weld.event.ExtensionObserverMethodImpl;
+import org.jboss.weld.injection.attributes.FieldInjectionPointAttributes;
+import org.jboss.weld.injection.attributes.ParameterInjectionPointAttributes;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.util.reflection.Reflections;
 
@@ -42,6 +52,9 @@ public class ContainerLifecycleEvents implements Service {
     private boolean processAnnotatedTypeObserved;
     private boolean processBeanObserved;
     private boolean processBeanAttributesObserved;
+    private boolean processInjectionPointObserved;
+    private boolean processInjectionTargetObserved;
+    private boolean processProducerObserved;
     private boolean processObserverMethodObserved;
 
     public void processObserverMethod(ObserverMethod<?> observer) {
@@ -66,6 +79,12 @@ public class ContainerLifecycleEvents implements Service {
             processBeanAttributesObserved = true;
         } else if (!processObserverMethodObserved && ProcessObserverMethod.class.isAssignableFrom(rawType)) {
             processObserverMethodObserved = true;
+        } else if (!processProducerObserved && ProcessProducer.class.equals(rawType)) {
+            processProducerObserved = true;
+        } else if (!processInjectionTargetObserved && ProcessInjectionTarget.class.equals(rawType)) {
+            processInjectionTargetObserved = true;
+        } else if (!processInjectionPointObserved && ProcessInjectionPoint.class.equals(rawType)) {
+            processInjectionPointObserved = true;
         }
     }
 
@@ -83,6 +102,18 @@ public class ContainerLifecycleEvents implements Service {
 
     public boolean isProcessObserverMethodObserved() {
         return everythingObserved || processObserverMethodObserved;
+    }
+
+    public boolean isProcessProducerObserved() {
+        return everythingObserved || processProducerObserved;
+    }
+
+    public boolean isProcessInjectionTargetObserved() {
+        return everythingObserved || processInjectionTargetObserved;
+    }
+
+    public boolean isProcessInjectionPointObserved() {
+        return everythingObserved || processInjectionPointObserved;
     }
 
     public void fireProcessBean(BeanManagerImpl beanManager, Bean<?> bean) {
@@ -108,9 +139,42 @@ public class ContainerLifecycleEvents implements Service {
         return null;
     }
 
+    public void fireProcessInjectionTarget(BeanManagerImpl beanManager, AbstractClassBean<?> bean) {
+        if (isProcessInjectionTargetObserved()) {
+            AbstractProcessInjectionTarget.fire(beanManager, bean);
+        }
+    }
+
+    public <X> InjectionTarget<X> fireProcessInjectionTarget(BeanManagerImpl beanManager, AnnotatedType<X> annotatedType, InjectionTarget<X> injectionTarget) {
+        if (isProcessInjectionTargetObserved()) {
+            return AbstractProcessInjectionTarget.fire(beanManager, annotatedType, injectionTarget);
+        }
+        return injectionTarget;
+    }
+
+    public <T, X> FieldInjectionPointAttributes<T, X> fireProcessInjectionPoint(FieldInjectionPointAttributes<T, X> attributes, Class<?> declaringComponentClass, BeanManagerImpl manager) {
+        if (isProcessInjectionPointObserved()) {
+            return ProcessInjectionPointImpl.fire(attributes, declaringComponentClass, manager);
+        }
+        return attributes;
+    }
+
+    public <T, X> ParameterInjectionPointAttributes<T, X> fireProcessInjectionPoint(ParameterInjectionPointAttributes<T, X> injectionPointAttributes, Class<?> declaringComponentClass, BeanManagerImpl manager) {
+        if (isProcessInjectionPointObserved()) {
+            return ProcessInjectionPointImpl.fire(injectionPointAttributes, declaringComponentClass, manager);
+        }
+        return injectionPointAttributes;
+    }
+
     public void fireProcessObserverMethod(BeanManagerImpl beanManager, ObserverMethod<?> observer) {
         if (isProcessObserverMethodObserved()) {
             ProcessObserverMethodImpl.fire(beanManager, observer);
+        }
+    }
+
+    public void fireProcessProducer(BeanManagerImpl beanManager, AbstractProducerBean<?, ?, Member> bean) {
+        if (isProcessProducerObserved()) {
+            ProcessProducerImpl.fire(beanManager, bean);
         }
     }
 

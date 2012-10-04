@@ -64,7 +64,6 @@ import org.jboss.weld.bootstrap.events.ContainerLifecycleEvents;
 import org.jboss.weld.bootstrap.events.ProcessBeanAttributesImpl;
 import org.jboss.weld.bootstrap.events.ProcessBeanInjectionTarget;
 import org.jboss.weld.bootstrap.events.ProcessObserverMethodImpl;
-import org.jboss.weld.bootstrap.events.ProcessProducerImpl;
 import org.jboss.weld.ejb.EJBApiAbstraction;
 import org.jboss.weld.ejb.InternalEjbDescriptor;
 import org.jboss.weld.event.ObserverFactory;
@@ -154,9 +153,9 @@ public class AbstractBeanDeployer<E extends BeanDeployerEnvironment> {
     public void fireBeanEvents(RIBean<?> bean) {
         if (!(bean instanceof NewBean)) {
             if (bean instanceof AbstractProducerBean<?, ?, ?>) {
-                ProcessProducerImpl.fire(manager, Reflections.<AbstractProducerBean<?, ?, Member>>cast(bean));
+                containerLifecycleEvents.fireProcessProducer(manager, Reflections.<AbstractProducerBean<?, ?, Member>>cast(bean));
             } else if (bean instanceof AbstractClassBean<?>) {
-                ProcessBeanInjectionTarget.fire(manager, (AbstractClassBean<?>) bean);
+                containerLifecycleEvents.fireProcessInjectionTarget(manager, (AbstractClassBean<?>) bean);
             }
             containerLifecycleEvents.fireProcessBean(getManager(), bean);
         }
