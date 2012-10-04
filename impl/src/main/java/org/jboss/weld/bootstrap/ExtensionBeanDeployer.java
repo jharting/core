@@ -30,7 +30,7 @@ import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedMethod;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
 import org.jboss.weld.bean.RIBean;
 import org.jboss.weld.bean.builtin.ExtensionBean;
-import org.jboss.weld.bootstrap.events.ContainerLifecycleEventObservers;
+import org.jboss.weld.bootstrap.events.ContainerLifecycleEvents;
 import org.jboss.weld.bootstrap.spi.BeanDeploymentArchive;
 import org.jboss.weld.bootstrap.spi.Deployment;
 import org.jboss.weld.bootstrap.spi.Metadata;
@@ -51,7 +51,7 @@ public class ExtensionBeanDeployer {
     private final Deployment deployment;
     private final Map<BeanDeploymentArchive, BeanDeployment> beanDeployments;
     private final Collection<ContextHolder<? extends Context>> contexts;
-    private final ContainerLifecycleEventObservers containerLifecycleEventObservers;
+    private final ContainerLifecycleEvents containerLifecycleEventObservers;
 
     public ExtensionBeanDeployer(BeanManagerImpl manager, Deployment deployment, Map<BeanDeploymentArchive, BeanDeployment> beanDeployments, Collection<ContextHolder<? extends Context>> contexts) {
         this.beanManager = manager;
@@ -59,7 +59,7 @@ public class ExtensionBeanDeployer {
         this.deployment = deployment;
         this.beanDeployments = beanDeployments;
         this.contexts = contexts;
-        this.containerLifecycleEventObservers = beanManager.getServices().get(ContainerLifecycleEventObservers.class);
+        this.containerLifecycleEventObservers = beanManager.getServices().get(ContainerLifecycleEvents.class);
     }
 
     public ExtensionBeanDeployer deployBeans() {

@@ -48,7 +48,7 @@ import org.jboss.weld.bean.RIBean;
 import org.jboss.weld.bean.attributes.BeanAttributesFactory;
 import org.jboss.weld.bean.interceptor.InterceptorBindingsAdapter;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
-import org.jboss.weld.bootstrap.events.ContainerLifecycleEventObservers;
+import org.jboss.weld.bootstrap.events.ContainerLifecycleEvents;
 import org.jboss.weld.bootstrap.events.ProcessAnnotatedTypeFactory;
 import org.jboss.weld.bootstrap.events.ProcessAnnotatedTypeImpl;
 import org.jboss.weld.ejb.EjbDescriptors;
@@ -105,7 +105,7 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
         }
 
         if (clazz != null && !clazz.isAnnotation() && !Beans.isVetoed(clazz)) {
-            if (containerLifecycleEventObservers.isProcessAnnotatedTypeObserved()) {
+            if (containerLifecycleEvents.isProcessAnnotatedTypeObserved()) {
                 preloadContainerLifecycleEvent(ProcessAnnotatedType.class, clazz);
             }
             AnnotatedType<?> annotatedType = null;
@@ -136,7 +136,7 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
     }
 
     public void processAnnotatedTypes() {
-        if (!containerLifecycleEventObservers.isProcessAnnotatedTypeObserved()) {
+        if (!containerLifecycleEvents.isProcessAnnotatedTypeObserved()) {
             return;
         }
 
@@ -216,24 +216,24 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
         boolean managedBeanOrDecorator = !getEnvironment().getEjbDescriptors().contains(annotatedType.getJavaClass()) && Beans.isTypeManagedBeanOrDecoratorOrInterceptor(annotatedType);
         if (managedBeanOrDecorator) {
             preloadContainerLifecycleEvent(ProcessInjectionTarget.class, annotatedType.getJavaClass());
-            if (containerLifecycleEventObservers.isProcessBeanAttributesObserved()) {
+            if (containerLifecycleEvents.isProcessBeanAttributesObserved()) {
                 preloadContainerLifecycleEvent(ProcessBeanAttributes.class, annotatedType.getJavaClass());
             }
             EnhancedAnnotatedType<?> weldClass = classTransformer.getEnhancedAnnotatedType(annotatedType);
             if (weldClass.isAnnotationPresent(Decorator.class)) {
-                if (containerLifecycleEventObservers.isProcessBeanObserved()) {
+                if (containerLifecycleEvents.isProcessBeanObserved()) {
                     preloadContainerLifecycleEvent(ProcessBean.class, annotatedType.getJavaClass());
                 }
                 validateDecorator(weldClass);
                 createDecorator(weldClass);
             } else if (weldClass.isAnnotationPresent(Interceptor.class)) {
-                if (containerLifecycleEventObservers.isProcessBeanObserved()) {
+                if (containerLifecycleEvents.isProcessBeanObserved()) {
                     preloadContainerLifecycleEvent(ProcessBean.class, annotatedType.getJavaClass());
                 }
                 validateInterceptor(weldClass);
                 createInterceptor(weldClass);
             } else if (!weldClass.isAbstract()) {
-                if (containerLifecycleEventObservers.isProcessBeanObserved()) {
+                if (containerLifecycleEvents.isProcessBeanObserved()) {
                     preloadContainerLifecycleEvent(ProcessManagedBean.class, annotatedType.getJavaClass());
                 }
                 createManagedBean(weldClass);

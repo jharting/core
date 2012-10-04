@@ -18,21 +18,31 @@ package org.jboss.weld.bootstrap.events;
 
 import java.lang.reflect.Type;
 
+import javax.enterprise.inject.spi.Annotated;
+import javax.enterprise.inject.spi.Bean;
+import javax.enterprise.inject.spi.BeanAttributes;
 import javax.enterprise.inject.spi.ObserverMethod;
 import javax.enterprise.inject.spi.ProcessAnnotatedType;
 import javax.enterprise.inject.spi.ProcessBean;
 import javax.enterprise.inject.spi.ProcessBeanAttributes;
+import javax.enterprise.inject.spi.ProcessObserverMethod;
 
+import org.jboss.weld.bean.ManagedBean;
+import org.jboss.weld.bean.ProducerField;
+import org.jboss.weld.bean.ProducerMethod;
+import org.jboss.weld.bean.SessionBean;
 import org.jboss.weld.bootstrap.api.Service;
 import org.jboss.weld.event.ExtensionObserverMethodImpl;
+import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.util.reflection.Reflections;
 
-public class ContainerLifecycleEventObservers implements Service {
+public class ContainerLifecycleEvents implements Service {
 
     private boolean everythingObserved;
     private boolean processAnnotatedTypeObserved;
     private boolean processBeanObserved;
     private boolean processBeanAttributesObserved;
+    private boolean processObserverMethodObserved;
 
     public void processObserverMethod(ObserverMethod<?> observer) {
         if (observer instanceof ExtensionObserverMethodImpl<?, ?>) {
@@ -54,6 +64,8 @@ public class ContainerLifecycleEventObservers implements Service {
             processBeanObserved = true;
         } else if (!processBeanAttributesObserved && ProcessBeanAttributes.class.isAssignableFrom(rawType)) {
             processBeanAttributesObserved = true;
+        } else if (!processObserverMethodObserved && ProcessObserverMethod.class.isAssignableFrom(rawType)) {
+            processObserverMethodObserved = true;
         }
     }
 
@@ -67,6 +79,39 @@ public class ContainerLifecycleEventObservers implements Service {
 
     public boolean isProcessBeanAttributesObserved() {
         return everythingObserved || processBeanAttributesObserved;
+    }
+
+    public boolean isProcessObserverMethodObserved() {
+        return everythingObserved || processObserverMethodObserved;
+    }
+
+    public void fireProcessBean(BeanManagerImpl beanManager, Bean<?> bean) {
+        if (isProcessBeanObserved()) {
+            if (bean instanceof ManagedBean<?>) {
+                ProcessManagedBeanImpl.fire(beanManager, (ManagedBean<?>) bean);
+            } else if (bean instanceof SessionBean<?>) {
+                ProcessSessionBeanImpl.fire(beanManager, Reflections.<SessionBean<Object>> cast(bean));
+            } else if (bean instanceof ProducerField<?, ?>) {
+                ProcessProducerFieldImpl.fire(beanManager, (ProducerField<?, ?>) bean);
+            } else if (bean instanceof ProducerMethod<?, ?>) {
+                ProcessProducerMethodImpl.fire(beanManager, (ProducerMethod<?, ?>) bean);
+            } else {
+                ProcessBeanImpl.fire(beanManager, bean);
+            }
+        }
+    }
+
+    public <T> ProcessBeanAttributesImpl<T> fireProcessBeanAttributes(BeanManagerImpl beanManager, BeanAttributes<T> attributes, Annotated annotated, Type type) {
+        if (isProcessBeanAttributesObserved()) {
+            return ProcessBeanAttributesImpl.fire(beanManager, attributes, annotated, type);
+        }
+        return null;
+    }
+
+    public void fireProcessObserverMethod(BeanManagerImpl beanManager, ObserverMethod<?> observer) {
+        if (isProcessObserverMethodObserved()) {
+            ProcessObserverMethodImpl.fire(beanManager, observer);
+        }
     }
 
     @Override

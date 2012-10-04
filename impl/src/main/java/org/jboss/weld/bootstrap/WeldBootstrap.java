@@ -63,7 +63,7 @@ import org.jboss.weld.bootstrap.events.AfterBeanDiscoveryImpl;
 import org.jboss.weld.bootstrap.events.AfterDeploymentValidationImpl;
 import org.jboss.weld.bootstrap.events.BeforeBeanDiscoveryImpl;
 import org.jboss.weld.bootstrap.events.BeforeShutdownImpl;
-import org.jboss.weld.bootstrap.events.ContainerLifecycleEventObservers;
+import org.jboss.weld.bootstrap.events.ContainerLifecycleEvents;
 import org.jboss.weld.bootstrap.events.ProcessModuleImpl;
 import org.jboss.weld.bootstrap.spi.BeanDeploymentArchive;
 import org.jboss.weld.bootstrap.spi.BeansXml;
@@ -288,7 +288,7 @@ public class WeldBootstrap implements Bootstrap {
             deploymentServices.add(ContextualStore.class, implementationServices.get(ContextualStore.class));
             deploymentServices.add(CurrentInjectionPoint.class, implementationServices.get(CurrentInjectionPoint.class));
             deploymentServices.add(GlobalObserverNotifierService.class, observerNotificationService);
-            deploymentServices.add(ContainerLifecycleEventObservers.class, new ContainerLifecycleEventObservers());
+            deploymentServices.add(ContainerLifecycleEvents.class, implementationServices.get(ContainerLifecycleEvents.class));
 
             this.environment = environment;
             this.deploymentManager = BeanManagerImpl.newRootManager("deployment", deploymentServices, EMPTY_ENABLED);
@@ -325,6 +325,7 @@ public class WeldBootstrap implements Bootstrap {
         services.add(ContextualStore.class, new ContextualStoreImpl());
         services.add(CurrentInjectionPoint.class, new CurrentInjectionPoint());
         services.add(SpecializationAndEnablementRegistry.class, new SpecializationAndEnablementRegistry());
+        services.add(ContainerLifecycleEvents.class, new ContainerLifecycleEvents());
 
         BootstrapConfiguration configuration = new BootstrapConfiguration(DefaultResourceLoader.INSTANCE);
         if (configuration.isThreadingEnabled()) {
@@ -334,7 +335,7 @@ public class WeldBootstrap implements Bootstrap {
                 services.add(Validator.class, new ConcurrentValidator(executor));
             }
             if (configuration.isPreloaderEnabled()) {
-                services.add(ContainerLifecycleEventPreloader.class, new ContainerLifecycleEventPreloader(configuration));
+                services.add(ContainerLifecycleEventPreloader.class, new ContainerLifecycleEventPreloader(configuration, null));
             }
         }
         if (!services.contains(Validator.class)) {

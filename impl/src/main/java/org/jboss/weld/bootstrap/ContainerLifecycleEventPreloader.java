@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.jboss.weld.Container;
 import org.jboss.weld.bootstrap.api.helpers.AbstractBootstrapService;
+import org.jboss.weld.bootstrap.events.ContainerLifecycleEvents;
 import org.jboss.weld.executor.DeamonThreadFactory;
 import org.jboss.weld.logging.messages.BootstrapMessage;
 import org.jboss.weld.manager.BeanManagerImpl;
@@ -66,9 +67,11 @@ public class ContainerLifecycleEventPreloader extends AbstractBootstrapService {
     }
 
     private final ExecutorService executor;
+    private final ContainerLifecycleEvents containerLifecycleEvents;
 
-    public ContainerLifecycleEventPreloader(BootstrapConfiguration configuration) {
+    public ContainerLifecycleEventPreloader(BootstrapConfiguration configuration, ContainerLifecycleEvents containerLifecycleEvents) {
         this.executor = Executors.newFixedThreadPool(configuration.getPreloaderThreads(), new DeamonThreadFactory(new ThreadGroup("weld-preloaders"), "weld-preloader-"));
+        this.containerLifecycleEvents = containerLifecycleEvents;
     }
 
     @SuppressWarnings(value = "RV_RETURN_VALUE_IGNORED_BAD_PRACTICE", justification = "We never need to synchronize with the preloader.")
