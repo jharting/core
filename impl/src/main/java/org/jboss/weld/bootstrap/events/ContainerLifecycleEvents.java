@@ -34,7 +34,6 @@ import javax.enterprise.inject.spi.ProcessInjectionTarget;
 import javax.enterprise.inject.spi.ProcessObserverMethod;
 import javax.enterprise.inject.spi.ProcessProducer;
 
-import org.jboss.weld.Container;
 import org.jboss.weld.bean.AbstractClassBean;
 import org.jboss.weld.bean.AbstractProducerBean;
 import org.jboss.weld.bean.ManagedBean;
@@ -259,5 +258,9 @@ public class ContainerLifecycleEvents extends AbstractBootstrapService {
         if (preloader != null) {
             preloader.shutdown();
         }
+    }
+
+    public boolean isPreloaderEnabled() {
+        return preloader != null;
     }
 }
