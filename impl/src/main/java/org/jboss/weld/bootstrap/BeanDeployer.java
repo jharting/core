@@ -39,7 +39,6 @@ import javax.enterprise.inject.spi.ProcessInjectionTarget;
 import javax.enterprise.inject.spi.ProcessManagedBean;
 import javax.interceptor.Interceptor;
 
-import org.jboss.weld.Container;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
 import org.jboss.weld.annotated.slim.SlimAnnotatedType;
 import org.jboss.weld.bean.AbstractBean;
@@ -48,8 +47,6 @@ import org.jboss.weld.bean.RIBean;
 import org.jboss.weld.bean.attributes.BeanAttributesFactory;
 import org.jboss.weld.bean.interceptor.InterceptorBindingsAdapter;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
-import org.jboss.weld.bootstrap.events.ContainerLifecycleEvents;
-import org.jboss.weld.bootstrap.events.ProcessAnnotatedTypeFactory;
 import org.jboss.weld.bootstrap.events.ProcessAnnotatedTypeImpl;
 import org.jboss.weld.ejb.EjbDescriptors;
 import org.jboss.weld.ejb.InternalEjbDescriptor;
@@ -136,38 +133,29 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
     }
 
     public void processAnnotatedTypes() {
-        if (!containerLifecycleEvents.isProcessAnnotatedTypeObserved()) {
-            return;
-        }
-
         Set<AnnotatedType<?>> classesToBeAdded = new HashSet<AnnotatedType<?>>();
         Set<AnnotatedType<?>> classesToBeRemoved = new HashSet<AnnotatedType<?>>();
 
         for (AnnotatedType<?> annotatedType : getEnvironment().getAnnotatedTypes()) {
             // fire event
-            boolean synthetic = getEnvironment().getAnnotatedTypeSource(annotatedType) != null;
-            ProcessAnnotatedTypeImpl<?> event;
-            if (synthetic) {
-                event = ProcessAnnotatedTypeFactory.create(getManager(), annotatedType, getEnvironment().getAnnotatedTypeSource(annotatedType));
-            } else {
-                event = ProcessAnnotatedTypeFactory.create(getManager(), annotatedType);
-            }
-            event.fire();
+            ProcessAnnotatedTypeImpl<?> event = containerLifecycleEvents.fireProcessAnnotatedType(getManager(), annotatedType, getEnvironment().getAnnotatedTypeSource(annotatedType));
             // process the result
-            if (event.isVeto()) {
-                getEnvironment().vetoJavaClass(annotatedType.getJavaClass());
-                classesToBeRemoved.add(annotatedType);
-            } else {
-                boolean dirty = event.isDirty();
-                if (dirty) {
-                    classesToBeRemoved.add(annotatedType); // remove the original class
-                    AnnotatedType<?> modifiedType = event.getAnnotatedType();
-                    if (modifiedType instanceof SlimAnnotatedType<?>) {
-                        annotatedType = modifiedType;
-                    } else {
-                        annotatedType = classTransformer.getAnnotatedType(modifiedType);
+            if (event != null) {
+                if (event.isVeto()) {
+                    getEnvironment().vetoJavaClass(annotatedType.getJavaClass());
+                    classesToBeRemoved.add(annotatedType);
+                } else {
+                    boolean dirty = event.isDirty();
+                    if (dirty) {
+                        classesToBeRemoved.add(annotatedType); // remove the original class
+                        AnnotatedType<?> modifiedType = event.getAnnotatedType();
+                        if (modifiedType instanceof SlimAnnotatedType<?>) {
+                            annotatedType = modifiedType;
+                        } else {
+                            annotatedType = classTransformer.getAnnotatedType(modifiedType);
+                        }
+                        classesToBeAdded.add(annotatedType); // add a replacement for the removed class
                     }
-                    classesToBeAdded.add(annotatedType); // add a replacement for the removed class
                 }
             }
         }
