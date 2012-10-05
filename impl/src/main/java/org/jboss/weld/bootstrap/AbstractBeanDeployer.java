@@ -24,16 +24,11 @@ import static org.jboss.weld.logging.messages.BootstrapMessage.FOUND_INTERCEPTOR
 import static org.jboss.weld.logging.messages.BootstrapMessage.FOUND_OBSERVER_METHOD;
 
 import java.lang.reflect.Member;
-import java.lang.reflect.Type;
 import java.util.Set;
 
 import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.BeanAttributes;
-import javax.enterprise.inject.spi.ProcessBean;
-import javax.enterprise.inject.spi.ProcessBeanAttributes;
-import javax.enterprise.inject.spi.ProcessObserverMethod;
-import javax.enterprise.inject.spi.ProcessProducer;
 import javax.enterprise.inject.spi.ProcessProducerField;
 import javax.enterprise.inject.spi.ProcessProducerMethod;
 
@@ -62,7 +57,6 @@ import org.jboss.weld.bean.builtin.ee.EEResourceProducerField;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
 import org.jboss.weld.bootstrap.events.ContainerLifecycleEvents;
 import org.jboss.weld.bootstrap.events.ProcessBeanAttributesImpl;
-import org.jboss.weld.bootstrap.events.ProcessBeanInjectionTarget;
 import org.jboss.weld.bootstrap.events.ProcessObserverMethodImpl;
 import org.jboss.weld.ejb.EJBApiAbstraction;
 import org.jboss.weld.ejb.InternalEjbDescriptor;
@@ -101,20 +95,6 @@ public class AbstractBeanDeployer<E extends BeanDeployerEnvironment> {
 
     protected BeanManagerImpl getManager() {
         return manager;
-    }
-
-    /**
-     * In multi-threaded environment we often cannot leverage multiple core fully in bootstrap because the deployer
-     * threads are often blocked by the reflection API or waiting to get a classloader lock. While waiting for classes to be loaded or
-     * reflection metadata to be obtained, we can make use of the idle CPU cores and start resolving container lifecycle event observers
-     * (extensions) upfront for those types of events we know we will be firing. Since these resolutions are cached, firing of the
-     * lifecycle events will then be very fast.
-     *
-     * This method is a noop hook by default. It is expected to be override by a concurrent implementation of bean deployer.
-     *
-     */
-    protected void preloadContainerLifecycleEvent(Class<?> eventRawType, Type... typeParameters) {
-        // noop by default
     }
 
     // interceptors, decorators and observers go first
@@ -234,13 +214,9 @@ public class AbstractBeanDeployer<E extends BeanDeployerEnvironment> {
         BeanAttributes<T> attributes = BeanAttributesFactory.forBean(annotatedMethod, getManager());
         DisposalMethod<X, ?> disposalMethod = resolveDisposalMethod(attributes, declaringBean);
         ProducerMethod<? super X, T> bean = ProducerMethod.of(attributes, annotatedMethod, declaringBean, disposalMethod, manager, services);
-        if (containerLifecycleEvents.isProcessBeanAttributesObserved()) {
-            preloadContainerLifecycleEvent(ProcessBeanAttributes.class, bean.getType());
-        }
-        if (containerLifecycleEvents.isProcessBeanObserved()) {
-            preloadContainerLifecycleEvent(ProcessProducerMethod.class, annotatedMethod.getBaseType(), bean.getBeanClass());
-        }
-        preloadContainerLifecycleEvent(ProcessProducer.class, bean.getBeanClass(), annotatedMethod.getBaseType());
+        containerLifecycleEvents.preloadProcessBeanAttributes(bean.getType());
+        containerLifecycleEvents.preloadProcessBean(ProcessProducerMethod.class, annotatedMethod.getBaseType(), bean.getBeanClass());
+        containerLifecycleEvents.preloadProcessProducer(bean.getBeanClass(), annotatedMethod.getBaseType());
         getEnvironment().addProducerMethod(bean);
     }
 
@@ -253,13 +229,9 @@ public class AbstractBeanDeployer<E extends BeanDeployerEnvironment> {
         } else {
             bean = ProducerField.of(attributes, field, declaringBean, disposalMethod, manager, services);
         }
-        if (containerLifecycleEvents.isProcessBeanAttributesObserved()) {
-            preloadContainerLifecycleEvent(ProcessBeanAttributes.class, bean.getType());
-        }
-        if (containerLifecycleEvents.isProcessBeanObserved()) {
-            preloadContainerLifecycleEvent(ProcessProducerField.class, field.getBaseType(), bean.getBeanClass());
-        }
-        preloadContainerLifecycleEvent(ProcessProducer.class, bean.getBeanClass(), field.getBaseType());
+        containerLifecycleEvents.preloadProcessBeanAttributes(bean.getType());
+        containerLifecycleEvents.preloadProcessBean(ProcessProducerField.class, field.getBaseType(), bean.getBeanClass());
+        containerLifecycleEvents.preloadProcessProducer(bean.getBeanClass(), field.getBaseType());
         getEnvironment().addProducerField(bean);
     }
 
@@ -278,7 +250,7 @@ public class AbstractBeanDeployer<E extends BeanDeployerEnvironment> {
     protected <T, X> void createObserverMethod(RIBean<X> declaringBean, EnhancedAnnotatedMethod<T, ? super X> method) {
         ObserverMethodImpl<T, X> observer = ObserverFactory.create(method, declaringBean, manager);
         ObserverInitializationContext<T, ? super X> observerInitializer = ObserverInitializationContext.of(observer, method);
-        preloadContainerLifecycleEvent(ProcessObserverMethod.class, observer.getObservedType(), declaringBean.getBeanClass());
+        containerLifecycleEvents.preloadProcessObserverMethod(observer.getObservedType(), declaringBean.getBeanClass());
         getEnvironment().addObserverMethod(observerInitializer);
     }
 
@@ -334,7 +306,6 @@ public class AbstractBeanDeployer<E extends BeanDeployerEnvironment> {
     }
 
     public void addBuiltInBean(AbstractBuiltInBean<?> bean) {
-        preloadContainerLifecycleEvent(ProcessBean.class, bean.getBeanClass());
         getEnvironment().addBuiltInBean(bean);
     }
 

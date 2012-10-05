@@ -63,6 +63,7 @@ import org.jboss.weld.bootstrap.events.AfterBeanDiscoveryImpl;
 import org.jboss.weld.bootstrap.events.AfterDeploymentValidationImpl;
 import org.jboss.weld.bootstrap.events.BeforeBeanDiscoveryImpl;
 import org.jboss.weld.bootstrap.events.BeforeShutdownImpl;
+import org.jboss.weld.bootstrap.events.ContainerLifecycleEventPreloader;
 import org.jboss.weld.bootstrap.events.ContainerLifecycleEvents;
 import org.jboss.weld.bootstrap.events.ProcessModuleImpl;
 import org.jboss.weld.bootstrap.spi.BeanDeploymentArchive;
@@ -278,16 +279,13 @@ public class WeldBootstrap implements Bootstrap {
 
             registry.addAll(implementationServices.entrySet());
 
-            GlobalObserverNotifierService observerNotificationService = new GlobalObserverNotifierService(registry);
-            registry.add(GlobalObserverNotifierService.class, observerNotificationService);
-
             ServiceRegistry deploymentServices = new SimpleServiceRegistry();
             deploymentServices.add(ClassTransformer.class, implementationServices.get(ClassTransformer.class));
             deploymentServices.add(MetaAnnotationStore.class, implementationServices.get(MetaAnnotationStore.class));
             deploymentServices.add(TypeStore.class, implementationServices.get(TypeStore.class));
             deploymentServices.add(ContextualStore.class, implementationServices.get(ContextualStore.class));
             deploymentServices.add(CurrentInjectionPoint.class, implementationServices.get(CurrentInjectionPoint.class));
-            deploymentServices.add(GlobalObserverNotifierService.class, observerNotificationService);
+            deploymentServices.add(GlobalObserverNotifierService.class, implementationServices.get(GlobalObserverNotifierService.class));
             deploymentServices.add(ContainerLifecycleEvents.class, implementationServices.get(ContainerLifecycleEvents.class));
 
             this.environment = environment;
@@ -325,9 +323,12 @@ public class WeldBootstrap implements Bootstrap {
         services.add(ContextualStore.class, new ContextualStoreImpl());
         services.add(CurrentInjectionPoint.class, new CurrentInjectionPoint());
         services.add(SpecializationAndEnablementRegistry.class, new SpecializationAndEnablementRegistry());
-        services.add(ContainerLifecycleEvents.class, new ContainerLifecycleEvents());
+
+        GlobalObserverNotifierService observerNotificationService = new GlobalObserverNotifierService(services);
+        services.add(GlobalObserverNotifierService.class, observerNotificationService);
 
         BootstrapConfiguration configuration = new BootstrapConfiguration(DefaultResourceLoader.INSTANCE);
+        ContainerLifecycleEventPreloader preloader = null;
         if (configuration.isThreadingEnabled()) {
             ExecutorServices executor = ExecutorServicesFactory.create(configuration);
             services.add(ExecutorServices.class, executor);
@@ -335,9 +336,12 @@ public class WeldBootstrap implements Bootstrap {
                 services.add(Validator.class, new ConcurrentValidator(executor));
             }
             if (configuration.isPreloaderEnabled()) {
-//                services.add(ContainerLifecycleEventPreloader.class, new ContainerLifecycleEventPreloader(configuration, null));
+                preloader = new ContainerLifecycleEventPreloader(configuration, observerNotificationService.getGlobalLenientObserverNotifier());
             }
         }
+
+        services.add(ContainerLifecycleEvents.class, new ContainerLifecycleEvents(preloader));
+
         if (!services.contains(Validator.class)) {
             services.add(Validator.class, new Validator());
         }
@@ -457,7 +461,7 @@ public class WeldBootstrap implements Bootstrap {
             }
             return this;
         } catch (RuntimeException e) {
-            ContainerLifecycleEventPreloader.shutdown();
+            Container.instance().services().get(ContainerLifecycleEvents.class).cleanup();
             throw e;
         }
     }

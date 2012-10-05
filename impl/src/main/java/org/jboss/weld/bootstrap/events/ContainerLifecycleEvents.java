@@ -34,20 +34,21 @@ import javax.enterprise.inject.spi.ProcessInjectionTarget;
 import javax.enterprise.inject.spi.ProcessObserverMethod;
 import javax.enterprise.inject.spi.ProcessProducer;
 
+import org.jboss.weld.Container;
 import org.jboss.weld.bean.AbstractClassBean;
 import org.jboss.weld.bean.AbstractProducerBean;
 import org.jboss.weld.bean.ManagedBean;
 import org.jboss.weld.bean.ProducerField;
 import org.jboss.weld.bean.ProducerMethod;
 import org.jboss.weld.bean.SessionBean;
-import org.jboss.weld.bootstrap.api.Service;
+import org.jboss.weld.bootstrap.api.helpers.AbstractBootstrapService;
 import org.jboss.weld.event.ExtensionObserverMethodImpl;
 import org.jboss.weld.injection.attributes.FieldInjectionPointAttributes;
 import org.jboss.weld.injection.attributes.ParameterInjectionPointAttributes;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.util.reflection.Reflections;
 
-public class ContainerLifecycleEvents implements Service {
+public class ContainerLifecycleEvents extends AbstractBootstrapService {
 
     private boolean everythingObserved;
     private boolean processAnnotatedTypeObserved;
@@ -57,6 +58,12 @@ public class ContainerLifecycleEvents implements Service {
     private boolean processInjectionTargetObserved;
     private boolean processProducerObserved;
     private boolean processObserverMethodObserved;
+
+    private final ContainerLifecycleEventPreloader preloader;
+
+    public ContainerLifecycleEvents(ContainerLifecycleEventPreloader preloader) {
+        this.preloader = preloader;
+    }
 
     public void processObserverMethod(ObserverMethod<?> observer) {
         if (observer instanceof ExtensionObserverMethodImpl<?, ?>) {
@@ -205,7 +212,52 @@ public class ContainerLifecycleEvents implements Service {
         }
     }
 
+    public void preloadProcessAnnotatedType(Class<?> type) {
+        if (preloader != null && isProcessAnnotatedTypeObserved()) {
+            preloader.preloadContainerLifecycleEvent(ProcessAnnotatedType.class, type);
+        }
+    }
+
+    public <T extends ProcessBean<?>> void preloadProcessBean(Class<T> eventRawType, Type... typeParameters) {
+        if (preloader != null && isProcessBeanObserved()) {
+            preloader.preloadContainerLifecycleEvent(ProcessAnnotatedType.class, typeParameters);
+        }
+    }
+
+    public void preloadProcessBeanAttributes(Type type) {
+        if (preloader != null && isProcessBeanAttributesObserved()) {
+            preloader.preloadContainerLifecycleEvent(ProcessBeanAttributes.class, type);
+        }
+    }
+
+    public void preloadProcessInjectionPoint(Type... typeParameters) {
+        if (preloader != null && isProcessInjectionPointObserved()) {
+            preloader.preloadContainerLifecycleEvent(ProcessInjectionPoint.class, typeParameters);
+        }
+    }
+
+    public void preloadProcessInjectionTarget(Class<?> type) {
+        if (preloader != null && isProcessInjectionTargetObserved()) {
+            preloader.preloadContainerLifecycleEvent(ProcessInjectionTarget.class, type);
+        }
+    }
+
+    public void preloadProcessObserverMethod(Type... typeParameters) {
+        if (preloader != null && isProcessObserverMethodObserved()) {
+            preloader.preloadContainerLifecycleEvent(ProcessObserverMethod.class, typeParameters);
+        }
+    }
+
+    public void preloadProcessProducer(Type... typeParameters) {
+        if (preloader != null && isProcessProducerObserved()) {
+            preloader.preloadContainerLifecycleEvent(ProcessProducer.class, typeParameters);
+        }
+    }
+
     @Override
-    public void cleanup() {
+    public void cleanupAfterBoot() {
+        if (preloader != null) {
+            preloader.shutdown();
+        }
     }
 }
