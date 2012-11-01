@@ -24,6 +24,7 @@ import org.jboss.weld.exceptions.InvalidObjectException;
 import org.jboss.weld.resources.ClassTransformer;
 import org.jboss.weld.resources.ReflectionCache;
 import org.jboss.weld.resources.SharedObjectCache;
+import org.jboss.weld.resources.spi.ResourceLoadingException;
 import org.jboss.weld.util.LazyValueHolder;
 import org.jboss.weld.util.Types;
 import org.jboss.weld.util.collections.ArraySet;
@@ -118,6 +119,17 @@ public class BackedAnnotatedType<X> extends BackedAnnotated implements SlimAnnot
     }
 
     @Override
+    public void init() {
+        try {
+            this.constructors.get();
+            this.fields.get();
+            this.methods.get();
+        } catch (Throwable e) {
+            throw new ResourceLoadingException("Error loading class " + getJavaClass().getName(), e);
+        }
+    }
+
+    @Override
     public void clear() {
         this.constructors.clear();
         this.fields.clear();
@@ -170,7 +182,7 @@ public class BackedAnnotatedType<X> extends BackedAnnotated implements SlimAnnot
         }
     }
 
-    private class BackedAnnotatedFields extends EagerlyInitializedLazyValueHolder<Set<AnnotatedField<? super X>>> {
+    private class BackedAnnotatedFields extends LazyValueHolder<Set<AnnotatedField<? super X>>> {
         @Override
         protected Set<AnnotatedField<? super X>> computeValue() {
             ArraySet<AnnotatedField<? super X>> fields = new ArraySet<AnnotatedField<? super X>>();
@@ -185,7 +197,7 @@ public class BackedAnnotatedType<X> extends BackedAnnotated implements SlimAnnot
         }
     }
 
-    private class BackedAnnotatedMethods extends EagerlyInitializedLazyValueHolder<Set<AnnotatedMethod<? super X>>> {
+    private class BackedAnnotatedMethods extends LazyValueHolder<Set<AnnotatedMethod<? super X>>> {
         @Override
         protected Set<AnnotatedMethod<? super X>> computeValue() {
             ArraySet<AnnotatedMethod<? super X>> methods = new ArraySet<AnnotatedMethod<? super X>>();

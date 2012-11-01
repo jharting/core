@@ -16,10 +16,8 @@
  */
 package org.jboss.weld.bootstrap.events;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Member;
 import java.lang.reflect.Type;
-import java.util.Collection;
 
 import javax.enterprise.inject.spi.Annotated;
 import javax.enterprise.inject.spi.AnnotatedType;
@@ -36,6 +34,7 @@ import javax.enterprise.inject.spi.ProcessInjectionTarget;
 import javax.enterprise.inject.spi.ProcessObserverMethod;
 import javax.enterprise.inject.spi.ProcessProducer;
 
+import org.jboss.weld.annotated.slim.SlimAnnotatedType;
 import org.jboss.weld.bean.AbstractClassBean;
 import org.jboss.weld.bean.AbstractProducerBean;
 import org.jboss.weld.bean.ManagedBean;
@@ -47,6 +46,7 @@ import org.jboss.weld.event.ExtensionObserverMethodImpl;
 import org.jboss.weld.injection.attributes.FieldInjectionPointAttributes;
 import org.jboss.weld.injection.attributes.ParameterInjectionPointAttributes;
 import org.jboss.weld.manager.BeanManagerImpl;
+import org.jboss.weld.resources.spi.ResourceLoadingException;
 import org.jboss.weld.util.reflection.Reflections;
 
 public class ContainerLifecycleEvents extends AbstractBootstrapService {
@@ -134,7 +134,7 @@ public class ContainerLifecycleEvents extends AbstractBootstrapService {
         return processInjectionPointObserved;
     }
 
-    public <T> ProcessAnnotatedTypeImpl<T> fireProcessAnnotatedType(BeanManagerImpl beanManager, AnnotatedType<T> annotatedType, Extension source) {
+    public <T> ProcessAnnotatedTypeImpl<T> fireProcessAnnotatedType(BeanManagerImpl beanManager, SlimAnnotatedType<T> annotatedType, Extension source) {
         if (isProcessAnnotatedTypeObserved()) {
 
             ProcessAnnotatedTypeImpl<T> event = null;
@@ -143,7 +143,11 @@ public class ContainerLifecycleEvents extends AbstractBootstrapService {
             } else {
                 event = new ProcessSyntheticAnnotatedTypeImpl<T>(beanManager, annotatedType, discovery, source);
             }
-            event.fire();
+            try {
+                event.fire();
+            } catch (ResourceLoadingException e) {
+                return null;
+            }
             return event;
         }
         return null;

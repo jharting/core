@@ -115,6 +115,11 @@ public class UnbackedAnnotatedType<X> extends UnbackedAnnotated implements SlimA
     }
 
     @Override
+    public void init() {
+        // noop
+    }
+
+    @Override
     public void clear() {
         // noop
     }

@@ -22,6 +22,7 @@ import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.IdentifiedAnnotatedType;
 
 import org.jboss.weld.Container;
+import org.jboss.weld.resources.spi.ResourceLoadingException;
 
 /**
  * Marker interface for lightweight implementations of {@link AnnotatedType}.
@@ -31,6 +32,13 @@ import org.jboss.weld.Container;
  * @param <T> the type
  */
 public interface SlimAnnotatedType<T> extends IdentifiedAnnotatedType<T> {
+
+    /**
+     * Forces initialization (loading of all members) to verify that this class can be loaded.
+     *
+     * @throws ResourceLoadingException if there is a problem loading the type
+     */
+    void init();
 
     /**
      * Clear up cached content to save memory. Called after bootstrap is complete.

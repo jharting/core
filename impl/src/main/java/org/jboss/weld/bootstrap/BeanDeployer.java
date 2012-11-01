@@ -130,7 +130,7 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
         Set<SlimAnnotatedType<?>> classesToBeAdded = new HashSet<SlimAnnotatedType<?>>();
         Set<AnnotatedType<?>> classesToBeRemoved = new HashSet<AnnotatedType<?>>();
 
-        for (AnnotatedType<?> annotatedType : getEnvironment().getAnnotatedTypes()) {
+        for (SlimAnnotatedType<?> annotatedType : getEnvironment().getAnnotatedTypes()) {
             // fire event
             ProcessAnnotatedTypeImpl<?> event = containerLifecycleEvents.fireProcessAnnotatedType(getManager(), annotatedType, getEnvironment().getAnnotatedTypeSource(annotatedType));
             // process the result
@@ -142,12 +142,7 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
                     boolean dirty = event.isDirty();
                     if (dirty) {
                         classesToBeRemoved.add(annotatedType); // remove the original class
-                        AnnotatedType<?> modifiedType = event.getAnnotatedType();
-                        if (modifiedType instanceof SlimAnnotatedType<?>) {
-                            classesToBeAdded.add((SlimAnnotatedType<?>) modifiedType);
-                        } else {
-                            classesToBeAdded.add(classTransformer.getAnnotatedType(modifiedType));
-                        }
+                        classesToBeAdded.add(event.getAnnotatedType());
                     }
                 }
             }
@@ -179,7 +174,7 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
     public void createClassBeans() {
         Map<Class<?>, Set<AnnotatedType<?>>> otherWeldClasses = Multimaps.newConcurrentSetMultimap();
 
-        for (AnnotatedType<?> annotatedType : getEnvironment().getAnnotatedTypes()) {
+        for (SlimAnnotatedType<?> annotatedType : getEnvironment().getAnnotatedTypes()) {
             createClassBean(annotatedType, otherWeldClasses);
         }
         // create session beans
@@ -200,9 +195,15 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
         }
     }
 
-    protected void createClassBean(AnnotatedType<?> annotatedType, Map<Class<?>, Set<AnnotatedType<?>>> otherWeldClasses) {
+    protected void createClassBean(SlimAnnotatedType<?> annotatedType, Map<Class<?>, Set<AnnotatedType<?>>> otherWeldClasses) {
         boolean managedBeanOrDecorator = !getEnvironment().getEjbDescriptors().contains(annotatedType.getJavaClass()) && Beans.isTypeManagedBeanOrDecoratorOrInterceptor(annotatedType);
         if (managedBeanOrDecorator) {
+            try {
+                annotatedType.init();
+            } catch (ResourceLoadingException e) {
+                // do not continue further if we cannot fully load this type
+                return;
+            }
             containerLifecycleEvents.preloadProcessInjectionTarget(annotatedType.getJavaClass());
             containerLifecycleEvents.preloadProcessBeanAttributes(annotatedType.getJavaClass());
             EnhancedAnnotatedType<?> weldClass = classTransformer.getEnhancedAnnotatedType(annotatedType);
