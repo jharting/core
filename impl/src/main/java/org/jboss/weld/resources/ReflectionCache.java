@@ -42,4 +42,6 @@ public interface ReflectionCache extends Service {
 
     Set<Annotation> getParameterAnnotationSet(Method method, int parameterPosition);
 
+    Set<Annotation> getBackedAnnotatedTypeAnnotationSet(Class<?> javaClass);
+
 }
