@@ -19,6 +19,7 @@ package org.jboss.weld.injection;
 import static org.jboss.weld.logging.messages.UtilMessage.QUALIFIER_ON_FINAL_FIELD;
 import static org.jboss.weld.util.collections.WeldCollections.immutableList;
 import static org.jboss.weld.util.collections.WeldCollections.immutableSet;
+import static org.jboss.weld.util.reflection.Reflections.cast;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ import java.util.Set;
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.spi.Bean;
+import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.enterprise.inject.spi.ProcessInjectionPoint;
 import javax.inject.Inject;
@@ -70,8 +72,10 @@ public class InjectionPointFactory {
     }
 
     private static final InjectionPointFactory INSTANCE = new InjectionPointFactory();
-    private static final InjectionPointFactory SILENT_INSTANCE = new InjectionPointFactory() {
+    private static final InjectionPointFactory SILENT_INSTANCE = new SilentInjectionPointFactory();
+    private static final InjectionPointFactory EXTENSION_INSTANCE = new ExtensionInjectionPointFactory();
 
+    private static class SilentInjectionPointFactory extends InjectionPointFactory {
         @Override
         protected <T, X> FieldInjectionPointAttributes<T, X> processInjectionPoint(FieldInjectionPointAttributes<T, X> injectionPointAttributes, Class<?> declaringComponentClass, BeanManagerImpl manager) {
             // NOOP
@@ -83,7 +87,18 @@ public class InjectionPointFactory {
             // NOOP
             return injectionPointAttributes;
         }
-    };
+    }
+
+    private static class ExtensionInjectionPointFactory extends SilentInjectionPointFactory {
+        @Override
+        public <T, X> ParameterInjectionPoint<T, X> createParameterInjectionPoint(EnhancedAnnotatedParameter<T, X> parameter, Bean<?> declaringBean, Class<?> declaringComponentClass, BeanManagerImpl manager) {
+            ParameterInjectionPoint<T, X> result =  super.createParameterInjectionPoint(parameter, declaringBean, declaringComponentClass, manager);
+            if (result.getType().equals(BeanManager.class) && result.getQualifiers().equals(BeanManagerInjectionPoint.QUALIFIERS)) {
+                return cast(BeanManagerInjectionPoint.of(parameter, declaringBean, manager));
+            }
+            return result;
+        }
+    }
 
     /**
      * Returns the default {@link InjectionPointFactory} singleton.
@@ -95,11 +110,19 @@ public class InjectionPointFactory {
 
     /**
      * Returns an {@link InjectionPointFactory} instance that never produces a {@link ProcessInjectionPoint} event. This is used
-     * for creating observer method injection points of extensions and proxy classes.
+     * for creating injection points of proxy classes.
      * @return an {@link InjectionPointFactory} instance
      */
     public static InjectionPointFactory silentInstance() {
         return SILENT_INSTANCE;
+    }
+
+    /**
+     * This factory never fires {@link ProcessInjectionPoint}. Furthermore, it only creates injection points of the {@link BeanManager} type.
+     * @return an {@link InjectionPointFactory} instance
+     */
+    public static InjectionPointFactory extensionInstance() {
+        return EXTENSION_INSTANCE;
     }
 
     /**
