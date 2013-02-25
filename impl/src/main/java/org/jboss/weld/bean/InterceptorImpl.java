@@ -35,13 +35,14 @@ import javax.enterprise.inject.spi.Interceptor;
 import javax.interceptor.InvocationContext;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
+import org.jboss.weld.bean.interceptor.CdiInterceptorReference;
 import org.jboss.weld.bean.interceptor.WeldInterceptorClassMetadata;
 import org.jboss.weld.exceptions.DefinitionException;
 import org.jboss.weld.exceptions.DeploymentException;
 import org.jboss.weld.exceptions.WeldException;
 import org.jboss.weld.interceptor.proxy.InterceptorInvocation;
 import org.jboss.weld.interceptor.proxy.SimpleInterceptionChain;
-import org.jboss.weld.interceptor.reader.ClassMetadataInterceptorReference;
+import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
 import org.jboss.weld.logging.messages.ReflectionMessage;
 import org.jboss.weld.manager.BeanManagerImpl;
@@ -67,7 +68,7 @@ public class InterceptorImpl<T> extends ManagedBean<T> implements Interceptor<T>
 
     protected InterceptorImpl(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> type, BeanManagerImpl beanManager) {
         super(attributes, type, new StringBuilder().append(Interceptor.class.getSimpleName()).append(BEAN_ID_SEPARATOR).append(type.getName()).toString(), beanManager);
-        this.interceptorMetadata = beanManager.getInterceptorMetadataReader().getInterceptorMetadata(ClassMetadataInterceptorReference.of(WeldInterceptorClassMetadata.of(type)));
+        this.interceptorMetadata = getInterceptorMetadata(type, this, beanManager);
         this.serializable = type.isSerializable();
         this.interceptorBindingTypes = Collections.unmodifiableSet(new HashSet<Annotation>(Interceptors.mergeBeanInterceptorBindings(beanManager, getEnhancedAnnotated(), getStereotypes()).values()));
 
@@ -77,6 +78,12 @@ public class InterceptorImpl<T> extends ManagedBean<T> implements Interceptor<T>
         if (Beans.findInterceptorBindingConflicts(beanManager, interceptorBindingTypes)) {
             throw new DeploymentException(CONFLICTING_INTERCEPTOR_BINDINGS, getType());
         }
+    }
+
+    private static <T> InterceptorMetadata<?> getInterceptorMetadata(EnhancedAnnotatedType<T> type, Interceptor<T> interceptor, BeanManagerImpl manager) {
+        ClassMetadata<T> classMetadata = WeldInterceptorClassMetadata.of(type);
+        CdiInterceptorReference<T> reference = new CdiInterceptorReference<T>(classMetadata, interceptor);
+        return manager.getInterceptorMetadataReader().getInterceptorMetadata(reference);
     }
 
     public Set<Annotation> getInterceptorBindings() {
