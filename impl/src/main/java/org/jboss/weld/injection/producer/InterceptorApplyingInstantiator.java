@@ -69,6 +69,7 @@ public class InterceptorApplyingInstantiator<T> implements Instantiator<T> {
     protected void performAroundConstructInterception(InterceptionContext interceptionContext) {
         List<? extends InterceptorMetadata<?>> interceptors = interceptionModel.getInterceptors(InterceptionType.AROUND_CONSTRUCT, null);
         if (!interceptors.isEmpty()) {
+//            InterceptionChainInvoker invoker = new InterceptionChainInvoker(interceptionContext, factory)
             // TODO
         }
     }
