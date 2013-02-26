@@ -24,14 +24,14 @@ import org.jboss.weld.interceptor.spi.metadata.InterceptorFactory;
 import org.jboss.weld.interceptor.spi.metadata.MethodMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionType;
 
-public class TargetClassInterceptorMetadata<T> extends AbstractInterceptorMetadata<ClassMetadata<T>> {
+public class TargetClassInterceptorMetadata<T> extends AbstractInterceptorMetadata<T> {
 
     public TargetClassInterceptorMetadata(ClassMetadata<?> classMetadata, Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap) {
         super(classMetadata, interceptorMethodMap);
     }
 
     @Override
-    public InterceptorFactory<ClassMetadata<T>> getInterceptorFactory() {
+    public InterceptorFactory<T> getInterceptorFactory() {
         return null;
     }
 

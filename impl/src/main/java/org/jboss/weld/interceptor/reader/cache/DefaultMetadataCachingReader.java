@@ -8,6 +8,7 @@ import com.google.common.collect.MapMaker;
 import org.jboss.weld.interceptor.reader.ClassMetadataInterceptorFactory;
 import org.jboss.weld.interceptor.reader.InterceptorMetadataUtils;
 import org.jboss.weld.interceptor.reader.ReflectiveClassMetadata;
+import org.jboss.weld.interceptor.reader.TargetClassInterceptorMetadata;
 import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorFactory;
@@ -64,9 +65,9 @@ public class DefaultMetadataCachingReader implements MetadataCachingReader {
         }
     }
 
-    public <T> InterceptorMetadata<T> getTargetClassInterceptorMetadata(ClassMetadata<T> classMetadata) {
+    public <T> TargetClassInterceptorMetadata<T> getTargetClassInterceptorMetadata(ClassMetadata<T> classMetadata) {
         try {
-            return (InterceptorMetadata<T>) classMetadataInterceptorMetadataCache.get(classMetadata);
+            return (TargetClassInterceptorMetadata<T>) classMetadataInterceptorMetadataCache.get(classMetadata);
         } catch (ComputationException e) {
             if (unwrapRuntimeExceptions && e.getCause() instanceof RuntimeException) {
                 throw (RuntimeException) e.getCause();

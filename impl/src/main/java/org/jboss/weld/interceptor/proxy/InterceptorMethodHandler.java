@@ -7,20 +7,14 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import org.jboss.weld.bean.proxy.MethodHandler;
 import org.jboss.weld.bean.proxy.ProxyObject;
-import org.jboss.weld.interceptor.reader.InterceptorMetadataUtils;
+import org.jboss.weld.interceptor.reader.TargetClassInterceptorMetadata;
 import org.jboss.weld.interceptor.spi.context.InvocationContextFactory;
-import org.jboss.weld.interceptor.spi.instance.InterceptorInstantiator;
-import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
 import org.jboss.weld.interceptor.spi.metadata.MethodMetadata;
-import org.jboss.weld.interceptor.spi.model.InterceptionModel;
 import org.jboss.weld.interceptor.spi.model.InterceptionType;
 import org.jboss.weld.interceptor.util.InterceptionUtils;
 import org.jboss.weld.util.reflection.SecureReflections;
@@ -41,32 +35,14 @@ public class InterceptorMethodHandler implements MethodHandler, Serializable {
         }
     };
 
-    private final Map<InterceptorMetadata<?>, Object> interceptorHandlerInstances;
-    private final InterceptorMetadata<ClassMetadata<?>> targetClassInterceptorMetadata;
-    private final InterceptionModel<ClassMetadata<?>, ?> interceptionModel;
+    private final InterceptionContext ctx;
     private final Object targetInstance;
     private final InvocationContextFactory invocationContextFactory;
 
-    public InterceptorMethodHandler(Object targetInstance,
-                                    ClassMetadata<?> targetClassMetadata,
-                                    InterceptionModel<ClassMetadata<?>, ?> interceptionModel,
-                                    InterceptorInstantiator<?, ?> interceptorInstantiator,
-                                    InvocationContextFactory invocationContextFactory) {
+    public InterceptorMethodHandler(Object targetInstance, InterceptionContext ctx, InvocationContextFactory invocationContextFactory) {
         this.targetInstance = targetInstance;
+        this.ctx = ctx;
         this.invocationContextFactory = invocationContextFactory;
-        if (interceptionModel == null) {
-            throw new IllegalArgumentException("Interception model must not be null");
-        }
-        if (interceptorInstantiator == null) {
-            throw new IllegalArgumentException("Interception handler factory must not be null");
-        }
-        this.interceptionModel = interceptionModel;
-        Set<? extends InterceptorMetadata<?>> allInterceptors = this.interceptionModel.getAllInterceptors();
-        interceptorHandlerInstances = new HashMap<InterceptorMetadata<?>, Object>(allInterceptors.size());
-        for (InterceptorMetadata interceptorMetadata : allInterceptors) {
-            interceptorHandlerInstances.put(interceptorMetadata, interceptorInstantiator.createFor(interceptorMetadata.getInterceptorFactory()));
-        }
-        targetClassInterceptorMetadata = InterceptorMetadataUtils.readMetadataForTargetClass(targetClassMetadata);
     }
 
     protected boolean isProxy() {
@@ -95,17 +71,18 @@ public class InterceptorMethodHandler implements MethodHandler, Serializable {
     }
 
     private boolean isInterceptorMethod(Method method) {
-        MethodMetadata methodMetadata = targetClassInterceptorMetadata.getInterceptorClass().getDeclaredMethod(method);
+        MethodMetadata methodMetadata = ctx.getTargetClassInterceptorMetadata().getInterceptorClass().getDeclaredMethod(method);
         return methodMetadata != null && methodMetadata.isInterceptorMethod();
     }
 
     private Object executeInterception(Object self, Method proceedingMethod, Method thisMethod, Object[] args, InterceptionType interceptionType) throws Throwable {
 
-        List<? extends InterceptorMetadata<?>> interceptorList = interceptionModel.getInterceptors(interceptionType, thisMethod);
+        List<? extends InterceptorMetadata<?>> interceptorList = ctx.getInterceptionModel().getInterceptors(interceptionType, thisMethod);
         Collection<InterceptorInvocation> interceptorInvocations = new ArrayList<InterceptorInvocation>(interceptorList.size());
         for (InterceptorMetadata interceptorReference : interceptorList) {
-            interceptorInvocations.add(interceptorReference.getInterceptorInvocation(interceptorHandlerInstances.get(interceptorReference), interceptorReference, interceptionType));
+            interceptorInvocations.add(interceptorReference.getInterceptorInvocation(ctx.getInterceptorInstances().get(interceptorReference), interceptorReference, interceptionType));
         }
+        TargetClassInterceptorMetadata<?> targetClassInterceptorMetadata = ctx.getTargetClassInterceptorMetadata();
         if (targetClassInterceptorMetadata != null && targetClassInterceptorMetadata.isEligible(interceptionType)) {
             interceptorInvocations.add(targetClassInterceptorMetadata.getInterceptorInvocation(isProxy() ? targetInstance : self, targetClassInterceptorMetadata, interceptionType));
         }

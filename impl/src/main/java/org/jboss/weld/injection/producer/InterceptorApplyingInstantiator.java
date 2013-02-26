@@ -19,14 +19,14 @@ package org.jboss.weld.injection.producer;
 import javax.enterprise.context.spi.CreationalContext;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
-import org.jboss.weld.bean.interceptor.WeldInterceptorClassMetadata;
-import org.jboss.weld.bean.interceptor.WeldInterceptorInstantiator;
 import org.jboss.weld.bean.proxy.CombinedInterceptorAndDecoratorStackMethodHandler;
 import org.jboss.weld.bean.proxy.MethodHandler;
 import org.jboss.weld.bean.proxy.ProxyObject;
 import org.jboss.weld.exceptions.DeploymentException;
 import org.jboss.weld.interceptor.proxy.DefaultInvocationContextFactory;
-import org.jboss.weld.interceptor.proxy.InterceptorProxyCreatorImpl;
+import org.jboss.weld.interceptor.proxy.InterceptionContext;
+import org.jboss.weld.interceptor.proxy.InterceptorMethodHandler;
+import org.jboss.weld.interceptor.reader.TargetClassInterceptorMetadata;
 import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionModel;
 import org.jboss.weld.manager.BeanManagerImpl;
@@ -41,28 +41,29 @@ import org.jboss.weld.manager.BeanManagerImpl;
  */
 public class InterceptorApplyingInstantiator<T> implements Instantiator<T> {
 
-    private final WeldInterceptorClassMetadata<T> weldInterceptorClassMetadata;
+    private final TargetClassInterceptorMetadata<T> targetClassInterceptorMetadata;
     private final InterceptionModel<ClassMetadata<?>, ?> interceptionModel;
     private final Instantiator<T> delegate;
 
     public InterceptorApplyingInstantiator(EnhancedAnnotatedType<T> type, Instantiator<T> delegate, BeanManagerImpl manager) {
-        this.weldInterceptorClassMetadata = WeldInterceptorClassMetadata.of(type);
+        this.targetClassInterceptorMetadata = manager.getInterceptorMetadataReader().getTargetClassInterceptorMetadata(manager.getInterceptorMetadataReader().getClassMetadata(type.getJavaClass()));
         this.interceptionModel = manager.getInterceptorModelRegistry().get(type.getJavaClass());
         this.delegate = delegate;
     }
 
     @Override
     public T newInstance(CreationalContext<T> ctx, BeanManagerImpl manager) {
+        InterceptionContext interceptionContext = new InterceptionContext(targetClassInterceptorMetadata, interceptionModel, ctx, manager);
+        // TODO: run @AroundConstruct interceptors
+
         T instance = delegate.newInstance(ctx, manager);
-        applyInterceptors(instance, ctx, manager);
+        applyInterceptors(instance, interceptionContext);
         return instance;
     }
 
-    protected T applyInterceptors(T instance, final CreationalContext<T> creationalContext, BeanManagerImpl manager) {
+    protected T applyInterceptors(T instance, InterceptionContext interceptionContext) {
         try {
-            WeldInterceptorInstantiator<T> interceptorInstantiator = new WeldInterceptorInstantiator<T>(manager, creationalContext);
-            InterceptorProxyCreatorImpl interceptorProxyCreator = new InterceptorProxyCreatorImpl(interceptorInstantiator, new DefaultInvocationContextFactory(), interceptionModel);
-            MethodHandler methodHandler = interceptorProxyCreator.createSubclassingMethodHandler(null, weldInterceptorClassMetadata);
+            MethodHandler methodHandler = new InterceptorMethodHandler(null, interceptionContext, new DefaultInvocationContextFactory());
             CombinedInterceptorAndDecoratorStackMethodHandler wrapperMethodHandler = (CombinedInterceptorAndDecoratorStackMethodHandler) ((ProxyObject) instance).getHandler();
             wrapperMethodHandler.setInterceptorMethodHandler(methodHandler);
         } catch (Exception e) {
