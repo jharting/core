@@ -20,14 +20,27 @@ package org.jboss.weld.interceptor.proxy;
 import java.lang.reflect.Method;
 import java.util.Collection;
 
+import javax.interceptor.InvocationContext;
+
 import org.jboss.weld.interceptor.chain.AbstractInterceptionChain;
+import org.jboss.weld.util.reflection.SecureReflections;
 
 /**
  * @author <a href="mailto:mariusb@redhat.com">Marius Bogoevici</a>
  */
 public class SimpleInterceptionChain extends AbstractInterceptionChain {
 
-    protected SimpleInterceptionChain(Collection<InterceptorInvocation> interceptorInvocations, Object target, Method targetMethod) {
-        super(interceptorInvocations, target, targetMethod);
+    public SimpleInterceptionChain(Collection<InterceptorInvocation> interceptorInvocations) {
+        super(interceptorInvocations);
+    }
+
+    protected Object interceptorChainCompleted(InvocationContext ctx) throws Exception {
+        Method method = ctx.getMethod();
+        if (method != null) {
+            SecureReflections.ensureAccessible(method);
+            return method.invoke(ctx.getTarget(), ctx.getParameters());
+        } else {
+            return null;
+        }
     }
 }

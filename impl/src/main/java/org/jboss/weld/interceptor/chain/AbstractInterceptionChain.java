@@ -17,7 +17,6 @@
 package org.jboss.weld.interceptor.chain;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -27,7 +26,6 @@ import javax.interceptor.InvocationContext;
 import org.jboss.weld.interceptor.proxy.InterceptorInvocation;
 import org.jboss.weld.interceptor.proxy.InterceptorMethodInvocation;
 import org.jboss.weld.interceptor.spi.context.InterceptionChain;
-import org.jboss.weld.util.reflection.SecureReflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,17 +37,11 @@ public abstract class AbstractInterceptionChain implements InterceptionChain {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractInterceptionChain.class);
 
-    private final Object target;
-
-    private final Method targetMethod;
-
     private int currentPosition;
 
     private final List<InterceptorMethodInvocation> interceptorMethodInvocations;
 
-    protected AbstractInterceptionChain(Collection<InterceptorInvocation> interceptorInvocations, Object target, Method targetMethod) {
-        this.target = target;
-        this.targetMethod = targetMethod;
+    protected AbstractInterceptionChain(Collection<InterceptorInvocation> interceptorInvocations) {
         this.currentPosition = 0;
         interceptorMethodInvocations = new ArrayList<InterceptorMethodInvocation>(interceptorInvocations.size());
         for (InterceptorInvocation interceptorInvocation : interceptorInvocations) {
@@ -92,19 +84,7 @@ public abstract class AbstractInterceptionChain implements InterceptionChain {
         }
     }
 
-    protected Object interceptorChainCompleted(InvocationContext invocationContext) throws Exception {
-        if (targetMethod != null) {
-            SecureReflections.ensureAccessible(targetMethod);
-            if (invocationContext.getMethod() != null) {
-                return targetMethod.invoke(target, invocationContext.getParameters());
-            } else {
-                return targetMethod.invoke(target);
-            }
-
-        } else {
-            return null;
-        }
-    }
+    protected abstract Object interceptorChainCompleted(InvocationContext invocationContext) throws Exception;
 
     public boolean hasNextInterceptor() {
         return currentPosition < interceptorMethodInvocations.size();

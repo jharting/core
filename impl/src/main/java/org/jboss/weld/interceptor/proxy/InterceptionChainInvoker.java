@@ -46,7 +46,7 @@ public class InterceptionChainInvoker {
         if (targetClassInterceptorMetadata != null && targetClassInterceptorMetadata.isEligible(interceptionType)) {
             interceptorInvocations.add(targetClassInterceptorMetadata.getInterceptorInvocation(instance, targetClassInterceptorMetadata, interceptionType));
         }
-        SimpleInterceptionChain chain = new SimpleInterceptionChain(interceptorInvocations, instance, method);
+        SimpleInterceptionChain chain = new SimpleInterceptionChain(interceptorInvocations);
         return chain.invokeNextInterceptor(factory.newInvocationContext(chain, instance, method, args));
     }
 

@@ -99,7 +99,7 @@ public class InterceptorImpl<T> extends ManagedBean<T> implements Interceptor<T>
             org.jboss.weld.interceptor.spi.model.InterceptionType interceptionType = org.jboss.weld.interceptor.spi.model.InterceptionType.valueOf(type.name());
             Collection<InterceptorInvocation> invocations = new ArrayList<InterceptorInvocation>();
             invocations.add(interceptorMetadata.getInterceptorInvocation(instance, interceptorMetadata, interceptionType));
-            return new SimpleInterceptionChain(invocations, instance, ctx.getMethod()).invokeNextInterceptor(ctx);
+            return new SimpleInterceptionChain(invocations).invokeNextInterceptor(ctx);
         } catch (RuntimeException e) {
             throw e;
         } catch (Throwable e) {
