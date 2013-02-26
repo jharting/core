@@ -16,19 +16,23 @@
  */
 package org.jboss.weld.injection.producer;
 
+import java.util.List;
+
 import javax.enterprise.context.spi.CreationalContext;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
 import org.jboss.weld.bean.proxy.CombinedInterceptorAndDecoratorStackMethodHandler;
-import org.jboss.weld.bean.proxy.MethodHandler;
 import org.jboss.weld.bean.proxy.ProxyObject;
 import org.jboss.weld.exceptions.DeploymentException;
 import org.jboss.weld.interceptor.proxy.DefaultInvocationContextFactory;
+import org.jboss.weld.interceptor.proxy.InterceptionChainInvoker;
 import org.jboss.weld.interceptor.proxy.InterceptionContext;
 import org.jboss.weld.interceptor.proxy.InterceptorMethodHandler;
 import org.jboss.weld.interceptor.reader.TargetClassInterceptorMetadata;
 import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
+import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionModel;
+import org.jboss.weld.interceptor.spi.model.InterceptionType;
 import org.jboss.weld.manager.BeanManagerImpl;
 
 /**
@@ -54,16 +58,25 @@ public class InterceptorApplyingInstantiator<T> implements Instantiator<T> {
     @Override
     public T newInstance(CreationalContext<T> ctx, BeanManagerImpl manager) {
         InterceptionContext interceptionContext = new InterceptionContext(targetClassInterceptorMetadata, interceptionModel, ctx, manager);
-        // TODO: run @AroundConstruct interceptors
+
+        performAroundConstructInterception(interceptionContext);
 
         T instance = delegate.newInstance(ctx, manager);
         applyInterceptors(instance, interceptionContext);
         return instance;
     }
 
+    protected void performAroundConstructInterception(InterceptionContext interceptionContext) {
+        List<? extends InterceptorMetadata<?>> interceptors = interceptionModel.getInterceptors(InterceptionType.AROUND_CONSTRUCT, null);
+        if (!interceptors.isEmpty()) {
+            // TODO
+        }
+    }
+
     protected T applyInterceptors(T instance, InterceptionContext interceptionContext) {
         try {
-            MethodHandler methodHandler = new InterceptorMethodHandler(null, interceptionContext, new DefaultInvocationContextFactory());
+            InterceptionChainInvoker invocation = new InterceptionChainInvoker(interceptionContext, new DefaultInvocationContextFactory());
+            InterceptorMethodHandler methodHandler = new InterceptorMethodHandler(invocation);
             CombinedInterceptorAndDecoratorStackMethodHandler wrapperMethodHandler = (CombinedInterceptorAndDecoratorStackMethodHandler) ((ProxyObject) instance).getHandler();
             wrapperMethodHandler.setInterceptorMethodHandler(methodHandler);
         } catch (Exception e) {

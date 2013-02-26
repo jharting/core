@@ -155,6 +155,7 @@ public class InterceptionModelInitializer<T> {
         initLifeCycleInterceptor(InterceptionType.PRE_DESTROY, classBindingAnnotations);
         initLifeCycleInterceptor(InterceptionType.PRE_PASSIVATE, classBindingAnnotations);
         initLifeCycleInterceptor(InterceptionType.POST_ACTIVATE, classBindingAnnotations);
+        initLifeCycleInterceptor(InterceptionType.AROUND_CONSTRUCT, classBindingAnnotations);
     }
 
     private void initLifeCycleInterceptor(InterceptionType interceptionType, Map<Class<? extends Annotation>, Annotation> classBindingAnnotations) {
