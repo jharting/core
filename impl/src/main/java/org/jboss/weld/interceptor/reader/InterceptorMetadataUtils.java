@@ -37,11 +37,11 @@ public class InterceptorMetadataUtils {
 
 
     public static InterceptorMetadata readMetadataForInterceptorClass(InterceptorReference<?> interceptorReference) {
-        return new SimpleInterceptorMetadata(interceptorReference, false, buildMethodMap(interceptorReference.getClassMetadata(), false));
+        return new DefaultInterceptorMetadata(interceptorReference, buildMethodMap(interceptorReference.getClassMetadata(), false));
     }
 
-    public static InterceptorMetadata readMetadataForTargetClass(ClassMetadata<?> classMetadata) {
-        return new SimpleInterceptorMetadata(ClassMetadataInterceptorReference.of(classMetadata), true, buildMethodMap(classMetadata, true));
+    public static <T> TargetClassInterceptorMetadata readMetadataForTargetClass(ClassMetadata<T> classMetadata) {
+        return new TargetClassInterceptorMetadata(classMetadata, buildMethodMap(classMetadata, true));
     }
 
     public static boolean isInterceptorMethod(InterceptionType interceptionType, MethodMetadata method, boolean forTargetClass) {

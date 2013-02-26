@@ -33,20 +33,18 @@ import org.jboss.weld.interceptor.spi.model.InterceptionType;
 
 /**
  * @author <a href="mailto:mariusb@redhat.com">Marius Bogoevici</a>
+ * @author Jozef Hartinger
  */
-public class SimpleInterceptorMetadata<T> implements InterceptorMetadata<T>, Serializable {
+public abstract class AbstractInterceptorMetadata<T> implements InterceptorMetadata<T>, Serializable {
 
     private static final long serialVersionUID = 1247010247012491L;
 
     private final Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap;
 
-    private final InterceptorReference<T> interceptorReference;
+    private final ClassMetadata<?> classMetadata;
 
-    private final boolean targetClass;
-
-    public SimpleInterceptorMetadata(InterceptorReference<T> interceptorReference, boolean targetClass, Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap) {
-        this.interceptorReference = interceptorReference;
-        this.targetClass = targetClass;
+    public AbstractInterceptorMetadata(ClassMetadata<?> classMetadata, Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap) {
+        this.classMetadata = classMetadata;
         this.interceptorMethodMap = interceptorMethodMap;
     }
 
@@ -54,11 +52,7 @@ public class SimpleInterceptorMetadata<T> implements InterceptorMetadata<T>, Ser
      * {@inheritDoc}
      */
     public ClassMetadata<?> getInterceptorClass() {
-        return this.interceptorReference.getClassMetadata();
-    }
-
-    public InterceptorReference<T> getInterceptorReference() {
-        return interceptorReference;
+        return classMetadata;
     }
 
     public List<MethodMetadata> getInterceptorMethods(InterceptionType interceptionType) {
@@ -83,11 +77,8 @@ public class SimpleInterceptorMetadata<T> implements InterceptorMetadata<T>, Ser
     }
 
     public InterceptorInvocation getInterceptorInvocation(Object interceptorInstance, InterceptorMetadata interceptorReference, InterceptionType interceptionType) {
-        return new SimpleInterceptorInvocation(interceptorInstance, interceptionType, getInterceptorMethods(interceptionType), targetClass);
+        return new SimpleInterceptorInvocation(interceptorInstance, interceptionType, getInterceptorMethods(interceptionType), isTargetClassInterceptor());
     }
 
-    @Override
-    public String toString() {
-        return "SimpleInterceptorMetadata [" + getInterceptorClass().getClassName() + "]";
-    }
+    protected abstract boolean isTargetClassInterceptor();
 }

@@ -17,26 +17,35 @@
 
 package org.jboss.weld.interceptor.reader;
 
+import javax.enterprise.context.spi.CreationalContext;
+import javax.enterprise.inject.spi.BeanManager;
+import javax.enterprise.inject.spi.InjectionTarget;
+
+import org.jboss.weld.exceptions.WeldException;
 import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorReference;
+import org.jboss.weld.manager.BeanManagerImpl;
+import org.jboss.weld.util.reflection.SecureReflections;
 
 /**
  * {@link org.jboss.weld.interceptor.spi.metadata.ClassMetadata}-based implementation of {@link org.jboss.weld.interceptor.spi.metadata.InterceptorReference}
  * <p/>
  * This is used internally by the framework.
  */
-public class ClassMetadataInterceptorReference implements InterceptorReference<ClassMetadata<?>> {
+public class ClassMetadataInterceptorReference<T> implements InterceptorReference<ClassMetadata<?>> {
 
     private static final long serialVersionUID = -619464974130150607L;
 
-    private final ClassMetadata<?> classMetadata;
-
-    private ClassMetadataInterceptorReference(ClassMetadata<?> classMetadata) {
-        this.classMetadata = classMetadata;
+    public static <T> InterceptorReference<ClassMetadata<?>> of(ClassMetadata<T> classMetadata, BeanManagerImpl manager) {
+        return new ClassMetadataInterceptorReference<T>(classMetadata, manager);
     }
 
-    public static InterceptorReference<ClassMetadata<?>> of(ClassMetadata<?> classMetadata) {
-        return new ClassMetadataInterceptorReference(classMetadata);
+    private final ClassMetadata<T> classMetadata;
+    private final InjectionTarget<T> injectionTarget;
+
+    private ClassMetadataInterceptorReference(ClassMetadata<T> classMetadata, BeanManagerImpl manager) {
+        this.classMetadata = classMetadata;
+        this.injectionTarget = manager.createInjectionTarget(manager.createAnnotatedType(classMetadata.getJavaClass()));
     }
 
     public ClassMetadata<?> getClassMetadata() {
@@ -48,26 +57,30 @@ public class ClassMetadataInterceptorReference implements InterceptorReference<C
         return getClassMetadata();
     }
 
+    public T create(CreationalContext<T> ctx, BeanManager manager) {
+        try {
+            T instance = SecureReflections.newInstance(classMetadata.getJavaClass()); // TODO: use special InjectionTarget (that does not apply interceptors) to instantiate the class
+            injectionTarget.inject(instance, ctx);
+            return instance;
+        } catch (Exception e) {
+            throw new WeldException(e); // TODO: add proper message
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
+        if (o instanceof ClassMetadataInterceptorReference<?>) {
+            ClassMetadataInterceptorReference<?> that = (ClassMetadataInterceptorReference<?>) o;
+            return this.classMetadata.equals(that.classMetadata);
         }
-
-        ClassMetadataInterceptorReference that = (ClassMetadataInterceptorReference) o;
-
-        if (classMetadata != null ? !classMetadata.equals(that.classMetadata) : that.classMetadata != null) {
-            return false;
-        }
-
-        return true;
+        return false;
     }
 
     @Override
     public int hashCode() {
-        return classMetadata != null ? classMetadata.hashCode() : 0;
+        return classMetadata.hashCode();
     }
 }

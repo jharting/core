@@ -11,6 +11,7 @@ import org.jboss.weld.interceptor.reader.ReflectiveClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorReference;
+import org.jboss.weld.manager.BeanManagerImpl;
 
 /**
  *
@@ -24,7 +25,10 @@ public class DefaultMetadataCachingReader implements MetadataCachingReader {
 
     private boolean unwrapRuntimeExceptions;
 
-    public DefaultMetadataCachingReader() {
+    private final BeanManagerImpl manager;
+
+    public DefaultMetadataCachingReader(BeanManagerImpl manager) {
+        this.manager = manager;
         this.interceptorMetadataCache = new MapMaker().makeComputingMap(new Function<InterceptorReference<?>, InterceptorMetadata<?>>() {
             public InterceptorMetadata<?> apply(InterceptorReference<?> from) {
                 return InterceptorMetadataUtils.readMetadataForInterceptorClass(from);
@@ -73,7 +77,7 @@ public class DefaultMetadataCachingReader implements MetadataCachingReader {
 
     public <T> InterceptorMetadata<T> getInterceptorMetadata(Class<T> clazz) {
         try {
-            return (InterceptorMetadata<T>) interceptorMetadataCache.get(ClassMetadataInterceptorReference.of(reflectiveClassMetadataCache.get(clazz)));
+            return (InterceptorMetadata<T>) interceptorMetadataCache.get(ClassMetadataInterceptorReference.of(reflectiveClassMetadataCache.get(clazz), manager));
         } catch (ComputationException e) {
             if (unwrapRuntimeExceptions && e.getCause() instanceof RuntimeException) {
                 throw (RuntimeException) e.getCause();

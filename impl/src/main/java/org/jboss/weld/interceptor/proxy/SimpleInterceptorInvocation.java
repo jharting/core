@@ -20,7 +20,6 @@ package org.jboss.weld.interceptor.proxy;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
 import org.jboss.weld.interceptor.spi.metadata.MethodMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionType;
 
