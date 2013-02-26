@@ -5,19 +5,19 @@ import java.util.concurrent.ConcurrentMap;
 import com.google.common.base.Function;
 import com.google.common.collect.ComputationException;
 import com.google.common.collect.MapMaker;
-import org.jboss.weld.interceptor.reader.ClassMetadataInterceptorReference;
+import org.jboss.weld.interceptor.reader.ClassMetadataInterceptorFactory;
 import org.jboss.weld.interceptor.reader.InterceptorMetadataUtils;
 import org.jboss.weld.interceptor.reader.ReflectiveClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
-import org.jboss.weld.interceptor.spi.metadata.InterceptorReference;
+import org.jboss.weld.interceptor.spi.metadata.InterceptorFactory;
 import org.jboss.weld.manager.BeanManagerImpl;
 
 /**
  *
  */
 public class DefaultMetadataCachingReader implements MetadataCachingReader {
-    private final ConcurrentMap<InterceptorReference<?>, InterceptorMetadata<?>> interceptorMetadataCache;
+    private final ConcurrentMap<InterceptorFactory<?>, InterceptorMetadata<?>> interceptorMetadataCache;
 
     private final ConcurrentMap<ClassMetadata<?>, InterceptorMetadata<?>> classMetadataInterceptorMetadataCache;
 
@@ -29,8 +29,8 @@ public class DefaultMetadataCachingReader implements MetadataCachingReader {
 
     public DefaultMetadataCachingReader(BeanManagerImpl manager) {
         this.manager = manager;
-        this.interceptorMetadataCache = new MapMaker().makeComputingMap(new Function<InterceptorReference<?>, InterceptorMetadata<?>>() {
-            public InterceptorMetadata<?> apply(InterceptorReference<?> from) {
+        this.interceptorMetadataCache = new MapMaker().makeComputingMap(new Function<InterceptorFactory<?>, InterceptorMetadata<?>>() {
+            public InterceptorMetadata<?> apply(InterceptorFactory<?> from) {
                 return InterceptorMetadataUtils.readMetadataForInterceptorClass(from);
             }
         });
@@ -53,7 +53,7 @@ public class DefaultMetadataCachingReader implements MetadataCachingReader {
         this.unwrapRuntimeExceptions = unwrapRuntimeExceptions;
     }
 
-    public <T> InterceptorMetadata<T> getInterceptorMetadata(InterceptorReference<T> interceptorReference) {
+    public <T> InterceptorMetadata<T> getInterceptorMetadata(InterceptorFactory<T> interceptorReference) {
         try {
             return (InterceptorMetadata<T>) interceptorMetadataCache.get(interceptorReference);
         } catch (ComputationException e) {
@@ -77,7 +77,7 @@ public class DefaultMetadataCachingReader implements MetadataCachingReader {
 
     public <T> InterceptorMetadata<T> getInterceptorMetadata(Class<T> clazz) {
         try {
-            return (InterceptorMetadata<T>) interceptorMetadataCache.get(ClassMetadataInterceptorReference.of(reflectiveClassMetadataCache.get(clazz), manager));
+            return (InterceptorMetadata<T>) interceptorMetadataCache.get(ClassMetadataInterceptorFactory.of(reflectiveClassMetadataCache.get(clazz), manager));
         } catch (ComputationException e) {
             if (unwrapRuntimeExceptions && e.getCause() instanceof RuntimeException) {
                 throw (RuntimeException) e.getCause();

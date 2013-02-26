@@ -33,7 +33,7 @@ public interface InterceptorMetadata<T> extends Serializable {
      *
      * @return
      */
-    InterceptorReference<T> getInterceptorReference();
+    InterceptorFactory<T> getInterceptorFactory();
 
     ClassMetadata<?> getInterceptorClass();
 

@@ -17,49 +17,47 @@
 
 package org.jboss.weld.interceptor.reader;
 
+import java.lang.reflect.Constructor;
+
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.InjectionTarget;
 
+import org.jboss.weld.exceptions.DefinitionException;
 import org.jboss.weld.exceptions.WeldException;
 import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
-import org.jboss.weld.interceptor.spi.metadata.InterceptorReference;
+import org.jboss.weld.interceptor.spi.metadata.InterceptorFactory;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.util.reflection.SecureReflections;
 
-/**
- * {@link org.jboss.weld.interceptor.spi.metadata.ClassMetadata}-based implementation of {@link org.jboss.weld.interceptor.spi.metadata.InterceptorReference}
- * <p/>
- * This is used internally by the framework.
- */
-public class ClassMetadataInterceptorReference<T> implements InterceptorReference<ClassMetadata<?>> {
+public class ClassMetadataInterceptorFactory<T> implements InterceptorFactory<T> {
 
-    private static final long serialVersionUID = -619464974130150607L;
-
-    public static <T> InterceptorReference<ClassMetadata<?>> of(ClassMetadata<T> classMetadata, BeanManagerImpl manager) {
-        return new ClassMetadataInterceptorReference<T>(classMetadata, manager);
+    public static <T> InterceptorFactory<T> of(ClassMetadata<T> classMetadata, BeanManagerImpl manager) {
+        return new ClassMetadataInterceptorFactory<T>(classMetadata, manager);
     }
 
     private final ClassMetadata<T> classMetadata;
     private final InjectionTarget<T> injectionTarget;
+    private final Constructor<T> constructor;
 
-    private ClassMetadataInterceptorReference(ClassMetadata<T> classMetadata, BeanManagerImpl manager) {
+    private ClassMetadataInterceptorFactory(ClassMetadata<T> classMetadata, BeanManagerImpl manager) {
         this.classMetadata = classMetadata;
         this.injectionTarget = manager.createInjectionTarget(manager.createAnnotatedType(classMetadata.getJavaClass()));
+        try {
+            this.constructor = SecureReflections.ensureAccessible(SecureReflections.getDeclaredConstructor(classMetadata.getJavaClass()));
+        } catch (NoSuchMethodException e) {
+            throw new DefinitionException(e); // TODO: remove
+        }
     }
 
-    public ClassMetadata<?> getClassMetadata() {
+    @Override
+    public ClassMetadata<T> getClassMetadata() {
         return classMetadata;
-    }
-
-    public ClassMetadata<?> getInterceptor() {
-        // here the interceptor type is the class itself, so this duplicates getClassMetadata()
-        return getClassMetadata();
     }
 
     public T create(CreationalContext<T> ctx, BeanManager manager) {
         try {
-            T instance = SecureReflections.newInstance(classMetadata.getJavaClass()); // TODO: use special InjectionTarget (that does not apply interceptors) to instantiate the class
+            T instance = constructor.newInstance(); // TODO: use special InjectionTarget (that does not apply interceptors) to instantiate the class
             injectionTarget.inject(instance, ctx);
             return instance;
         } catch (Exception e) {
@@ -72,8 +70,8 @@ public class ClassMetadataInterceptorReference<T> implements InterceptorReferenc
         if (this == o) {
             return true;
         }
-        if (o instanceof ClassMetadataInterceptorReference<?>) {
-            ClassMetadataInterceptorReference<?> that = (ClassMetadataInterceptorReference<?>) o;
+        if (o instanceof ClassMetadataInterceptorFactory<?>) {
+            ClassMetadataInterceptorFactory<?> that = (ClassMetadataInterceptorFactory<?>) o;
             return this.classMetadata.equals(that.classMetadata);
         }
         return false;

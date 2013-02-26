@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
-import org.jboss.weld.interceptor.spi.metadata.InterceptorReference;
+import org.jboss.weld.interceptor.spi.metadata.InterceptorFactory;
 import org.jboss.weld.interceptor.spi.metadata.MethodMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionType;
 
@@ -31,7 +31,7 @@ public class TargetClassInterceptorMetadata<T> extends AbstractInterceptorMetada
     }
 
     @Override
-    public InterceptorReference<ClassMetadata<T>> getInterceptorReference() {
+    public InterceptorFactory<ClassMetadata<T>> getInterceptorFactory() {
         return null;
     }
 

@@ -19,13 +19,13 @@ package org.jboss.weld.interceptor.reader.cache;
 
 import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
-import org.jboss.weld.interceptor.spi.metadata.InterceptorReference;
+import org.jboss.weld.interceptor.spi.metadata.InterceptorFactory;
 
 /**
  * @author: Marius Bogoevici
  */
 public interface MetadataCachingReader {
-    <T> InterceptorMetadata<T> getInterceptorMetadata(InterceptorReference<T> interceptorReference);
+    <T> InterceptorMetadata<T> getInterceptorMetadata(InterceptorFactory<T> interceptorReference);
 
     <T> InterceptorMetadata<T> getTargetClassInterceptorMetadata(ClassMetadata<T> classMetadata);
 

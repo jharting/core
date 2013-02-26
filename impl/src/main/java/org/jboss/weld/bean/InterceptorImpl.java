@@ -35,7 +35,7 @@ import javax.enterprise.inject.spi.Interceptor;
 import javax.interceptor.InvocationContext;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
-import org.jboss.weld.bean.interceptor.CdiInterceptorReference;
+import org.jboss.weld.bean.interceptor.CdiInterceptorFactory;
 import org.jboss.weld.bean.interceptor.WeldInterceptorClassMetadata;
 import org.jboss.weld.exceptions.DefinitionException;
 import org.jboss.weld.exceptions.DeploymentException;
@@ -56,7 +56,7 @@ import org.jboss.weld.util.reflection.Formats;
  */
 public class InterceptorImpl<T> extends ManagedBean<T> implements Interceptor<T> {
 
-    private final InterceptorMetadata<?> interceptorMetadata;
+    private final InterceptorMetadata<T> interceptorMetadata;
 
     private final Set<Annotation> interceptorBindingTypes;
 
@@ -80,9 +80,9 @@ public class InterceptorImpl<T> extends ManagedBean<T> implements Interceptor<T>
         }
     }
 
-    private static <T> InterceptorMetadata<?> getInterceptorMetadata(EnhancedAnnotatedType<T> type, Interceptor<T> interceptor, BeanManagerImpl manager) {
+    private static <T> InterceptorMetadata<T> getInterceptorMetadata(EnhancedAnnotatedType<T> type, Interceptor<T> interceptor, BeanManagerImpl manager) {
         ClassMetadata<T> classMetadata = WeldInterceptorClassMetadata.of(type);
-        CdiInterceptorReference<T> reference = new CdiInterceptorReference<T>(classMetadata, interceptor);
+        CdiInterceptorFactory<T> reference = new CdiInterceptorFactory<T>(classMetadata, interceptor);
         return manager.getInterceptorMetadataReader().getInterceptorMetadata(reference);
     }
 
@@ -90,7 +90,7 @@ public class InterceptorImpl<T> extends ManagedBean<T> implements Interceptor<T>
         return interceptorBindingTypes;
     }
 
-    public InterceptorMetadata<?> getInterceptorMetadata() {
+    public InterceptorMetadata<T> getInterceptorMetadata() {
         return interceptorMetadata;
     }
 

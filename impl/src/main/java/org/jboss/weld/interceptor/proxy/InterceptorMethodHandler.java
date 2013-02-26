@@ -64,7 +64,7 @@ public class InterceptorMethodHandler implements MethodHandler, Serializable {
         Set<? extends InterceptorMetadata<?>> allInterceptors = this.interceptionModel.getAllInterceptors();
         interceptorHandlerInstances = new HashMap<InterceptorMetadata<?>, Object>(allInterceptors.size());
         for (InterceptorMetadata interceptorMetadata : allInterceptors) {
-            interceptorHandlerInstances.put(interceptorMetadata, interceptorInstantiator.createFor(interceptorMetadata.getInterceptorReference()));
+            interceptorHandlerInstances.put(interceptorMetadata, interceptorInstantiator.createFor(interceptorMetadata.getInterceptorFactory()));
         }
         targetClassInterceptorMetadata = InterceptorMetadataUtils.readMetadataForTargetClass(targetClassMetadata);
     }

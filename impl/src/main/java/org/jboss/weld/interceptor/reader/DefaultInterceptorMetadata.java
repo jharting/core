@@ -20,22 +20,22 @@ import java.util.List;
 import java.util.Map;
 
 import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
-import org.jboss.weld.interceptor.spi.metadata.InterceptorReference;
+import org.jboss.weld.interceptor.spi.metadata.InterceptorFactory;
 import org.jboss.weld.interceptor.spi.metadata.MethodMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionType;
 import org.jboss.weld.util.reflection.Reflections;
 
 public class DefaultInterceptorMetadata<T> extends AbstractInterceptorMetadata<T> {
 
-    private final InterceptorReference<T> reference;
+    private final InterceptorFactory<T> reference;
 
-    public DefaultInterceptorMetadata(InterceptorReference<T> reference, Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap) {
+    public DefaultInterceptorMetadata(InterceptorFactory<T> reference, Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap) {
         super(Reflections.<ClassMetadata<T>>cast(reference.getClassMetadata()), interceptorMethodMap);
         this.reference = reference;
     }
 
     @Override
-    public InterceptorReference<T> getInterceptorReference() {
+    public InterceptorFactory<T> getInterceptorFactory() {
         return reference;
     }
 

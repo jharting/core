@@ -23,30 +23,29 @@ import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.Interceptor;
 
 import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
-import org.jboss.weld.interceptor.spi.metadata.InterceptorReference;
+import org.jboss.weld.interceptor.spi.metadata.InterceptorFactory;
 
-public class CdiInterceptorReference<T> implements InterceptorReference<Interceptor<T>> {
+public class CdiInterceptorFactory<T> implements InterceptorFactory<T> {
 
     private final ClassMetadata<T> classMetadata;
     private final Interceptor<T> interceptor;
 
-    public CdiInterceptorReference(ClassMetadata<T> classMetadata, Interceptor<T> interceptor) {
+    public CdiInterceptorFactory(ClassMetadata<T> classMetadata, Interceptor<T> interceptor) {
         this.classMetadata = classMetadata;
         this.interceptor = interceptor;
     }
 
     @Override
-    public Interceptor<T> getInterceptor() {
-        return interceptor;
-    }
-
-    @Override
-    public ClassMetadata<?> getClassMetadata() {
+    public ClassMetadata<T> getClassMetadata() {
         return classMetadata;
     }
 
     public T create(CreationalContext<T> ctx, BeanManager manager) {
         return cast(manager.getReference(interceptor, interceptor.getBeanClass(), ctx));
+    }
+
+    public Interceptor<T> getInterceptor() {
+        return interceptor;
     }
 
     @Override
@@ -59,8 +58,8 @@ public class CdiInterceptorReference<T> implements InterceptorReference<Intercep
         if (this == obj) {
             return true;
         }
-        if (obj instanceof CdiInterceptorReference) {
-            CdiInterceptorReference<?> that = (CdiInterceptorReference<?>) obj;
+        if (obj instanceof CdiInterceptorFactory) {
+            CdiInterceptorFactory<?> that = (CdiInterceptorFactory<?>) obj;
             return this.interceptor.equals(that.interceptor);
         }
         return false;

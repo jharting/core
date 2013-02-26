@@ -16,14 +16,19 @@
  */
 package org.jboss.weld.interceptor.spi.metadata;
 
-import java.io.Serializable;
+import javax.enterprise.context.spi.CreationalContext;
+import javax.enterprise.inject.spi.BeanManager;
 
 /**
- * Defines a minimal contract for an interceptor reference. Allows different types
- * of interceptors to be used at the same time (classes, CDI interceptors)
+ * Produces instances of interceptors
+ *
+ * @author Jozef Hartinger
+ *
+ * @param <T>
  */
-public interface InterceptorReference<T> extends Serializable {
-    T getInterceptor();
+public interface InterceptorFactory<T> {
 
-    ClassMetadata<?> getClassMetadata();
+    ClassMetadata<T> getClassMetadata();
+
+    T create(CreationalContext<T> ctx, BeanManager manager);
 }
