@@ -94,8 +94,8 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
      * @param type        The type of the bean
      * @param beanManager The Bean manager
      */
-    protected ManagedBean(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> type, String idSuffix, BeanManagerImpl beanManager) {
-        super(attributes, type, idSuffix, beanManager);
+    protected ManagedBean(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> type, BeanIdentifier identifier, BeanManagerImpl beanManager) {
+        super(attributes, type, identifier, beanManager);
         this.proxiable = Proxies.isTypesProxyable(getTypes());
         setProducer(beanManager.getLocalInjectionTargetFactory(getEnhancedAnnotated()).createInjectionTarget(getEnhancedAnnotated(), this, false));
     }

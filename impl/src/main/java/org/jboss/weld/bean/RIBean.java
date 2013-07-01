@@ -37,8 +37,8 @@ public abstract class RIBean<T> extends CommonBean<T> implements PassivationCapa
     private boolean initialized;
     private volatile Set<QualifierInstance> qualifiers;
 
-    protected RIBean(BeanAttributes<T> attributes, String idSuffix, BeanManagerImpl beanManager) {
-        super(attributes, idSuffix, beanManager);
+    protected RIBean(BeanAttributes<T> attributes, BeanIdentifier identifier, BeanManagerImpl beanManager) {
+        super(attributes, identifier);
         this.beanManager = beanManager;
     }
 
