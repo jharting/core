@@ -22,7 +22,6 @@ import javax.enterprise.inject.spi.BeanAttributes;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.enterprise.inject.spi.Producer;
 
-import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.util.Beans;
 
 /**
@@ -36,14 +35,9 @@ public abstract class AbstractSyntheticBean<T> extends CommonBean<T> {
 
     private final Class<?> beanClass;
 
-    protected AbstractSyntheticBean(BeanAttributes<T> attributes, String id, BeanManagerImpl manager, Class<?> beanClass) {
-        super(attributes, id, manager);
+    protected AbstractSyntheticBean(BeanAttributes<T> attributes, BeanIdentifier identifier, Class<?> beanClass) {
+        super(attributes, identifier);
         this.beanClass = beanClass;
-    }
-
-    protected static <T> String createId(BeanAttributes<T> attributes, Class<?> beanClass) {
-        return new StringBuilder().append(SyntheticClassBean.class.getName()).append(RIBean.BEAN_ID_SEPARATOR).append(beanClass.getName())
-                .append(Beans.createBeanAttributesId(attributes)).toString();
     }
 
     @Override

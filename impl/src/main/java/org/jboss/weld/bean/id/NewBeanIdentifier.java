@@ -14,12 +14,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.weld.bean;
+package org.jboss.weld.bean.id;
 
-import org.jboss.weld.annotated.Identifier;
+import org.jboss.weld.annotated.slim.AnnotatedTypeIdentifier;
+import org.jboss.weld.bean.NewBean;
 
-public interface BeanIdentifier extends Identifier {
+public class NewBeanIdentifier extends ManagedBeanIdentifier {
 
-    public static final String BEAN_ID_SEPARATOR = "#";
+    private static final long serialVersionUID = 2944774782937307922L;
 
+    public NewBeanIdentifier(AnnotatedTypeIdentifier delegate) {
+        super(delegate);
+    }
+
+    @Override
+    protected String getPrefix() {
+        return NewBean.class.getName();
+    }
 }

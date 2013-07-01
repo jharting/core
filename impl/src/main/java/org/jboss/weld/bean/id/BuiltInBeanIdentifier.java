@@ -16,34 +16,40 @@
  */
 package org.jboss.weld.bean.id;
 
-import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
-import org.jboss.weld.annotated.slim.AnnotatedTypeIdentifier;
+import static com.google.common.base.Objects.equal;
+
 import org.jboss.weld.bean.BeanIdentifier;
+import org.jboss.weld.bean.builtin.AbstractBuiltInBean;
 
 import com.google.common.base.Objects;
 
-public class ClassBeanIdentifier implements BeanIdentifier {
+public class BuiltInBeanIdentifier implements BeanIdentifier {
 
-    private static final long serialVersionUID = 5651531774687889270L;
+    private static final long serialVersionUID = 902099265887139677L;
 
-    public static ClassBeanIdentifier of(EnhancedAnnotatedType<?> type) {
-        return new ClassBeanIdentifier(type.slim().getIdentifier());
+    private final String bdaId;
+    private final String className;
+    private final String suffix;
+
+    public BuiltInBeanIdentifier(String bdaId, String className, String suffix) {
+        this.bdaId = bdaId;
+        this.className = className;
+        this.suffix = suffix;
     }
 
-    private final AnnotatedTypeIdentifier delegate;
-
-    public ClassBeanIdentifier(AnnotatedTypeIdentifier delegate) {
-        this.delegate = delegate;
+    public BuiltInBeanIdentifier(String bdaId, String className) {
+        this(bdaId, className, null);
     }
 
     @Override
     public String asString() {
-        return delegate.asString();
+        return new StringBuilder().append(AbstractBuiltInBean.class.getName()).append(BEAN_ID_SEPARATOR).append(bdaId).append(BEAN_ID_SEPARATOR)
+                .append(className).append(BEAN_ID_SEPARATOR).append(suffix).toString();
     }
 
     @Override
     public int hashCode() {
-        return delegate.hashCode();
+        return Objects.hashCode(bdaId, className, suffix);
     }
 
     @Override
@@ -51,9 +57,9 @@ public class ClassBeanIdentifier implements BeanIdentifier {
         if (this == obj) {
             return true;
         }
-        if (obj instanceof ClassBeanIdentifier) {
-            ClassBeanIdentifier that = (ClassBeanIdentifier) obj;
-            return Objects.equal(this.delegate, that.delegate);
+        if (obj instanceof BuiltInBeanIdentifier) {
+            BuiltInBeanIdentifier that = (BuiltInBeanIdentifier) obj;
+            return equal(this.bdaId, that.bdaId) && equal(this.className, that.className) && equal(this.suffix, that.suffix);
         }
         return false;
     }

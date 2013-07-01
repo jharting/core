@@ -35,7 +35,7 @@ import javax.enterprise.inject.spi.Interceptor;
 import javax.interceptor.InvocationContext;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
-import org.jboss.weld.bean.id.ClassBeanIdentifier;
+import org.jboss.weld.bean.id.ManagedBeanIdentifier;
 import org.jboss.weld.bean.interceptor.CdiInterceptorFactory;
 import org.jboss.weld.bean.interceptor.WeldInterceptorClassMetadata;
 import org.jboss.weld.exceptions.DefinitionException;
@@ -68,7 +68,7 @@ public class InterceptorImpl<T> extends ManagedBean<T> implements Interceptor<T>
     }
 
     protected InterceptorImpl(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> type, BeanManagerImpl beanManager) {
-        super(attributes, type, ClassBeanIdentifier.of(type), beanManager);
+        super(attributes, type, ManagedBeanIdentifier.of(type), beanManager);
         this.interceptorMetadata = getInterceptorMetadata(type, this, beanManager);
         this.serializable = type.isSerializable();
         this.interceptorBindingTypes = Collections.unmodifiableSet(new HashSet<Annotation>(Interceptors.mergeBeanInterceptorBindings(beanManager, getEnhancedAnnotated(), getStereotypes()).values()));

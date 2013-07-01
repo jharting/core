@@ -29,7 +29,7 @@ import javax.enterprise.inject.spi.BeanAttributes;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
 import org.jboss.weld.annotated.enhanced.MethodSignature;
 import org.jboss.weld.annotated.runtime.InvokableAnnotatedMethod;
-import org.jboss.weld.bean.id.ClassBeanIdentifier;
+import org.jboss.weld.bean.id.ManagedBeanIdentifier;
 import org.jboss.weld.bootstrap.BeanDeployerEnvironment;
 import org.jboss.weld.injection.attributes.WeldInjectionPointAttributes;
 import org.jboss.weld.manager.BeanManagerImpl;
@@ -59,7 +59,7 @@ public class DecoratorImpl<T> extends ManagedBean<T> implements WeldDecorator<T>
     private Set<Type> decoratedTypes;
 
     protected DecoratorImpl(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> type, BeanManagerImpl beanManager) {
-        super(attributes, type, ClassBeanIdentifier.of(type), beanManager);
+        super(attributes, type, ManagedBeanIdentifier.of(type), beanManager);
     }
 
     @Override

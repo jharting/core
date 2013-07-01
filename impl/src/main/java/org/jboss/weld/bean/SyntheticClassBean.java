@@ -21,6 +21,7 @@ import javax.enterprise.inject.spi.BeanAttributes;
 import javax.enterprise.inject.spi.InjectionTarget;
 import javax.enterprise.inject.spi.InjectionTargetFactory;
 
+import org.jboss.weld.bean.id.SyntheticBeanIdentifier;
 import org.jboss.weld.manager.BeanManagerImpl;
 
 /**
@@ -35,7 +36,7 @@ public class SyntheticClassBean<T> extends AbstractSyntheticBean<T> {
     protected final InjectionTarget<T> producer;
 
     public SyntheticClassBean(BeanAttributes<T> attributes, Class<T> beanClass, InjectionTargetFactory<T> factory, BeanManagerImpl manager) {
-        super(attributes, createId(attributes, beanClass), manager, beanClass);
+        super(attributes, SyntheticBeanIdentifier.of(attributes, beanClass), beanClass);
         this.producer = factory.createInjectionTarget(this);
     }
 

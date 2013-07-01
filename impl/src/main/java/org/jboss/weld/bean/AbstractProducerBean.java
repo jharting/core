@@ -36,6 +36,7 @@ import javax.enterprise.inject.spi.BeanAttributes;
 import javax.enterprise.inject.spi.InjectionPoint;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedMember;
+import org.jboss.weld.bean.id.ProducerIdentifier;
 import org.jboss.weld.bootstrap.BeanDeployerEnvironment;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
 import org.jboss.weld.exceptions.DeploymentException;
@@ -72,8 +73,8 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
      * @param declaringBean The declaring bean
      * @param beanManager   The Bean manager
      */
-    public AbstractProducerBean(BeanAttributes<T> attributes, String idSuffix, AbstractClassBean<X> declaringBean, BeanManagerImpl beanManager, ServiceRegistry services) {
-        super(attributes, idSuffix, beanManager);
+    public AbstractProducerBean(BeanAttributes<T> attributes, ProducerIdentifier identifier, AbstractClassBean<X> declaringBean, BeanManagerImpl beanManager, ServiceRegistry services) {
+        super(attributes, identifier, beanManager);
         this.declaringBean = declaringBean;
     }
 

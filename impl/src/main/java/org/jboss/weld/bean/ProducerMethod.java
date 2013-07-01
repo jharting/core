@@ -26,11 +26,11 @@ import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanAttributes;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedMethod;
+import org.jboss.weld.bean.id.ProducerIdentifier;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
 import org.jboss.weld.exceptions.DefinitionException;
 import org.jboss.weld.injection.producer.ProducerMethodProducer;
 import org.jboss.weld.manager.BeanManagerImpl;
-import org.jboss.weld.util.AnnotatedTypes;
 import org.jboss.weld.util.Beans;
 import org.jboss.weld.util.Proxies;
 import org.jboss.weld.util.reflection.Formats;
@@ -57,11 +57,11 @@ public class ProducerMethod<X, T> extends AbstractProducerBean<X, T, Method> {
      * @return A producer Web Bean
      */
     public static <X, T> ProducerMethod<X, T> of(BeanAttributes<T> attributes, EnhancedAnnotatedMethod<T, ? super X> method, AbstractClassBean<X> declaringBean, DisposalMethod<X, ?> disposalMethod, BeanManagerImpl beanManager, ServiceRegistry services) {
-        return new ProducerMethod<X, T>(attributes, method, declaringBean, disposalMethod, beanManager, services);
+        return new ProducerMethod<X, T>(attributes, method, declaringBean, disposalMethod, beanManager, services, ProducerIdentifier.of(declaringBean, method));
     }
 
-    protected ProducerMethod(BeanAttributes<T> attributes, EnhancedAnnotatedMethod<T, ? super X> method, AbstractClassBean<X> declaringBean, DisposalMethod<X, ?> disposalMethod, BeanManagerImpl beanManager, ServiceRegistry services) {
-        super(attributes, createId(method, declaringBean), declaringBean, beanManager, services);
+    protected ProducerMethod(BeanAttributes<T> attributes, EnhancedAnnotatedMethod<T, ? super X> method, AbstractClassBean<X> declaringBean, DisposalMethod<X, ?> disposalMethod, BeanManagerImpl beanManager, ServiceRegistry services, ProducerIdentifier identifier) {
+        super(attributes, identifier, declaringBean, beanManager, services);
         this.enhancedAnnotatedMethod = method;
         this.annotatedMethod = method.slim();
         initType();
@@ -83,19 +83,6 @@ public class ProducerMethod<X, T> extends AbstractProducerBean<X, T, Method> {
                 return ProducerMethod.this;
             }
         });
-    }
-
-    protected static <T, X> String createId(EnhancedAnnotatedMethod<T, ? super X> method, AbstractClassBean<X> declaringBean) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(ProducerMethod.class.getSimpleName());
-        sb.append(BEAN_ID_SEPARATOR);
-        sb.append(declaringBean.getAnnotated().getIdentifier().asString());
-        if (declaringBean.getEnhancedAnnotated().isDiscovered()) {
-            sb.append(method.getSignature().toString());
-        } else {
-            sb.append(AnnotatedTypes.createCallableId(method));
-        }
-        return sb.toString();
     }
 
     @Override

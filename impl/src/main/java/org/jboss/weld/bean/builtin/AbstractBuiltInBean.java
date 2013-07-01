@@ -28,6 +28,7 @@ import javax.enterprise.inject.spi.InjectionPoint;
 
 import org.jboss.weld.bean.RIBean;
 import org.jboss.weld.bean.attributes.ImmutableBeanAttributes;
+import org.jboss.weld.bean.id.BuiltInBeanIdentifier;
 import org.jboss.weld.bootstrap.BeanDeployerEnvironment;
 import org.jboss.weld.literal.AnyLiteral;
 import org.jboss.weld.literal.DefaultLiteral;
@@ -39,12 +40,11 @@ import com.google.common.collect.Sets;
 
 public abstract class AbstractBuiltInBean<T> extends RIBean<T> {
 
-    private static final String ID_PREFIX = "Built-in";
     private boolean proxyRequired;
     private final Class<T> type;
 
-    protected AbstractBuiltInBean(String idSuffix, BeanManagerImpl beanManager, Class<T> type) {
-        super(new BuiltInBeanAttributes<T>(type), new StringBuilder().append(ID_PREFIX).append(BEAN_ID_SEPARATOR).append(idSuffix).toString(), beanManager);
+    protected AbstractBuiltInBean(BuiltInBeanIdentifier identifier, BeanManagerImpl beanManager, Class<T> type) {
+        super(new BuiltInBeanAttributes<T>(type), identifier, beanManager);
         this.type = type;
     }
 

@@ -36,6 +36,7 @@ import javax.enterprise.inject.spi.Decorator;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedField;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
+import org.jboss.weld.bean.id.ManagedBeanIdentifier;
 import org.jboss.weld.bootstrap.BeanDeployerEnvironment;
 import org.jboss.weld.context.CreationalContextImpl;
 import org.jboss.weld.context.RequestContext;
@@ -81,11 +82,7 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
      * @return A Web Bean
      */
     public static <T> ManagedBean<T> of(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> clazz, BeanManagerImpl beanManager) {
-        return new ManagedBean<T>(attributes, clazz, createId(ManagedBean.class.getSimpleName(), clazz), beanManager);
-    }
-
-    protected static String createId(String beanType, EnhancedAnnotatedType<?> type) {
-        return new StringBuilder().append(beanType).append(BEAN_ID_SEPARATOR).append(type.slim().getIdentifier().asString()).toString();
+        return new ManagedBean<T>(attributes, clazz, ManagedBeanIdentifier.of(clazz), beanManager);
     }
 
     /**
