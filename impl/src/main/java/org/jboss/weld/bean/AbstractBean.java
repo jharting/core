@@ -18,13 +18,13 @@ package org.jboss.weld.bean;
 
 import static org.jboss.weld.logging.Category.BEAN;
 import static org.jboss.weld.logging.LoggerFactory.loggerFactory;
+import static org.jboss.weld.logging.messages.BeanMessage.BEANS_WITH_DIFFERENT_BEAN_NAMES_CANNOT_BE_SPECIALIZED;
 import static org.jboss.weld.logging.messages.BeanMessage.CREATING_BEAN;
 import static org.jboss.weld.logging.messages.BeanMessage.NAME_NOT_ALLOWED_ON_SPECIALIZATION;
 import static org.jboss.weld.logging.messages.BeanMessage.QUALIFIERS_USED;
 import static org.jboss.weld.logging.messages.BeanMessage.SPECIALIZING_BEAN_MISSING_SPECIALIZED_TYPE;
 import static org.jboss.weld.logging.messages.BeanMessage.USING_NAME;
 import static org.jboss.weld.logging.messages.BeanMessage.USING_SCOPE;
-import static org.jboss.weld.logging.messages.BeanMessage.BEANS_WITH_DIFFERENT_BEAN_NAMES_CANNOT_BE_SPECIALIZED;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
@@ -46,6 +46,7 @@ import org.jboss.weld.bootstrap.SpecializationAndEnablementRegistry;
 import org.jboss.weld.exceptions.DefinitionException;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.metadata.cache.MetaAnnotationStore;
+import org.jboss.weld.serialization.spi.BeanIdentifier;
 import org.slf4j.cal10n.LocLogger;
 
 /**
@@ -72,8 +73,8 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
      *
      * @param beanManager The Bean manager
      */
-    public AbstractBean(BeanAttributes<T> attributes, String idSuffix, BeanManagerImpl beanManager) {
-        super(attributes, idSuffix, beanManager);
+    public AbstractBean(BeanAttributes<T> attributes, BeanIdentifier identifier, BeanManagerImpl beanManager) {
+        super(attributes, identifier, beanManager);
     }
 
     /**
