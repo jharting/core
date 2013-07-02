@@ -22,8 +22,6 @@ import org.jboss.weld.bean.builtin.AbstractBuiltInBean;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.serialization.spi.BeanIdentifier;
 
-import com.google.common.base.Objects;
-
 public class BuiltInBeanIdentifier implements BeanIdentifier {
 
     private static final long serialVersionUID = 902099265887139677L;
@@ -39,11 +37,13 @@ public class BuiltInBeanIdentifier implements BeanIdentifier {
     private final String bdaId;
     private final String className;
     private final String suffix;
+    private final int hashCode;
 
     public BuiltInBeanIdentifier(String bdaId, String className, String suffix) {
         this.bdaId = bdaId;
         this.className = className;
         this.suffix = suffix;
+        this.hashCode = asString().hashCode();
     }
 
     public BuiltInBeanIdentifier(String bdaId, String className) {
@@ -58,7 +58,7 @@ public class BuiltInBeanIdentifier implements BeanIdentifier {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(bdaId, className, suffix);
+        return hashCode;
     }
 
     @Override
@@ -69,6 +69,10 @@ public class BuiltInBeanIdentifier implements BeanIdentifier {
         if (obj instanceof BuiltInBeanIdentifier) {
             BuiltInBeanIdentifier that = (BuiltInBeanIdentifier) obj;
             return equal(this.bdaId, that.bdaId) && equal(this.className, that.className) && equal(this.suffix, that.suffix);
+        }
+        if (obj instanceof StringBeanIdentifier) {
+            StringBeanIdentifier that = (StringBeanIdentifier) obj;
+            return this.asString().equals(that.asString());
         }
         return false;
     }

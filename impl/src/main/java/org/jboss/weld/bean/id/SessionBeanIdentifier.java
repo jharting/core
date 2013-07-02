@@ -21,28 +21,25 @@ import static com.google.common.base.Objects.equal;
 import org.jboss.weld.annotated.slim.AnnotatedTypeIdentifier;
 import org.jboss.weld.bean.SessionBean;
 
-public class SessionBeanIdentifier extends ManagedBeanIdentifier {
+public class SessionBeanIdentifier extends AbstractWeldBeanIdentifier {
 
     private static final long serialVersionUID = -8582127778163107560L;
 
     private final String ejbName;
     private final boolean isNew;
+    private final int hashCode;
 
     public SessionBeanIdentifier(AnnotatedTypeIdentifier delegate, String ejbName, boolean isNew) {
         super(delegate);
         this.ejbName = ejbName;
         this.isNew = isNew;
-    }
-
-    @Override
-    protected String getPrefix() {
-        return SessionBean.class.getName();
+        this.hashCode = asString().hashCode();
     }
 
     @Override
     public String asString() {
         StringBuilder builder = new StringBuilder();
-        builder.append(getPrefix());
+        builder.append(SessionBean.class.getName());
         builder.append(BEAN_ID_SEPARATOR);
         builder.append(getTypeIdentifier().asString());
         builder.append(BEAN_ID_SEPARATOR);
@@ -54,7 +51,7 @@ public class SessionBeanIdentifier extends ManagedBeanIdentifier {
 
     @Override
     public int hashCode() {
-        return getTypeIdentifier().hashCode();
+        return hashCode;
     }
 
     @Override
@@ -62,9 +59,13 @@ public class SessionBeanIdentifier extends ManagedBeanIdentifier {
         if (this == obj) {
             return true;
         }
-        if (obj instanceof SyntheticBeanIdentifier) {
+        if (obj instanceof SessionBeanIdentifier) {
             SessionBeanIdentifier that = (SessionBeanIdentifier) obj;
             return equal(this.ejbName, that.ejbName) && equal(this.getTypeIdentifier(), that.getTypeIdentifier()) && equal(this.isNew, that.isNew);
+        }
+        if (obj instanceof StringBeanIdentifier) {
+            StringBeanIdentifier that = (StringBeanIdentifier) obj;
+            return this.asString().equals(that.asString());
         }
         return false;
     }

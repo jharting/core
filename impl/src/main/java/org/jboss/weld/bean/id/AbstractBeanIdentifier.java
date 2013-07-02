@@ -16,19 +16,14 @@
  */
 package org.jboss.weld.bean.id;
 
-import org.jboss.weld.annotated.slim.AnnotatedTypeIdentifier;
-import org.jboss.weld.bean.NewBean;
+import org.jboss.weld.serialization.spi.BeanIdentifier;
 
-public class NewBeanIdentifier extends ManagedBeanIdentifier {
+public abstract class AbstractBeanIdentifier implements BeanIdentifier {
 
-    private static final long serialVersionUID = 2944774782937307922L;
-
-    public NewBeanIdentifier(AnnotatedTypeIdentifier delegate) {
-        super(delegate);
-    }
+    private static final long serialVersionUID = 2505413904389162237L;
 
     @Override
-    protected String getPrefix() {
-        return NewBean.class.getName();
+    public int hashCode() {
+        return asString().hashCode();
     }
 }

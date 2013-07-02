@@ -24,20 +24,22 @@ public class GeneratedBeanId implements BeanIdentifier {
 
     public static final String GENERATED_ID_PREFIX = GeneratedBeanId.class.getName();
 
-    private final String value;
+    private final int value;
+    private final int hashCode;
 
     public GeneratedBeanId(int value) {
-        this.value = new StringBuilder(GENERATED_ID_PREFIX).append(BEAN_ID_SEPARATOR).append(value).toString();
+        this.value = value;
+        this.hashCode = asString().hashCode();
     }
 
     @Override
     public String asString() {
-        return value;
+        return new StringBuilder(GENERATED_ID_PREFIX).append(BEAN_ID_SEPARATOR).append(value).toString();
     }
 
     @Override
     public int hashCode() {
-        return value.hashCode();
+        return hashCode;
     }
 
     @Override
@@ -47,7 +49,11 @@ public class GeneratedBeanId implements BeanIdentifier {
         }
         if (obj instanceof GeneratedBeanId) {
             GeneratedBeanId that = (GeneratedBeanId) obj;
-            return this.value.equals(that.value);
+            return this.value == that.value;
+        }
+        if (obj instanceof StringBeanIdentifier) {
+            StringBeanIdentifier that = (StringBeanIdentifier) obj;
+            return this.asString().equals(that.asString());
         }
         return false;
     }

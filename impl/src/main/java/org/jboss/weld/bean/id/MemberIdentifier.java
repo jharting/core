@@ -16,10 +16,13 @@
  */
 package org.jboss.weld.bean.id;
 
+import static com.google.common.base.Objects.equal;
+
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 
 import org.jboss.weld.annotated.Identifier;
+import org.jboss.weld.util.collections.Arrays2;
 
 import com.google.common.base.Objects;
 
@@ -29,22 +32,34 @@ public class MemberIdentifier implements Identifier {
 
     private static final String METHOD_IDENTIFIER = "()";
 
-    private final Member member;
+    private final Class<?> declaringClass;
+    private final String memberName;
+    private final Class<?>[] parameterTypes;
 
     public MemberIdentifier(Member member) {
-        this.member = member;
+        this.declaringClass = member.getDeclaringClass();
+        this.memberName = member.getName();
+        if (member instanceof Method) {
+            Method method = (Method) member;
+            Class<?>[] parameterTypes = method.getParameterTypes();
+            if (parameterTypes.length == 0) {
+                this.parameterTypes = Arrays2.EMPTY_CLASS_ARRAY;
+            } else {
+                this.parameterTypes = parameterTypes;
+            }
+        } else {
+            this.parameterTypes = null;
+        }
     }
 
     @Override
     public String asString() {
         StringBuilder builder = new StringBuilder();
-        builder.append(member.getDeclaringClass());
+        builder.append(declaringClass);
         builder.append(ID_SEPARATOR);
-        builder.append(member.getName());
-        if (member instanceof Method) {
+        builder.append(memberName);
+        if (parameterTypes != null) {
             builder.append(METHOD_IDENTIFIER);
-            Method method = (Method) member;
-            Class<?>[] parameterTypes = method.getParameterTypes();
             for (Class<?> parameterType : parameterTypes) {
                 builder.append(ID_SEPARATOR);
                 builder.append(parameterType.getName());
@@ -55,7 +70,7 @@ public class MemberIdentifier implements Identifier {
 
     @Override
     public int hashCode() {
-        return member.hashCode();
+        return Objects.hashCode(declaringClass, memberName, parameterTypes);
     }
 
     @Override
@@ -65,7 +80,8 @@ public class MemberIdentifier implements Identifier {
         }
         if (obj instanceof MemberIdentifier) {
             MemberIdentifier that = (MemberIdentifier) obj;
-            return Objects.equal(this.member, that.member);
+            return equal(this.declaringClass, that.declaringClass) && equal(this.memberName, that.memberName)
+                    && equal(this.parameterTypes, that.parameterTypes);
         }
         return false;
     }

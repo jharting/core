@@ -16,18 +16,27 @@
  */
 package org.jboss.weld.bean.id;
 
+import javax.enterprise.inject.spi.BeanAttributes;
+
+import org.jboss.weld.bean.SyntheticClassBean;
 import org.jboss.weld.serialization.spi.BeanIdentifier;
+import org.jboss.weld.util.Beans;
 
-import com.google.common.base.Objects;
+public class StringBeanIdentifier implements BeanIdentifier {
 
-public class ExternalBeanId implements BeanIdentifier {
+    private static final long serialVersionUID = 9292732766921254L;
 
-    private static final long serialVersionUID = -2258042777750089878L;
+    public static StringBeanIdentifier of(BeanAttributes<?> attributes, Class<?> beanClass) {
+        return new StringBeanIdentifier(new StringBuilder().append(SyntheticClassBean.class.getName()).append(BeanIdentifier.BEAN_ID_SEPARATOR)
+                .append(beanClass.getName()).append(BeanIdentifier.BEAN_ID_SEPARATOR).append(Beans.createBeanAttributesId(attributes)).toString());
+    }
 
     private final String id;
+    private final int hashCode;
 
-    public ExternalBeanId(String id) {
+    public StringBeanIdentifier(String id) {
         this.id = id;
+        this.hashCode = id.hashCode();
     }
 
     @Override
@@ -37,7 +46,7 @@ public class ExternalBeanId implements BeanIdentifier {
 
     @Override
     public int hashCode() {
-        return id.hashCode();
+        return this.hashCode;
     }
 
     @Override
@@ -45,9 +54,9 @@ public class ExternalBeanId implements BeanIdentifier {
         if (this == obj) {
             return true;
         }
-        if (obj instanceof ExternalBeanId) {
-            ExternalBeanId that = (ExternalBeanId) obj;
-            return Objects.equal(this.id, that.id);
+        if (obj instanceof BeanIdentifier) {
+            BeanIdentifier that = (BeanIdentifier) obj;
+            return this.asString().equals(that.asString());
         }
         return false;
     }
@@ -56,5 +65,4 @@ public class ExternalBeanId implements BeanIdentifier {
     public String toString() {
         return asString();
     }
-
 }

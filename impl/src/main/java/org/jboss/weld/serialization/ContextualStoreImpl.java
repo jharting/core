@@ -27,8 +27,8 @@ import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.PassivationCapable;
 
 import org.jboss.weld.bean.CommonBean;
-import org.jboss.weld.bean.id.ExternalBeanId;
 import org.jboss.weld.bean.id.GeneratedBeanId;
+import org.jboss.weld.bean.id.StringBeanIdentifier;
 import org.jboss.weld.context.SerializableContextualFactory;
 import org.jboss.weld.context.SerializableContextualInstanceImpl;
 import org.jboss.weld.serialization.spi.BeanIdentifier;
@@ -72,9 +72,9 @@ public class ContextualStoreImpl implements ContextualStore {
     @SuppressWarnings("unchecked")
     public <C extends Contextual<I>, I> C getContextual(String id) {
         if (id.startsWith(GeneratedBeanId.GENERATED_ID_PREFIX)) {
-            return (C) contextualsInverse.get(id);
+            return (C) contextualsInverse.get(new StringBeanIdentifier(id));
         } else {
-            return (C) passivationCapableContextuals.get(id);
+            return (C) passivationCapableContextuals.get(new StringBeanIdentifier(id));
         }
     }
 
@@ -107,7 +107,7 @@ public class ContextualStoreImpl implements ContextualStore {
         if (contextual instanceof PassivationCapable) {
             // this is an extension-provided passivation capable bean
             PassivationCapable passivationCapable = (PassivationCapable) contextual;
-            BeanIdentifier identifier = new ExternalBeanId(passivationCapable.getId());
+            BeanIdentifier identifier = new StringBeanIdentifier(passivationCapable.getId());
             passivationCapableContextuals.putIfAbsent(identifier, contextual);
             return identifier;
         } else {

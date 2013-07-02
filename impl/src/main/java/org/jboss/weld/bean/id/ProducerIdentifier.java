@@ -25,8 +25,6 @@ import org.jboss.weld.annotated.slim.AnnotatedTypeIdentifier;
 import org.jboss.weld.bean.AbstractClassBean;
 import org.jboss.weld.bean.AbstractProducerBean;
 
-import com.google.common.base.Objects;
-
 public class ProducerIdentifier extends AbstractWeldBeanIdentifier {
 
     private static final long serialVersionUID = 7231465544854248132L;
@@ -36,21 +34,18 @@ public class ProducerIdentifier extends AbstractWeldBeanIdentifier {
     }
 
     private final MemberIdentifier memberIdentifier;
+    private final int hashCode;
 
     public ProducerIdentifier(AnnotatedTypeIdentifier typeIdentifier, MemberIdentifier memberIdentifier) {
         super(typeIdentifier);
         this.memberIdentifier = memberIdentifier;
-    }
-
-    @Override
-    protected String getPrefix() {
-        return AbstractProducerBean.class.getName();
+        this.hashCode = asString().hashCode();
     }
 
     @Override
     public String asString() {
         StringBuilder builder = new StringBuilder();
-        builder.append(getPrefix());
+        builder.append(AbstractProducerBean.class.getName());
         builder.append(BEAN_ID_SEPARATOR);
         builder.append(getTypeIdentifier().asString());
         builder.append(BEAN_ID_SEPARATOR);
@@ -60,7 +55,7 @@ public class ProducerIdentifier extends AbstractWeldBeanIdentifier {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(getTypeIdentifier(), memberIdentifier);
+        return hashCode;
     }
 
     @Override
@@ -71,6 +66,10 @@ public class ProducerIdentifier extends AbstractWeldBeanIdentifier {
         if (obj instanceof ProducerIdentifier) {
             ProducerIdentifier that = (ProducerIdentifier) obj;
             return equal(this.getTypeIdentifier(), that.getTypeIdentifier()) && equal(this.memberIdentifier, that.memberIdentifier);
+        }
+        if (obj instanceof StringBeanIdentifier) {
+            StringBeanIdentifier that = (StringBeanIdentifier) obj;
+            return this.asString().equals(that.asString());
         }
         return false;
     }

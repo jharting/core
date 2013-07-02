@@ -26,22 +26,26 @@ public class ManagedBeanIdentifier extends AbstractWeldBeanIdentifier {
 
     private static final long serialVersionUID = 1023078213006903437L;
 
+    private final boolean isNew;
+    private final int hashCode;
+
     public static ManagedBeanIdentifier of(EnhancedAnnotatedType<?> type) {
-        return new ManagedBeanIdentifier(type.slim().getIdentifier());
+        return new ManagedBeanIdentifier(type.slim().getIdentifier(), false);
     }
 
-    public ManagedBeanIdentifier(AnnotatedTypeIdentifier delegate) {
+    public static ManagedBeanIdentifier ofNew(EnhancedAnnotatedType<?> type) {
+        return new ManagedBeanIdentifier(type.slim().getIdentifier(), true);
+    }
+
+    public ManagedBeanIdentifier(AnnotatedTypeIdentifier delegate, boolean isNew) {
         super(delegate);
-    }
-
-    @Override
-    protected String getPrefix() {
-        return ManagedBean.class.getName();
+        this.isNew = isNew;
+        this.hashCode = asString().hashCode();
     }
 
     @Override
     public int hashCode() {
-        return getTypeIdentifier().hashCode();
+        return hashCode;
     }
 
     @Override
@@ -51,8 +55,23 @@ public class ManagedBeanIdentifier extends AbstractWeldBeanIdentifier {
         }
         if (obj instanceof ManagedBeanIdentifier) {
             ManagedBeanIdentifier that = (ManagedBeanIdentifier) obj;
-            return equal(this.getTypeIdentifier(), that.getTypeIdentifier()) && equal(this.getPrefix(), that.getPrefix());
+            return equal(this.getTypeIdentifier(), that.getTypeIdentifier()) && equal(this.isNew, that.isNew);
+        }
+        if (obj instanceof StringBeanIdentifier) {
+            StringBeanIdentifier that = (StringBeanIdentifier) obj;
+            return this.asString().equals(that.asString());
         }
         return false;
+    }
+
+    @Override
+    public String asString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append(ManagedBean.class.getName());
+        builder.append(BEAN_ID_SEPARATOR);
+        builder.append(getTypeIdentifier().asString());
+        builder.append(BEAN_ID_SEPARATOR);
+        builder.append(isNew);
+        return builder.toString();
     }
 }

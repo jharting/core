@@ -19,8 +19,9 @@ package org.jboss.weld.bean;
 import javax.enterprise.inject.spi.BeanAttributes;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
-import org.jboss.weld.bean.id.NewBeanIdentifier;
+import org.jboss.weld.bean.id.ManagedBeanIdentifier;
 import org.jboss.weld.manager.BeanManagerImpl;
+import org.jboss.weld.serialization.spi.BeanIdentifier;
 
 /**
  * Represents a @New simple bean
@@ -37,7 +38,7 @@ public class NewManagedBean<T> extends ManagedBean<T> implements NewBean {
      * @return a new NewSimpleBean instance
      */
     public static <T> NewManagedBean<T> of(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> clazz, BeanManagerImpl beanManager) {
-        return new NewManagedBean<T>(attributes, clazz, new NewBeanIdentifier(clazz.slim().getIdentifier()), beanManager);
+        return new NewManagedBean<T>(attributes, clazz, ManagedBeanIdentifier.ofNew(clazz), beanManager);
     }
 
     /**
@@ -46,7 +47,7 @@ public class NewManagedBean<T> extends ManagedBean<T> implements NewBean {
      * @param type        An annotated class
      * @param beanManager The Bean manager
      */
-    protected NewManagedBean(BeanAttributes<T> attributes, final EnhancedAnnotatedType<T> type, NewBeanIdentifier identifier, BeanManagerImpl beanManager) {
+    protected NewManagedBean(BeanAttributes<T> attributes, final EnhancedAnnotatedType<T> type, BeanIdentifier identifier, BeanManagerImpl beanManager) {
         super(attributes, type, identifier, beanManager);
     }
 

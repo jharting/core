@@ -29,19 +29,8 @@ public abstract class AbstractWeldBeanIdentifier implements BeanIdentifier {
         this.typeIdentifier = delegate;
     }
 
-    protected abstract String getPrefix();
-
     protected AnnotatedTypeIdentifier getTypeIdentifier() {
         return typeIdentifier;
-    }
-
-    @Override
-    public String asString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append(getPrefix());
-        builder.append(BEAN_ID_SEPARATOR);
-        builder.append(typeIdentifier.asString());
-        return builder.toString();
     }
 
     @Override
