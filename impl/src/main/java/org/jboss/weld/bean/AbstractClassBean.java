@@ -34,6 +34,7 @@ import org.jboss.weld.bootstrap.BeanDeployerEnvironment;
 import org.jboss.weld.exceptions.DefinitionException;
 import org.jboss.weld.interceptor.spi.model.InterceptionModel;
 import org.jboss.weld.manager.BeanManagerImpl;
+import org.jboss.weld.serialization.spi.BeanIdentifier;
 import org.jboss.weld.util.Beans;
 
 /**

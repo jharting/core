@@ -25,6 +25,7 @@ import javax.enterprise.inject.spi.PassivationCapable;
 import org.jboss.weld.bootstrap.BeanDeployerEnvironment;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.resolution.QualifierInstance;
+import org.jboss.weld.serialization.spi.BeanIdentifier;
 
 /**
  * Abstract base class with functions specific to RI built-in beans

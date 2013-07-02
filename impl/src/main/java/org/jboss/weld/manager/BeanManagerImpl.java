@@ -157,6 +157,7 @@ import org.jboss.weld.resolution.TypeSafeInterceptorResolver;
 import org.jboss.weld.resolution.TypeSafeObserverResolver;
 import org.jboss.weld.resources.ClassTransformer;
 import org.jboss.weld.resources.MemberTransformer;
+import org.jboss.weld.serialization.spi.BeanIdentifier;
 import org.jboss.weld.serialization.spi.ContextualStore;
 import org.jboss.weld.util.Beans;
 import org.jboss.weld.util.Bindings;
@@ -1092,6 +1093,10 @@ public class BeanManagerImpl implements WeldManager, Serializable {
 
     @Override
     public Bean<?> getPassivationCapableBean(String id) {
+        return getServices().get(ContextualStore.class).<Bean<Object>, Object>getContextual(id);
+    }
+
+    public Bean<?> getPassivationCapableBean(BeanIdentifier id) {
         return getServices().get(ContextualStore.class).<Bean<Object>, Object>getContextual(id);
     }
 

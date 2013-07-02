@@ -19,7 +19,7 @@ package org.jboss.weld.bean;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanAttributes;
 
-import org.jboss.weld.annotated.Identified;
+import org.jboss.weld.serialization.spi.BeanIdentifier;
 import org.jboss.weld.util.bean.ForwardingBeanAttributes;
 import org.jboss.weld.util.reflection.Reflections;
 
@@ -30,7 +30,7 @@ import org.jboss.weld.util.reflection.Reflections;
  * @author Pete Muir
  *
  */
-public abstract class CommonBean<T> extends ForwardingBeanAttributes<T> implements Bean<T>, Identified<BeanIdentifier> {
+public abstract class CommonBean<T> extends ForwardingBeanAttributes<T> implements Bean<T> {
 
     private volatile BeanAttributes<T> attributes;
 
@@ -59,7 +59,7 @@ public abstract class CommonBean<T> extends ForwardingBeanAttributes<T> implemen
         Object object = unwrap(obj);
         if (object instanceof CommonBean<?>) {
             CommonBean<?> that = (CommonBean<?>) object;
-            return this.getId().equals(that.getId());
+            return this.getIdentifier().equals(that.getIdentifier());
         } else {
             return false;
         }
@@ -91,7 +91,6 @@ public abstract class CommonBean<T> extends ForwardingBeanAttributes<T> implemen
         return identifier.asString();
     }
 
-    @Override
     public BeanIdentifier getIdentifier() {
         return identifier;
     }

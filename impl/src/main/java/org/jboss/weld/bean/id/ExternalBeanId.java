@@ -16,36 +16,45 @@
  */
 package org.jboss.weld.bean.id;
 
-import org.jboss.weld.annotated.slim.AnnotatedTypeIdentifier;
 import org.jboss.weld.serialization.spi.BeanIdentifier;
 
-public abstract class AbstractWeldBeanIdentifier implements BeanIdentifier {
+import com.google.common.base.Objects;
 
-    private static final long serialVersionUID = 5863801570327390141L;
+public class ExternalBeanId implements BeanIdentifier {
 
-    private final AnnotatedTypeIdentifier typeIdentifier;
+    private static final long serialVersionUID = -2258042777750089878L;
 
-    public AbstractWeldBeanIdentifier(AnnotatedTypeIdentifier delegate) {
-        this.typeIdentifier = delegate;
-    }
+    private final String id;
 
-    protected abstract String getPrefix();
-
-    protected AnnotatedTypeIdentifier getTypeIdentifier() {
-        return typeIdentifier;
+    public ExternalBeanId(String id) {
+        this.id = id;
     }
 
     @Override
     public String asString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append(getPrefix());
-        builder.append(BEAN_ID_SEPARATOR);
-        builder.append(typeIdentifier.asString());
-        return builder.toString();
+        return id;
+    }
+
+    @Override
+    public int hashCode() {
+        return id.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj instanceof ExternalBeanId) {
+            ExternalBeanId that = (ExternalBeanId) obj;
+            return Objects.equal(this.id, that.id);
+        }
+        return false;
     }
 
     @Override
     public String toString() {
         return asString();
     }
+
 }

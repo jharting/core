@@ -22,6 +22,7 @@ import javax.enterprise.inject.spi.BeanAttributes;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.enterprise.inject.spi.Producer;
 
+import org.jboss.weld.serialization.spi.BeanIdentifier;
 import org.jboss.weld.util.Beans;
 
 /**

@@ -22,6 +22,7 @@ import javax.enterprise.context.spi.Contextual;
 import javax.enterprise.inject.spi.PassivationCapable;
 
 import org.jboss.weld.Container;
+import org.jboss.weld.serialization.spi.BeanIdentifier;
 import org.jboss.weld.serialization.spi.ContextualStore;
 import org.jboss.weld.serialization.spi.helpers.SerializableContextual;
 
@@ -63,7 +64,7 @@ public class SerializableContextualFactory {
         private transient C cached;
 
         // the id of a non-serializable, passivation capable contextual
-        private String id;
+        private BeanIdentifier id;
 
         private transient ContextualStore cachedContextualStore;
 
@@ -80,7 +81,7 @@ public class SerializableContextualFactory {
             this.cached = contextual;
         }
 
-        protected abstract String getId(C contextual, ContextualStore contextualStore);
+        protected abstract BeanIdentifier getId(C contextual, ContextualStore contextualStore);
 
         private ContextualStore getContextualStore() {
             if (cachedContextualStore == null) {
@@ -133,7 +134,7 @@ public class SerializableContextualFactory {
         }
 
         @Override
-        protected String getId(C contextual, ContextualStore contextualStore) {
+        protected BeanIdentifier getId(C contextual, ContextualStore contextualStore) {
             return contextualStore.putIfAbsent(contextual);
         }
 
@@ -149,8 +150,8 @@ public class SerializableContextualFactory {
         }
 
         @Override
-        protected String getId(C contextual, ContextualStore contextualStore) {
-            return contextual.getId();
+        protected BeanIdentifier getId(C contextual, ContextualStore contextualStore) {
+            return contextualStore.putIfAbsent(contextual);
         }
 
         @Override

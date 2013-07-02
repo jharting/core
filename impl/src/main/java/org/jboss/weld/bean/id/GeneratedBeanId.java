@@ -16,32 +16,40 @@
  */
 package org.jboss.weld.bean.id;
 
-import org.jboss.weld.annotated.slim.AnnotatedTypeIdentifier;
 import org.jboss.weld.serialization.spi.BeanIdentifier;
 
-public abstract class AbstractWeldBeanIdentifier implements BeanIdentifier {
+public class GeneratedBeanId implements BeanIdentifier {
 
-    private static final long serialVersionUID = 5863801570327390141L;
+    private static final long serialVersionUID = -5689120015548639021L;
 
-    private final AnnotatedTypeIdentifier typeIdentifier;
+    public static final String GENERATED_ID_PREFIX = GeneratedBeanId.class.getName();
 
-    public AbstractWeldBeanIdentifier(AnnotatedTypeIdentifier delegate) {
-        this.typeIdentifier = delegate;
-    }
+    private final String value;
 
-    protected abstract String getPrefix();
-
-    protected AnnotatedTypeIdentifier getTypeIdentifier() {
-        return typeIdentifier;
+    public GeneratedBeanId(int value) {
+        this.value = new StringBuilder(GENERATED_ID_PREFIX).append(BEAN_ID_SEPARATOR).append(value).toString();
     }
 
     @Override
     public String asString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append(getPrefix());
-        builder.append(BEAN_ID_SEPARATOR);
-        builder.append(typeIdentifier.asString());
-        return builder.toString();
+        return value;
+    }
+
+    @Override
+    public int hashCode() {
+        return value.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj instanceof GeneratedBeanId) {
+            GeneratedBeanId that = (GeneratedBeanId) obj;
+            return this.value.equals(that.value);
+        }
+        return false;
     }
 
     @Override

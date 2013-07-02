@@ -18,9 +18,9 @@ package org.jboss.weld.bean.id;
 
 import static com.google.common.base.Objects.equal;
 
-import org.jboss.weld.bean.BeanIdentifier;
 import org.jboss.weld.bean.builtin.AbstractBuiltInBean;
 import org.jboss.weld.manager.BeanManagerImpl;
+import org.jboss.weld.serialization.spi.BeanIdentifier;
 
 import com.google.common.base.Objects;
 

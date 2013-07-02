@@ -18,8 +18,8 @@ package org.jboss.weld.bean.id;
 
 import javax.enterprise.inject.spi.BeanAttributes;
 
-import org.jboss.weld.bean.BeanIdentifier;
 import org.jboss.weld.bean.SyntheticClassBean;
+import org.jboss.weld.serialization.spi.BeanIdentifier;
 import org.jboss.weld.util.Beans;
 
 import com.google.common.base.Objects;
@@ -29,7 +29,7 @@ public class SyntheticBeanIdentifier implements BeanIdentifier {
     private static final long serialVersionUID = 4972950382153266536L;
 
     public static SyntheticBeanIdentifier of(BeanAttributes<?> attributes, Class<?> beanClass) {
-        return new SyntheticBeanIdentifier(new StringBuilder().append(SyntheticClassBean.class.getName()).append(BeanIdentifier.ID_SEPARATOR)
+        return new SyntheticBeanIdentifier(new StringBuilder().append(SyntheticClassBean.class.getName()).append(BeanIdentifier.BEAN_ID_SEPARATOR)
                 .append(beanClass.getName()).append(Beans.createBeanAttributesId(attributes)).toString());
     }
 
