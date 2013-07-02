@@ -33,6 +33,7 @@ import org.jboss.weld.bean.AbstractClassBean;
 import org.jboss.weld.bean.DisposalMethod;
 import org.jboss.weld.bean.ProducerField;
 import org.jboss.weld.bean.builtin.CallableMethodHandler;
+import org.jboss.weld.bean.id.ProducerIdentifier;
 import org.jboss.weld.bean.proxy.BeanInstance;
 import org.jboss.weld.bean.proxy.EnterpriseTargetBeanInstance;
 import org.jboss.weld.bean.proxy.ProxyFactory;
@@ -102,7 +103,7 @@ public class EEResourceProducerField<X, T> extends ProducerField<X, T> {
     private final Class<T> rawType;
 
     protected EEResourceProducerField(BeanAttributes<T> attributes, EnhancedAnnotatedField<T, ? super X> field, AbstractClassBean<X> declaringBean, DisposalMethod<X, ?> disposalMethod, BeanManagerImpl manager, ServiceRegistry services) {
-        super(attributes, field, declaringBean, disposalMethod, manager, services);
+        super(attributes, field, declaringBean, disposalMethod, manager, services, ProducerIdentifier.of(declaringBean, field));
         this.rawType = field.getJavaClass();
     }
 

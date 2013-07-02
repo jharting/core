@@ -20,12 +20,21 @@ import static com.google.common.base.Objects.equal;
 
 import org.jboss.weld.bean.BeanIdentifier;
 import org.jboss.weld.bean.builtin.AbstractBuiltInBean;
+import org.jboss.weld.manager.BeanManagerImpl;
 
 import com.google.common.base.Objects;
 
 public class BuiltInBeanIdentifier implements BeanIdentifier {
 
     private static final long serialVersionUID = 902099265887139677L;
+
+    public static BuiltInBeanIdentifier of(BeanManagerImpl manager, Class<?> clazz) {
+        return new BuiltInBeanIdentifier(manager.getId(), clazz.getName());
+    }
+
+    public static BuiltInBeanIdentifier of(BeanManagerImpl manager, Class<?> clazz, String suffix) {
+        return new BuiltInBeanIdentifier(manager.getId(), clazz.getName(), suffix);
+    }
 
     private final String bdaId;
     private final String className;

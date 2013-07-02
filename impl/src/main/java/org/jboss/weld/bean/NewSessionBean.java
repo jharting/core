@@ -19,6 +19,7 @@ package org.jboss.weld.bean;
 import javax.enterprise.inject.spi.BeanAttributes;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
+import org.jboss.weld.bean.id.SessionBeanIdentifier;
 import org.jboss.weld.ejb.InternalEjbDescriptor;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.resources.ClassTransformer;
@@ -39,7 +40,7 @@ public class NewSessionBean<T> extends SessionBean<T> implements NewBean {
      */
     public static <T> NewSessionBean<T> of(BeanAttributes<T> attributes, InternalEjbDescriptor<T> ejbDescriptor, BeanManagerImpl beanManager) {
         EnhancedAnnotatedType<T> type = beanManager.getServices().get(ClassTransformer.class).getEnhancedAnnotatedType(ejbDescriptor.getBeanClass(), beanManager.getId());
-        return new NewSessionBean<T>(attributes, type, ejbDescriptor, createId(NewSessionBean.class.getSimpleName(), ejbDescriptor), beanManager);
+        return new NewSessionBean<T>(attributes, type, ejbDescriptor, new SessionBeanIdentifier(type.slim().getIdentifier(), ejbDescriptor.getEjbName(), true), beanManager);
     }
 
     /**
@@ -48,8 +49,8 @@ public class NewSessionBean<T> extends SessionBean<T> implements NewBean {
      * @param type        An annotated class
      * @param beanManager The Bean manager
      */
-    protected NewSessionBean(BeanAttributes<T> attributes, final EnhancedAnnotatedType<T> type, InternalEjbDescriptor<T> ejbDescriptor, String idSuffix, BeanManagerImpl beanManager) {
-        super(attributes, type, ejbDescriptor, idSuffix, beanManager);
+    protected NewSessionBean(BeanAttributes<T> attributes, final EnhancedAnnotatedType<T> type, InternalEjbDescriptor<T> ejbDescriptor, SessionBeanIdentifier identifier, BeanManagerImpl beanManager) {
+        super(attributes, type, ejbDescriptor, identifier, beanManager);
     }
 
     @Override

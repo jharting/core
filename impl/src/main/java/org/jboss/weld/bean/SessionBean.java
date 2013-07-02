@@ -44,6 +44,7 @@ import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedMethod;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
 import org.jboss.weld.annotated.enhanced.MethodSignature;
 import org.jboss.weld.annotated.enhanced.jlr.MethodSignatureImpl;
+import org.jboss.weld.bean.id.SessionBeanIdentifier;
 import org.jboss.weld.bean.interceptor.InterceptorBindingsAdapter;
 import org.jboss.weld.bean.proxy.EnterpriseBeanInstance;
 import org.jboss.weld.bean.proxy.Marker;
@@ -88,19 +89,7 @@ public class SessionBean<T> extends AbstractClassBean<T> {
      * @return An Enterprise Web Bean
      */
     public static <T> SessionBean<T> of(BeanAttributes<T> attributes, InternalEjbDescriptor<T> ejbDescriptor, BeanManagerImpl beanManager, EnhancedAnnotatedType<T> type) {
-        return new SessionBean<T>(attributes, type, ejbDescriptor, createId(SessionBean.class.getSimpleName(), ejbDescriptor, type), beanManager);
-    }
-
-    protected static String createId(String beanType, InternalEjbDescriptor<?> ejbDescriptor) {
-        return new StringBuilder().append(beanType).append(BEAN_ID_SEPARATOR).append(ejbDescriptor.getEjbName()).toString();
-    }
-
-    protected static String createId(String beanType, InternalEjbDescriptor<?> ejbDescriptor, EnhancedAnnotatedType<?> type) {
-        if (type.isDiscovered()) {
-            return createId(beanType, ejbDescriptor);
-        } else {
-            return new StringBuilder().append(beanType).append(BEAN_ID_SEPARATOR).append(ejbDescriptor.getEjbName()).append(type.slim().getIdentifier().asString()).toString();
-        }
+        return new SessionBean<T>(attributes, type, ejbDescriptor, new SessionBeanIdentifier(type.slim().getIdentifier(), ejbDescriptor.getEjbName(), false), beanManager);
     }
 
     /**
@@ -109,8 +98,8 @@ public class SessionBean<T> extends AbstractClassBean<T> {
      * @param type    The type of the bean
      * @param manager The Bean manager
      */
-    protected SessionBean(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> type, InternalEjbDescriptor<T> ejbDescriptor, String idSuffix, BeanManagerImpl manager) {
-        super(attributes, type, idSuffix, manager);
+    protected SessionBean(BeanAttributes<T> attributes, EnhancedAnnotatedType<T> type, InternalEjbDescriptor<T> ejbDescriptor, SessionBeanIdentifier identifier, BeanManagerImpl manager) {
+        super(attributes, type, identifier, manager);
         this.ejbDescriptor = ejbDescriptor;
         setProducer(beanManager.getLocalInjectionTargetFactory(getEnhancedAnnotated()).createInjectionTarget(getEnhancedAnnotated(), this, false));
     }

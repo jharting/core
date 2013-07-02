@@ -25,6 +25,7 @@ import javax.enterprise.inject.spi.Decorator;
 import javax.enterprise.inject.spi.InjectionPoint;
 
 import org.jboss.weld.bean.ForwardingDecorator;
+import org.jboss.weld.bean.id.BuiltInBeanIdentifier;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.serialization.BeanHolder;
 import org.jboss.weld.util.reflection.Reflections;
@@ -39,7 +40,7 @@ import org.jboss.weld.util.reflection.Reflections;
 public class DecoratorMetadataBean extends AbstractBuiltInMetadataBean<Decorator<?>> {
 
     public DecoratorMetadataBean(BeanManagerImpl beanManager) {
-        super(Decorator.class.getSimpleName(), Reflections.<Class<Decorator<?>>>cast(Decorator.class), beanManager);
+        super(BuiltInBeanIdentifier.of(beanManager, Decorator.class), Reflections.<Class<Decorator<?>>>cast(Decorator.class), beanManager);
     }
 
     @Override

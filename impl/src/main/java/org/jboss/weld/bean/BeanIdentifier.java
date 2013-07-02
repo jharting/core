@@ -20,6 +20,6 @@ import org.jboss.weld.annotated.Identifier;
 
 public interface BeanIdentifier extends Identifier {
 
-    public static final String BEAN_ID_SEPARATOR = "#";
+    String BEAN_ID_SEPARATOR = "#";
 
 }
