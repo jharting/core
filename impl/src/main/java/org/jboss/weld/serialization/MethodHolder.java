@@ -26,6 +26,7 @@ import javax.enterprise.inject.spi.AnnotatedMethod;
 
 import org.jboss.weld.exceptions.WeldException;
 import org.jboss.weld.interceptor.spi.metadata.MethodMetadata;
+import org.jboss.weld.util.collections.Arrays2;
 
 import com.google.common.base.Objects;
 
@@ -47,7 +48,12 @@ public class MethodHolder extends AbstractSerializableHolder<Method> implements 
         super(method);
         this.declaringClass = method.getDeclaringClass();
         this.methodName = method.getName();
-        this.parameterTypes = method.getParameterTypes();
+        Class<?>[] parameterTypes = method.getParameterTypes();
+        if (parameterTypes.length == 0) {
+            this.parameterTypes = Arrays2.EMPTY_CLASS_ARRAY;
+        } else {
+            this.parameterTypes = parameterTypes;
+        }
     }
 
     public static MethodHolder of(Method method) {
