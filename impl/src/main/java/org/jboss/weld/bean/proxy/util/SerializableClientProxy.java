@@ -17,14 +17,16 @@
 
 package org.jboss.weld.bean.proxy.util;
 
+import java.io.ObjectStreamException;
+import java.io.Serializable;
+
+import javax.enterprise.inject.spi.Bean;
+
 import org.jboss.weld.Container;
 import org.jboss.weld.exceptions.WeldException;
 import org.jboss.weld.logging.messages.BeanMessage;
+import org.jboss.weld.serialization.spi.BeanIdentifier;
 import org.jboss.weld.serialization.spi.ContextualStore;
-
-import javax.enterprise.inject.spi.Bean;
-import java.io.ObjectStreamException;
-import java.io.Serializable;
 
 /**
  * A wrapper mostly for client proxies which provides header information useful
@@ -39,9 +41,9 @@ public class SerializableClientProxy implements Serializable {
 
     private static final long serialVersionUID = -46820068707447753L;
 
-    private final String beanId;
+    private final BeanIdentifier beanId;
 
-    public SerializableClientProxy(final String beanId) {
+    public SerializableClientProxy(final BeanIdentifier beanId) {
         this.beanId = beanId;
     }
 

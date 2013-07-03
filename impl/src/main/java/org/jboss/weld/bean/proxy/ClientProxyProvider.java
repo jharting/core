@@ -31,6 +31,7 @@ import javax.enterprise.inject.spi.Bean;
 import org.jboss.weld.Container;
 import org.jboss.weld.exceptions.DefinitionException;
 import org.jboss.weld.resources.SharedObjectCache;
+import org.jboss.weld.serialization.spi.BeanIdentifier;
 import org.jboss.weld.serialization.spi.ContextualStore;
 import org.jboss.weld.util.Proxies;
 import org.jboss.weld.util.Proxies.TypeInfo;
@@ -156,7 +157,7 @@ public class ClientProxyProvider {
     }
 
     private static <T> T createClientProxy(Bean<T> bean, Set<Type> types) {
-        String id = Container.instance().services().get(ContextualStore.class).putIfAbsent(bean);
+        BeanIdentifier id = Container.instance().services().get(ContextualStore.class).putIfAbsent(bean);
         if (id == null) {
             throw new DefinitionException(BEAN_ID_CREATION_FAILED, bean);
         }

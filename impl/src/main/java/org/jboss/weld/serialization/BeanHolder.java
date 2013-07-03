@@ -19,6 +19,7 @@ package org.jboss.weld.serialization;
 import javax.enterprise.inject.spi.Bean;
 
 import org.jboss.weld.Container;
+import org.jboss.weld.serialization.spi.BeanIdentifier;
 import org.jboss.weld.serialization.spi.ContextualStore;
 
 /**
@@ -36,7 +37,7 @@ public class BeanHolder<T> extends AbstractSerializableHolder<Bean<T>> {
         return new BeanHolder<T>(bean);
     }
 
-    private final String beanId;
+    private final BeanIdentifier beanId;
 
     public BeanHolder(Bean<T> bean) {
         super(bean);

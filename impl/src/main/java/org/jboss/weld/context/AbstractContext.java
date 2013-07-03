@@ -178,12 +178,8 @@ public abstract class AbstractContext implements AlterableContext {
         }
     }
 
-    protected static <T> Contextual<T> getContextual(String id) {
-        return Container.instance().services().get(ContextualStore.class).<Contextual<T>, T>getContextual(id);
-    }
-
     protected String getId(Contextual<?> contextual) {
-        return serviceRegistry.get(ContextualStore.class).putIfAbsent(contextual);
+        return serviceRegistry.get(ContextualStore.class).putIfAbsent(contextual).asString();
     }
 
     protected ServiceRegistry getServiceRegistry() {

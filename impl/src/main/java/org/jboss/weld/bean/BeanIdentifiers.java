@@ -30,6 +30,9 @@ import org.jboss.weld.util.Beans;
 
 public class BeanIdentifiers {
 
+    private BeanIdentifiers() {
+    }
+
     public static final String SEPARATOR = "|";
 
     public static String forManagedBean(EnhancedAnnotatedType<?> type) {

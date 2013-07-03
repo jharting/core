@@ -17,6 +17,11 @@
 
 package org.jboss.weld.bean.proxy;
 
+import static org.jboss.weld.logging.Category.BEAN;
+import static org.jboss.weld.logging.LoggerFactory.loggerFactory;
+import static org.jboss.weld.logging.messages.BeanMessage.BEAN_INSTANCE_NOT_SET_ON_PROXY;
+import static org.jboss.weld.logging.messages.BeanMessage.PROXY_HANDLER_SERIALIZED_FOR_NON_SERIALIZABLE_BEAN;
+
 import java.io.Serializable;
 import java.lang.reflect.Method;
 
@@ -24,17 +29,15 @@ import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.PassivationCapable;
 
 import org.jboss.weld.Container;
+import org.jboss.weld.bean.CommonBean;
+import org.jboss.weld.bean.StringBeanIdentifier;
 import org.jboss.weld.exceptions.WeldException;
 import org.jboss.weld.interceptor.util.proxy.TargetInstanceProxy;
+import org.jboss.weld.serialization.spi.BeanIdentifier;
 import org.jboss.weld.serialization.spi.ContextualStore;
 import org.slf4j.cal10n.LocLogger;
 
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
-
-import static org.jboss.weld.logging.Category.BEAN;
-import static org.jboss.weld.logging.LoggerFactory.loggerFactory;
-import static org.jboss.weld.logging.messages.BeanMessage.BEAN_INSTANCE_NOT_SET_ON_PROXY;
-import static org.jboss.weld.logging.messages.BeanMessage.PROXY_HANDLER_SERIALIZED_FOR_NON_SERIALIZABLE_BEAN;
 
 /**
  * A general purpose MethodHandler for all proxies which routes calls to the
@@ -53,15 +56,17 @@ public class ProxyMethodHandler implements MethodHandler, Serializable {
     // The bean instance to forward calls to
     private final BeanInstance beanInstance;
 
-    private final String beanId;
+    private final BeanIdentifier beanId;
 
     private transient Bean<?> bean;
 
     public ProxyMethodHandler(BeanInstance beanInstance, Bean<?> bean) {
         this.beanInstance = beanInstance;
         this.bean = bean;
-        if (bean instanceof PassivationCapable) {
-            this.beanId = ((PassivationCapable) bean).getId();
+        if (bean instanceof CommonBean<?>) {
+            this.beanId = ((CommonBean<?>) bean).getIdentifier();
+        } else if (bean instanceof PassivationCapable) {
+            this.beanId = new StringBeanIdentifier(((PassivationCapable) bean).getId());
         } else {
             this.beanId = null;
         }
