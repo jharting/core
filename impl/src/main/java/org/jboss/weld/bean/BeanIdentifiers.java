@@ -22,7 +22,6 @@ import javax.enterprise.inject.spi.Extension;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedField;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedMethod;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
-import org.jboss.weld.bean.builtin.AbstractBuiltInBean;
 import org.jboss.weld.ejb.spi.EjbDescriptor;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.util.AnnotatedTypes;
@@ -33,26 +32,31 @@ public class BeanIdentifiers {
     private BeanIdentifiers() {
     }
 
+    public static final String PREFIX = "WELD|";
     public static final String SEPARATOR = "|";
 
+    private static StringBuilder getPrefix(Class<?> beanType) {
+        return new StringBuilder(PREFIX).append(beanType.getSimpleName()).append(SEPARATOR);
+    }
+
     public static String forManagedBean(EnhancedAnnotatedType<?> type) {
-        return new StringBuilder(ManagedBean.class.getName()).append(SEPARATOR).append(type.slim().getIdentifier().asString()).toString();
+        return getPrefix(ManagedBean.class).append(type.slim().getIdentifier().asString()).toString();
     }
 
     public static String forDecorator(EnhancedAnnotatedType<?> type) {
-        return new StringBuilder(DecoratorImpl.class.getName()).append(SEPARATOR).append(type.slim().getIdentifier().asString()).toString();
+        return getPrefix(DecoratorImpl.class).append(type.slim().getIdentifier().asString()).toString();
     }
 
     public static String forInterceptor(EnhancedAnnotatedType<?> type) {
-        return new StringBuilder(InterceptorImpl.class.getName()).append(SEPARATOR).append(type.slim().getIdentifier().asString()).toString();
+        return getPrefix(InterceptorImpl.class).append(type.slim().getIdentifier().asString()).toString();
     }
 
     public static String forNewManagedBean(EnhancedAnnotatedType<?> type) {
-        return new StringBuilder(NewManagedBean.class.getName()).append(SEPARATOR).append(type.slim().getIdentifier().asString()).toString();
+        return getPrefix(NewManagedBean.class).append(type.slim().getIdentifier().asString()).toString();
     }
 
     public static String forSessionBean(EnhancedAnnotatedType<?> type, EjbDescriptor<?> descriptor) {
-        StringBuilder builder = new StringBuilder(SessionBean.class.getName()).append(SEPARATOR).append(descriptor.getEjbName());
+        StringBuilder builder = getPrefix(SessionBean.class).append(descriptor.getEjbName());
         if (!type.isDiscovered()) {
             builder.append(SEPARATOR).append(type.slim().getIdentifier().asString());
         }
@@ -60,11 +64,11 @@ public class BeanIdentifiers {
     }
 
     public static String forNewSessionBean(EjbDescriptor<?> descriptor) {
-        return new StringBuilder(NewSessionBean.class.getName()).append(SEPARATOR).append(descriptor.getEjbName()).toString();
+        return getPrefix(NewSessionBean.class).append(descriptor.getEjbName()).toString();
     }
 
     public static String forProducerField(EnhancedAnnotatedField<?, ?> field, AbstractClassBean<?> declaringBean) {
-        StringBuilder sb = new StringBuilder(ProducerField.class.getName()).append(SEPARATOR).append(declaringBean.getAnnotated().getIdentifier().asString())
+        StringBuilder sb = getPrefix(ProducerField.class).append(declaringBean.getAnnotated().getIdentifier().asString())
                 .append(SEPARATOR);
         if (declaringBean.getEnhancedAnnotated().isDiscovered()) {
             sb.append(field.getName());
@@ -75,7 +79,7 @@ public class BeanIdentifiers {
     }
 
     public static String forProducerMethod(EnhancedAnnotatedMethod<?, ?> method, AbstractClassBean<?> declaringBean) {
-        StringBuilder sb = new StringBuilder(ProducerMethod.class.getSimpleName()).append(SEPARATOR).append(declaringBean.getAnnotated().getIdentifier().asString())
+        StringBuilder sb = getPrefix(ProducerMethod.class).append(declaringBean.getAnnotated().getIdentifier().asString())
                 .append(SEPARATOR);
         if (declaringBean.getEnhancedAnnotated().isDiscovered()) {
             sb.append(method.getSignature().toString());
@@ -86,12 +90,12 @@ public class BeanIdentifiers {
     }
 
     public static String forSyntheticBean(BeanAttributes<?> attributes, Class<?> beanClass) {
-        return new StringBuilder().append(SyntheticClassBean.class.getName()).append(SEPARATOR).append(beanClass.getName()).append(SEPARATOR)
+        return getPrefix(AbstractSyntheticBean.class).append(beanClass.getName()).append(SEPARATOR)
                 .append(Beans.createBeanAttributesId(attributes)).toString();
     }
 
     public static String forBuiltInBean(BeanManagerImpl manager, Class<?> type, String suffix) {
-        StringBuilder builder = new StringBuilder(AbstractBuiltInBean.class.getName()).append(SEPARATOR).append(manager.getId()).append(SEPARATOR).append(type.getSimpleName());
+        StringBuilder builder = getPrefix(AbstractSyntheticBean.class).append(manager.getId()).append(SEPARATOR).append(type.getSimpleName());
         if (suffix != null) {
             builder.append(SEPARATOR).append(suffix);
         }
@@ -99,6 +103,6 @@ public class BeanIdentifiers {
     }
 
     public static String forExtension(EnhancedAnnotatedType<?> type) {
-        return new StringBuilder(Extension.class.getName()).append(SEPARATOR).append(type.slim().getIdentifier().asString()).toString();
+        return getPrefix(Extension.class).append(type.slim().getIdentifier().asString()).toString();
     }
 }
