@@ -50,7 +50,6 @@ import javax.inject.Qualifier;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedMethod;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedParameter;
-import org.jboss.weld.bean.AbstractClassBean;
 import org.jboss.weld.bean.RIBean;
 import org.jboss.weld.exceptions.DefinitionException;
 import org.jboss.weld.injection.InjectionPointFactory;
@@ -78,10 +77,6 @@ import org.jboss.weld.util.reflection.HierarchyDiscovery;
  */
 public class ObserverMethodImpl<T, X> implements ObserverMethod<T> {
 
-    public static final String ID_PREFIX = ObserverMethodImpl.class.getPackage().getName();
-
-    public static final String ID_SEPARATOR = "-";
-
     private final Set<Annotation> bindings;
     private final Type eventType;
     protected final BeanManagerImpl beanManager;
@@ -89,7 +84,6 @@ public class ObserverMethodImpl<T, X> implements ObserverMethod<T> {
     protected final RIBean<X> declaringBean;
     protected final MethodInjectionPoint<T, ? super X> observerMethod;
     protected TransactionPhase transactionPhase;
-    private final String id;
 
     private final Set<WeldInjectionPointAttributes<?, ?>> injectionPoints;
     private final Set<WeldInjectionPointAttributes<?, ?>> newInjectionPoints;
@@ -108,7 +102,6 @@ public class ObserverMethodImpl<T, X> implements ObserverMethod<T> {
         this.observerMethod = initMethodInjectionPoint(observer, declaringBean, manager);
         EnhancedAnnotatedParameter<?, ? super X> eventParameter = observer.getEnhancedParameters(Observes.class).get(0);
         this.eventType = new HierarchyDiscovery(declaringBean.getBeanClass()).resolveType(eventParameter.getBaseType());
-        this.id = createId(observer, declaringBean);
         this.bindings = manager.getServices().get(SharedObjectCache.class).getSharedSet(observer.getEnhancedParameters(Observes.class).get(0).getMetaAnnotations(Qualifier.class));
         Observes observesAnnotation = observer.getEnhancedParameters(Observes.class).get(0).getAnnotation(Observes.class);
         this.reception = observesAnnotation.notifyObserver();
@@ -127,17 +120,6 @@ public class ObserverMethodImpl<T, X> implements ObserverMethod<T> {
         }
         this.injectionPoints = immutableSet(injectionPoints);
         this.newInjectionPoints = immutableSet(newInjectionPoints);
-    }
-
-    protected static String createId(final EnhancedAnnotatedMethod<?, ? > observer, final RIBean<?> declaringBean) {
-        String typeId = null;
-        if (declaringBean instanceof AbstractClassBean<?>) {
-            AbstractClassBean<?> classBean = (AbstractClassBean<?>) declaringBean;
-            typeId = classBean.getAnnotated().getIdentifier().asString();
-        } else {
-            typeId = declaringBean.getBeanClass().getName();
-        }
-        return new StringBuilder().append(ID_PREFIX).append(ID_SEPARATOR).append(ObserverMethod.class.getSimpleName()).append(ID_SEPARATOR).append(typeId).append(".").append(observer.getSignature()).toString();
     }
 
     protected MethodInjectionPoint<T, ? super X> initMethodInjectionPoint(EnhancedAnnotatedMethod<T, ? super X> observer, RIBean<X> declaringBean, BeanManagerImpl manager) {
@@ -307,15 +289,14 @@ public class ObserverMethodImpl<T, X> implements ObserverMethod<T> {
         return observerMethod.toString();
     }
 
-    public String getId() {
-        return id;
-    }
-
     @Override
     public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
         if (obj instanceof ObserverMethodImpl<?, ?>) {
             ObserverMethodImpl<?, ?> that = (ObserverMethodImpl<?, ?>) obj;
-            return this.getId().equals(that.getId());
+            return this.observerMethod.getAnnotated().equals(that.observerMethod.getAnnotated());
         } else {
             return false;
         }
@@ -323,6 +304,6 @@ public class ObserverMethodImpl<T, X> implements ObserverMethod<T> {
 
     @Override
     public int hashCode() {
-        return getId().hashCode();
+        return observerMethod.getAnnotated().hashCode();
     }
 }
