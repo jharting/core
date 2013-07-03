@@ -75,7 +75,7 @@ public class BeanIdentifiers {
     }
 
     public static String forProducerMethod(EnhancedAnnotatedMethod<?, ?> method, AbstractClassBean<?> declaringBean) {
-        StringBuilder sb = new StringBuilder(ProducerMethod.class.getName()).append(SEPARATOR).append(declaringBean.getAnnotated().getIdentifier().asString())
+        StringBuilder sb = new StringBuilder(ProducerMethod.class.getSimpleName()).append(SEPARATOR).append(declaringBean.getAnnotated().getIdentifier().asString())
                 .append(SEPARATOR);
         if (declaringBean.getEnhancedAnnotated().isDiscovered()) {
             sb.append(method.getSignature().toString());
