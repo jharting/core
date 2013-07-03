@@ -23,11 +23,9 @@ public class StringBeanIdentifier implements BeanIdentifier {
     private static final long serialVersionUID = -3389031898783605246L;
 
     private final String value;
-    private final int hashCode;
 
     public StringBeanIdentifier(String value) {
         this.value = value;
-        this.hashCode = value.hashCode();
     }
 
     @Override
@@ -37,7 +35,7 @@ public class StringBeanIdentifier implements BeanIdentifier {
 
     @Override
     public int hashCode() {
-        return hashCode;
+        return value.hashCode();
     }
 
     @Override
