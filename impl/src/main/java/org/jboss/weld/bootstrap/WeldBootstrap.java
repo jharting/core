@@ -159,6 +159,7 @@ import com.google.common.collect.ImmutableSet;
  *
  * @author Pete Muir
  * @author Ales Justin
+ * @author Marko Luksa
  */
 public class WeldBootstrap implements CDI11Bootstrap {
 
@@ -175,7 +176,8 @@ public class WeldBootstrap implements CDI11Bootstrap {
         private final BeanManagerImpl deploymentManager;
         private final Environment environment;
         private final Deployment deployment;
-        private final Map<BeanDeploymentArchive, BeanDeployment> managerAwareBeanDeploymentArchives;
+        private final Map<BeanDeploymentArchive, BeanDeployment> bdaToBeanDeploymentMap;
+        private final Map<BeanDeploymentArchive, BeanManagerImpl> bdaToBeanManagerMap;
         private final Collection<ContextHolder<? extends Context>> contexts;
 
         public DeploymentVisitor(BeanManagerImpl deploymentManager, Environment environment, final Deployment deployment, Collection<ContextHolder<? extends Context>> contexts) {
@@ -183,14 +185,15 @@ public class WeldBootstrap implements CDI11Bootstrap {
             this.environment = environment;
             this.deployment = deployment;
             this.contexts = contexts;
-            this.managerAwareBeanDeploymentArchives = new ConcurrentHashMap<BeanDeploymentArchive, BeanDeployment>();
+            this.bdaToBeanDeploymentMap = new ConcurrentHashMap<BeanDeploymentArchive, BeanDeployment>();
+            this.bdaToBeanManagerMap = new ConcurrentHashMap<BeanDeploymentArchive, BeanManagerImpl>();
         }
 
         public Map<BeanDeploymentArchive, BeanDeployment> visit() {
             for (BeanDeploymentArchive archive : deployment.getBeanDeploymentArchives()) {
-                visit(archive, managerAwareBeanDeploymentArchives, new HashSet<BeanDeploymentArchive>(), true);
+                visit(archive, bdaToBeanDeploymentMap, new HashSet<BeanDeploymentArchive>(), true);
             }
-            return managerAwareBeanDeploymentArchives;
+            return bdaToBeanDeploymentMap;
         }
 
         private <T extends Service> void copyService(BeanDeploymentArchive archive, Class<T> serviceClass) {
@@ -204,7 +207,7 @@ public class WeldBootstrap implements CDI11Bootstrap {
             }
         }
 
-        private BeanDeployment visit(BeanDeploymentArchive beanDeploymentArchive, Map<BeanDeploymentArchive, BeanDeployment> managerAwareBeanDeploymentArchives, Set<BeanDeploymentArchive> seenBeanDeploymentArchives, boolean validate) {
+        private BeanDeployment visit(BeanDeploymentArchive beanDeploymentArchive, Map<BeanDeploymentArchive, BeanDeployment> bdaToBeanDeploymentMap, Set<BeanDeploymentArchive> seenBeanDeploymentArchives, boolean validate) {
             copyService(beanDeploymentArchive, ResourceLoader.class);
             copyService(beanDeploymentArchive, InstantiatorFactory.class);
             // Check that the required services are specified
@@ -217,23 +220,24 @@ public class WeldBootstrap implements CDI11Bootstrap {
                 throw new IllegalArgumentException(DEPLOYMENT_ARCHIVE_NULL, beanDeploymentArchive);
             }
 
-            BeanDeployment parent = managerAwareBeanDeploymentArchives.get(beanDeploymentArchive);
+            BeanDeployment parent = bdaToBeanDeploymentMap.get(beanDeploymentArchive);
             if (parent == null) {
                 // Create the BeanDeployment
                 parent = new BeanDeployment(beanDeploymentArchive, deploymentManager, deployment.getServices(), contexts);
 
                 // Attach it
-                managerAwareBeanDeploymentArchives.put(beanDeploymentArchive, parent);
+                bdaToBeanDeploymentMap.put(beanDeploymentArchive, parent);
+                bdaToBeanManagerMap.put(beanDeploymentArchive, parent.getBeanManager());
             }
             seenBeanDeploymentArchives.add(beanDeploymentArchive);
             for (BeanDeploymentArchive archive : beanDeploymentArchive.getBeanDeploymentArchives()) {
                 BeanDeployment child;
                 // Cut any circularties
                 if (!seenBeanDeploymentArchives.contains(archive)) {
-                    child = visit(archive, managerAwareBeanDeploymentArchives, seenBeanDeploymentArchives, validate);
+                    child = visit(archive, bdaToBeanDeploymentMap, seenBeanDeploymentArchives, validate);
                 } else {
                     // already visited
-                    child = managerAwareBeanDeploymentArchives.get(archive);
+                    child = bdaToBeanDeploymentMap.get(archive);
                 }
                 parent.getBeanManager().addAccessibleBeanManager(child.getBeanManager());
             }
@@ -365,7 +369,7 @@ public class WeldBootstrap implements CDI11Bootstrap {
             this.deploymentVisitor = new DeploymentVisitor(deploymentManager, environment, deployment, contexts);
 
             if (deployment instanceof CDI11Deployment) {
-                registry.add(BeanManagerLookupService.class, new BeanManagerLookupService((CDI11Deployment) deployment, deploymentVisitor.managerAwareBeanDeploymentArchives));
+                registry.add(BeanManagerLookupService.class, new BeanManagerLookupService((CDI11Deployment) deployment, deploymentVisitor.bdaToBeanManagerMap));
             } else {
                 log.warn("Legacy deployment metadata provided by the integrator. Certain functionality will not be available.");
             }
