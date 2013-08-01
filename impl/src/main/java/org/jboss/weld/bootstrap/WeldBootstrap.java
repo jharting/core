@@ -252,6 +252,7 @@ public class WeldBootstrap implements CDI11Bootstrap {
     // The Bean manager
     private BeanManagerImpl deploymentManager;
     private Map<BeanDeploymentArchive, BeanDeployment> beanDeployments;
+    private Map<BeanDeploymentArchive, BeanManagerImpl> bdaToBeanManagerMap;
     private Environment environment;
     private Deployment deployment;
     private DeploymentVisitor deploymentVisitor;
@@ -438,11 +439,16 @@ public class WeldBootstrap implements CDI11Bootstrap {
 
     public BeanManagerImpl getManager(BeanDeploymentArchive beanDeploymentArchive) {
         synchronized (this) {
-            BeanDeployment beanDeployment = beanDeployments.get(beanDeploymentArchive);
-            if (beanDeployment != null) {
-                return beanDeployment.getBeanManager().getCurrent();
+            if (bdaToBeanManagerMap == null) {
+                BeanDeployment beanDeployment = beanDeployments.get(beanDeploymentArchive);
+                if (beanDeployment != null) {
+                    return beanDeployment.getBeanManager().getCurrent();
+                } else {
+                    return null;
+                }
             } else {
-                return null;
+                BeanManagerImpl beanManager = bdaToBeanManagerMap.get(beanDeploymentArchive);
+                return beanManager == null ? null : beanManager.getCurrent();
             }
         }
     }
@@ -521,7 +527,7 @@ public class WeldBootstrap implements CDI11Bootstrap {
             }
 
             AfterBeanDiscoveryImpl.fire(deploymentManager, deployment, beanDeployments, contexts);
-            
+
             // Re-read the deployment structure, this will be the physical
             // structure, extensions, classes, and any beans added using addBean
             // outside the physical structure
@@ -564,6 +570,7 @@ public class WeldBootstrap implements CDI11Bootstrap {
             deploymentManager.getGlobalLenientObserverNotifier().clear();
             deploymentManager.getDecoratorResolver().clear();
             deploymentManager.getServices().cleanupAfterBoot();
+            deploymentVisitor = null;
             for (BeanDeployment beanDeployment : beanDeployments.values()) {
                 BeanManagerImpl beanManager = beanDeployment.getBeanManager();
                 beanManager.getBeanResolver().clear();
@@ -594,6 +601,12 @@ public class WeldBootstrap implements CDI11Bootstrap {
             for (BeanDeployment deployment : beanDeployments.values()) {
                 deployment.getBeanDeployer().cleanup();
             }
+            bdaToBeanManagerMap = new ConcurrentHashMap<BeanDeploymentArchive, BeanManagerImpl>();
+            for (Map.Entry<BeanDeploymentArchive, BeanDeployment> entry : beanDeployments.entrySet()) {
+                bdaToBeanManagerMap.put(entry.getKey(), entry.getValue().getBeanManager());
+            }
+            beanDeployments = null;
+
             Container.instance().setState(ContainerState.INITIALIZED);
             return this;
         }
