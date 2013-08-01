@@ -33,7 +33,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -511,22 +510,22 @@ public class WeldBootstrap implements CDI11Bootstrap {
                 deployment.getBeanDeployer().createNewBeans();
             }
 
-            for (Entry<BeanDeploymentArchive, BeanDeployment> entry : beanDeployments.entrySet()) {
-                entry.getValue().deploySpecialized(environment);
+            for (BeanDeployment beanDeployment : beanDeployments.values()) {
+                beanDeployment.deploySpecialized(environment);
             }
             // TODO keep a list of new bdas, add them all in, and deploy beans for
             // them, then merge into existing
-            for (Entry<BeanDeploymentArchive, BeanDeployment> entry : beanDeployments.entrySet()) {
-                entry.getValue().deployBeans(environment);
+            for (BeanDeployment beanDeployment : beanDeployments.values()) {
+                beanDeployment.deployBeans(environment);
             }
             AfterBeanDiscoveryImpl.fire(deploymentManager, deployment, beanDeployments, contexts);
             // Re-read the deployment structure, this will be the physical
             // structure, extensions, classes, and any beans added using addBean
             // outside the physical structure
             beanDeployments = deploymentVisitor.visit();
-            for (Entry<BeanDeploymentArchive, BeanDeployment> entry : beanDeployments.entrySet()) {
-                entry.getValue().getBeanManager().getServices().get(InjectionTargetService.class).initialize();
-                entry.getValue().afterBeanDiscovery(environment);
+            for (BeanDeployment beanDeployment : beanDeployments.values()) {
+                beanDeployment.getBeanManager().getServices().get(InjectionTargetService.class).initialize();
+                beanDeployment.afterBeanDiscovery(environment);
             }
             Container.instance().putBeanDeployments(beanDeployments);
             Container.instance().setState(ContainerState.DEPLOYED);
@@ -537,10 +536,10 @@ public class WeldBootstrap implements CDI11Bootstrap {
     public Bootstrap validateBeans() {
         synchronized (this) {
             log.debug(VALIDATING_BEANS);
-            for (Entry<BeanDeploymentArchive, BeanDeployment> entry : beanDeployments.entrySet()) {
-                BeanManagerImpl beanManager = entry.getValue().getBeanManager();
+            for (BeanDeployment beanDeployment : beanDeployments.values()) {
+                BeanManagerImpl beanManager = beanDeployment.getBeanManager();
                 beanManager.getBeanResolver().clear();
-                deployment.getServices().get(Validator.class).validateDeployment(beanManager, entry.getValue());
+                deployment.getServices().get(Validator.class).validateDeployment(beanManager, beanDeployment);
                 beanManager.getServices().get(InjectionTargetService.class).validate();
             }
             Container.instance().setState(ContainerState.VALIDATED);
@@ -561,8 +560,8 @@ public class WeldBootstrap implements CDI11Bootstrap {
             deploymentManager.getGlobalLenientObserverNotifier().clear();
             deploymentManager.getDecoratorResolver().clear();
             deploymentManager.getServices().cleanupAfterBoot();
-            for (Entry<BeanDeploymentArchive, BeanDeployment> entry : beanDeployments.entrySet()) {
-                BeanManagerImpl beanManager = entry.getValue().getBeanManager();
+            for (BeanDeployment beanDeployment : beanDeployments.values()) {
+                BeanManagerImpl beanManager = beanDeployment.getBeanManager();
                 beanManager.getBeanResolver().clear();
                 beanManager.getAccessibleLenientObserverNotifier().clear();
                 beanManager.getDecoratorResolver().clear();
