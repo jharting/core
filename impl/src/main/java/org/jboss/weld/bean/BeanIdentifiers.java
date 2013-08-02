@@ -16,6 +16,8 @@
  */
 package org.jboss.weld.bean;
 
+import static org.jboss.weld.util.reflection.DeclaredMemberIndexer.getIndexForMethod;
+
 import javax.enterprise.inject.spi.BeanAttributes;
 import javax.enterprise.inject.spi.Extension;
 
@@ -27,6 +29,7 @@ import org.jboss.weld.ejb.spi.EjbDescriptor;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.util.AnnotatedTypes;
 import org.jboss.weld.util.Beans;
+import org.jboss.weld.util.reflection.DeclaredMemberIndexer;
 
 public class BeanIdentifiers {
 
@@ -76,7 +79,7 @@ public class BeanIdentifiers {
         StringBuilder sb = getPrefix(ProducerField.class).append(declaringBean.getAnnotated().getIdentifier().asString())
                 .append(SEPARATOR);
         if (declaringBean.getEnhancedAnnotated().isDiscovered()) {
-            sb.append(field.getName());
+            sb.append(DeclaredMemberIndexer.getIndexForField(field.getJavaMember()));
         } else {
             sb.append(AnnotatedTypes.createFieldId(field));
         }
@@ -87,7 +90,7 @@ public class BeanIdentifiers {
         StringBuilder sb = getPrefix(ProducerMethod.class).append(declaringBean.getAnnotated().getIdentifier().asString())
                 .append(SEPARATOR);
         if (declaringBean.getEnhancedAnnotated().isDiscovered()) {
-            sb.append(method.getSignature().toString());
+            sb.append(getIndexForMethod(method.getJavaMember()));
         } else {
             sb.append(AnnotatedTypes.createCallableId(method));
         }
