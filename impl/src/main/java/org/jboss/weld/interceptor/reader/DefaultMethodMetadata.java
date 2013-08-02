@@ -17,7 +17,6 @@
 
 package org.jboss.weld.interceptor.reader;
 
-import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Set;

@@ -27,7 +27,6 @@ import java.util.Set;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionModel;
 import org.jboss.weld.interceptor.spi.model.InterceptionType;
-import org.jboss.weld.serialization.MethodHolder;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
