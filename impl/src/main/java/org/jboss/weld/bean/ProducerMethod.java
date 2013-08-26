@@ -21,6 +21,8 @@ import static org.jboss.weld.logging.messages.BeanMessage.PRODUCER_METHOD_NOT_SP
 import java.lang.reflect.Method;
 import java.util.Set;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.spi.AnnotatedMethod;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanAttributes;
@@ -30,8 +32,10 @@ import org.jboss.weld.bootstrap.api.ServiceRegistry;
 import org.jboss.weld.exceptions.DefinitionException;
 import org.jboss.weld.injection.producer.ProducerMethodProducer;
 import org.jboss.weld.manager.BeanManagerImpl;
+import org.jboss.weld.serialization.spi.BeanIdentifier;
 import org.jboss.weld.util.Beans;
 import org.jboss.weld.util.Proxies;
+import org.jboss.weld.util.reflection.DeclaredMemberIndexer;
 import org.jboss.weld.util.reflection.Formats;
 
 /**
@@ -56,11 +60,15 @@ public class ProducerMethod<X, T> extends AbstractProducerBean<X, T, Method> {
      * @return A producer Web Bean
      */
     public static <X, T> ProducerMethod<X, T> of(BeanAttributes<T> attributes, EnhancedAnnotatedMethod<T, ? super X> method, AbstractClassBean<X> declaringBean, DisposalMethod<X, ?> disposalMethod, BeanManagerImpl beanManager, ServiceRegistry services) {
-        return new ProducerMethod<X, T>(attributes, method, declaringBean, disposalMethod, beanManager, services);
+        if (Dependent.class.equals(attributes.getScope()) || ApplicationScoped.class.equals(attributes.getScope())) {
+            return new ProducerMethod<X, T>(new ProducerMethodIdentifier(declaringBean.getAnnotated().getIdentifier(), DeclaredMemberIndexer.getIndexForMethod(method.getJavaMember())), attributes, method, declaringBean, disposalMethod, beanManager, services);
+        } else {
+            return new ProducerMethod<X, T>(new StringBeanIdentifier(BeanIdentifiers.forProducerMethod(method, declaringBean)), attributes, method, declaringBean, disposalMethod, beanManager, services);
+        }
     }
 
-    protected ProducerMethod(BeanAttributes<T> attributes, EnhancedAnnotatedMethod<T, ? super X> method, AbstractClassBean<X> declaringBean, DisposalMethod<X, ?> disposalMethod, BeanManagerImpl beanManager, ServiceRegistry services) {
-        super(attributes, new StringBeanIdentifier(BeanIdentifiers.forProducerMethod(method, declaringBean)), declaringBean, beanManager, services);
+    protected ProducerMethod(BeanIdentifier identifier, BeanAttributes<T> attributes, EnhancedAnnotatedMethod<T, ? super X> method, AbstractClassBean<X> declaringBean, DisposalMethod<X, ?> disposalMethod, BeanManagerImpl beanManager, ServiceRegistry services) {
+        super(attributes, identifier, declaringBean, beanManager, services);
         this.enhancedAnnotatedMethod = method;
         this.annotatedMethod = method.slim();
         initType();
