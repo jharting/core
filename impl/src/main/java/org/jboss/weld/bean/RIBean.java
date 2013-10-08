@@ -36,7 +36,6 @@ public abstract class RIBean<T> extends CommonBean<T> implements PassivationCapa
 
     protected final BeanManagerImpl beanManager;
     private boolean initialized;
-    private volatile Set<QualifierInstance> qualifiers;
 
     protected RIBean(BeanAttributes<T> attributes, BeanIdentifier identifier, BeanManagerImpl beanManager) {
         super(attributes, identifier);
@@ -49,6 +48,7 @@ public abstract class RIBean<T> extends CommonBean<T> implements PassivationCapa
 
     public abstract Class<T> getType();
 
+    @Override
     public Class<?> getBeanClass() {
         return getType();
     }
@@ -102,9 +102,6 @@ public abstract class RIBean<T> extends CommonBean<T> implements PassivationCapa
     public abstract boolean isProxyRequired();
 
     public Set<QualifierInstance> getQualifierInstances() {
-        if (qualifiers == null) {
-            qualifiers = QualifierInstance.qualifiers(beanManager, getQualifiers());
-        }
-        return qualifiers;
+        return QualifierInstance.qualifiers(beanManager, getQualifiers());
     }
 }
