@@ -18,6 +18,8 @@ package org.jboss.weld.logging;
 
 import static org.jboss.weld.logging.WeldLogger.WELD_PROJECT_CODE;
 
+import javax.enterprise.inject.spi.ObserverMethod;
+
 import org.jboss.logging.Logger;
 import org.jboss.logging.Logger.Level;
 import org.jboss.logging.annotations.Cause;
@@ -196,5 +198,9 @@ public interface BootstrapLogger extends WeldLogger {
 
     @Message(id = 140, value = "Calling Bootstrap method after container has already been initialized. For correct order, see CDI11Bootstrap's documentation.")
     IllegalStateException callingBootstrapMethodAfterContainerHasBeenInitialized();
+
+    @LogMessage(level = Logger.Level.INFO)
+    @Message(id = 141, value = "Falling back to the default observer method resolver due to {0}", format = Format.MESSAGE_FORMAT)
+    void notUsingFastResolver(ObserverMethod<?> observer);
 
 }

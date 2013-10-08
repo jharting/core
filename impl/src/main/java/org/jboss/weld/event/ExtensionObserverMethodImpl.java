@@ -126,7 +126,7 @@ public class ExtensionObserverMethodImpl<T, X> extends ObserverMethodImpl<T, X> 
         }
     }
 
-    public Collection<Class<? extends Annotation>> getRequiredTypeAnnotations() {
+    public Collection<Class<? extends Annotation>> getRequiredAnnotations() {
         return requiredTypeAnnotations;
     }
 }
