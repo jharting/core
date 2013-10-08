@@ -24,7 +24,6 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Type;
 import java.util.Set;
 
-import javax.enterprise.context.Dependent;
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.AnnotatedMember;
 import javax.enterprise.inject.spi.BeanAttributes;
@@ -58,7 +57,6 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
 
     // Passivation flags
     private boolean passivationCapableBean;
-    private boolean passivationCapableDependency;
 
     /**
      * Constructor
@@ -102,13 +100,6 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
 
     private void initPassivationCapable() {
         this.passivationCapableBean = !Reflections.isFinal(getEnhancedAnnotated().getJavaClass()) || Reflections.isSerializable(getEnhancedAnnotated().getJavaClass());
-        if (isNormalScoped()) {
-            this.passivationCapableDependency = true;
-        } else if (getScope().equals(Dependent.class) && passivationCapableBean) {
-            this.passivationCapableDependency = true;
-        } else {
-            this.passivationCapableDependency = false;
-        }
     }
 
     @Override
@@ -118,7 +109,7 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
 
     @Override
     public boolean isPassivationCapableDependency() {
-        return passivationCapableDependency;
+        return isNormalScoped() || (isDependent() && passivationCapableBean);
     }
 
     @Override
@@ -179,12 +170,14 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
      *
      * @returns The instance
      */
+    @Override
     public T create(final CreationalContext<T> creationalContext) {
         T instance = getProducer().produce(creationalContext);
         instance = checkReturnValue(instance);
         return instance;
     }
 
+    @Override
     public void destroy(T instance, CreationalContext<T> creationalContext) {
         try {
             getProducer().dispose(instance);

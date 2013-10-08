@@ -51,7 +51,6 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
     protected Class<T> type;
 
     private boolean preInitialized;
-    private boolean proxyRequired;
 
     private Producer<T> producer;
 
@@ -88,11 +87,6 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
     public void internalInitialize(BeanDeployerEnvironment environment) {
         preInitialize();
         BeanLogger.LOG.creatingBean(getType());
-        if (getScope() != null) {
-            proxyRequired = isNormalScoped();
-        } else {
-            proxyRequired = false;
-        }
         BeanLogger.LOG.qualifiersUsed(getQualifiers(), this);
         BeanLogger.LOG.usingName(getName(), this);
         BeanLogger.LOG.usingScope(getScope(), this);
@@ -195,7 +189,7 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
 
     @Override
     public boolean isProxyRequired() {
-        return proxyRequired;
+        return isNormalScoped();
     }
 
     public Producer<T> getProducer() {

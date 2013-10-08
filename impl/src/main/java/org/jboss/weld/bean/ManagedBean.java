@@ -57,7 +57,6 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
     private final boolean proxiable;
 
     private boolean passivationCapableBean;
-    private boolean passivationCapableDependency;
 
     /**
      * Creates a simple, annotation defined Web Bean
@@ -99,7 +98,6 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
 
     private void initPassivationCapable() {
         this.passivationCapableBean = getEnhancedAnnotated().isSerializable();
-        this.passivationCapableDependency = isNormalScoped() || (isDependent() && passivationCapableBean);
     }
 
     @Override
@@ -256,7 +254,7 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
 
     @Override
     public boolean isPassivationCapableDependency() {
-        return passivationCapableDependency;
+        return isNormalScoped() || (isDependent() && passivationCapableBean);
     }
 
     private RequestContext getUnboundRequestContext() {
