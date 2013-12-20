@@ -17,10 +17,8 @@
 package org.jboss.weld.tests.serialization.annotated;
 
 import javax.enterprise.inject.spi.AnnotatedType;
-import javax.inject.Inject;
 
 import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.weld.manager.BeanManagerImpl;
 import org.junit.runner.RunWith;
 
 @RunWith(Arquillian.class)
