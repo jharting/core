@@ -43,12 +43,12 @@ import org.jboss.weld.util.bytecode.BytecodeUtils;
  * @author Jozef Hartinger
  *
  */
-public class ExtendedAnnotatedTypeLoader extends AnnotatedTypeLoader {
+public class FastAnnotatedTypeLoader extends AnnotatedTypeLoader {
 
     private final ClassFileServices classFileServices;
     private final FastProcessAnnotatedTypeResolver resolver;
 
-    public ExtendedAnnotatedTypeLoader(BeanManagerImpl manager, ClassTransformer transformer, ClassFileServices classFileServices,
+    public FastAnnotatedTypeLoader(BeanManagerImpl manager, ClassTransformer transformer, ClassFileServices classFileServices,
             ContainerLifecycleEvents events, FastProcessAnnotatedTypeResolver resolver) {
         super(manager, transformer, events);
         this.classFileServices = classFileServices;
@@ -85,8 +85,7 @@ public class ExtendedAnnotatedTypeLoader extends AnnotatedTypeLoader {
             }
             return null;
         } catch (ClassFileInfoException e) {
-            // TODO: implement properly
-            BootstrapLogger.LOG.warn(e.getMessage());
+            BootstrapLogger.LOG.exceptionLoadingAnnotatedType(e.getMessage());
             return super.loadAnnotatedType(className, bdaId);
         }
     }

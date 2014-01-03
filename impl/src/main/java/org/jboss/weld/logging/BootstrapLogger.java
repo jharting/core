@@ -203,4 +203,8 @@ public interface BootstrapLogger extends WeldLogger {
     @Message(id = 141, value = "Falling back to the default observer method resolver due to {0}", format = Format.MESSAGE_FORMAT)
     void notUsingFastResolver(ObserverMethod<?> observer);
 
+    @LogMessage(level = Logger.Level.WARN)
+    @Message(id = 142, value = "Exception loading annotated type using ClassFileServices. Falling back to the default implementation. {0}", format = Format.MESSAGE_FORMAT)
+    void exceptionLoadingAnnotatedType(String message);
+
 }

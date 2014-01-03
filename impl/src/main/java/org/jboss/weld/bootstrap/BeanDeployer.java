@@ -149,7 +149,7 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
             try {
                 final Iterable<ObserverMethod<?>> observers = getManager().getServices().get(GlobalObserverNotifierService.class).getAllObserverMethods();
                 final FastProcessAnnotatedTypeResolver resolver = new FastProcessAnnotatedTypeResolver(classFileServices, observers);
-                return new ExtendedAnnotatedTypeLoader(getManager(), classTransformer, classFileServices, containerLifecycleEvents, resolver);
+                return new FastAnnotatedTypeLoader(getManager(), classTransformer, classFileServices, containerLifecycleEvents, resolver);
             } catch (UnsupportedObserverMethodException e) {
                 BootstrapLogger.LOG.notUsingFastResolver(e.getObserver());
                 // fallback to AnnotatedTypeLoader

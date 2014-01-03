@@ -110,4 +110,9 @@ public class SlimAnnotatedTypeContext<T> {
         }
         return false;
     }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + " for " + type.toString();
+    }
 }

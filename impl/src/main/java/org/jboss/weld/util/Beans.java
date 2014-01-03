@@ -493,7 +493,13 @@ public class Beans {
 
     public static boolean isTypeManagedBeanOrDecoratorOrInterceptor(ClassFileInfo classFileInfo) {
         return ((classFileInfo.getModifiers() & BytecodeUtils.ENUM) == 0) && !classFileInfo.isAssignableTo(Extension.class)
-//                && (classFileInfo.isTopLevelClass() || Modifier.isStatic(classFileInfo.getModifiers()))
+                /*
+                 * TODO:
+                 * We currently cannot reliably tell if a class is a non-static inner class or not. Therefore, this method
+                 * currently returns true even for non-static inner classes. This does not matter as a reflection check is performed
+                 * later before a Bean instance is created.
+                 */
+                // && (classFileInfo.isTopLevelClass() || Modifier.isStatic(classFileInfo.getModifiers()))
                 && classFileInfo.hasCdiConstructor()
                 && (!Modifier.isAbstract(classFileInfo.getModifiers()) || classFileInfo.isAnnotationDeclared(Decorator.class));
     }
