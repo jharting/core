@@ -18,12 +18,13 @@ package org.jboss.weld.bootstrap.events;
 
 import java.lang.reflect.Member;
 import java.lang.reflect.Type;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.enterprise.inject.spi.Annotated;
 import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanAttributes;
-import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.InjectionTarget;
 import javax.enterprise.inject.spi.ObserverMethod;
 import javax.enterprise.inject.spi.ProcessAnnotatedType;
@@ -35,6 +36,7 @@ import javax.enterprise.inject.spi.ProcessObserverMethod;
 import javax.enterprise.inject.spi.ProcessProducer;
 
 import org.jboss.weld.annotated.slim.SlimAnnotatedType;
+import org.jboss.weld.annotated.slim.SlimAnnotatedTypeContext;
 import org.jboss.weld.bean.AbstractClassBean;
 import org.jboss.weld.bean.AbstractProducerBean;
 import org.jboss.weld.bean.ManagedBean;
@@ -43,9 +45,11 @@ import org.jboss.weld.bean.ProducerMethod;
 import org.jboss.weld.bean.SessionBean;
 import org.jboss.weld.bootstrap.api.helpers.AbstractBootstrapService;
 import org.jboss.weld.event.ExtensionObserverMethodImpl;
+import org.jboss.weld.exceptions.DefinitionException;
 import org.jboss.weld.injection.attributes.FieldInjectionPointAttributes;
 import org.jboss.weld.injection.attributes.ParameterInjectionPointAttributes;
 import org.jboss.weld.manager.BeanManagerImpl;
+import org.jboss.weld.resolution.Resolvable;
 import org.jboss.weld.resources.spi.AnnotationDiscovery;
 import org.jboss.weld.util.reflection.Reflections;
 
@@ -134,19 +138,45 @@ public class ContainerLifecycleEvents extends AbstractBootstrapService {
         return processInjectionPointObserved;
     }
 
-    public <T> ProcessAnnotatedTypeImpl<T> fireProcessAnnotatedType(BeanManagerImpl beanManager, SlimAnnotatedType<T> annotatedType, Extension source) {
-        if (isProcessAnnotatedTypeObserved()) {
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public <T> ProcessAnnotatedTypeImpl<T> fireProcessAnnotatedType(BeanManagerImpl beanManager, SlimAnnotatedTypeContext<T> annotatedTypeContext) {
+        if (!isProcessAnnotatedTypeObserved()) {
+            return null;
+        }
 
+        if (annotatedTypeContext.getResolvedProcessAnnotatedTypeObservers() != null && annotatedTypeContext.getExtension() == null) {
+            if (annotatedTypeContext.getResolvedProcessAnnotatedTypeObservers().isEmpty()) {
+                return null;
+            }
+            final ProcessAnnotatedTypeImpl event = new ProcessAnnotatedTypeImpl(beanManager, annotatedTypeContext.getAnnotatedType(), null) {
+                @Override
+                protected Resolvable createResolvable(SlimAnnotatedType annotatedType, AnnotationDiscovery discovery) {
+                    return null;
+                }
+            };
+
+            List<Throwable> errors = new LinkedList<Throwable>();
+            for (ExtensionObserverMethodImpl observer : annotatedTypeContext.getResolvedProcessAnnotatedTypeObservers()) {
+                try {
+                    observer.notify(event);
+                } catch (Throwable e) {
+                    errors.add(e);
+                }
+            }
+            if (!errors.isEmpty()) {
+                throw new DefinitionException(errors);
+            }
+            return event;
+        } else {
             ProcessAnnotatedTypeImpl<T> event = null;
-            if (source == null) {
-                event = new ProcessAnnotatedTypeImpl<T>(beanManager, annotatedType, discovery);
+            if (annotatedTypeContext.getExtension() == null) {
+                event = new ProcessAnnotatedTypeImpl<T>(beanManager, annotatedTypeContext.getAnnotatedType(), discovery);
             } else {
-                event = new ProcessSyntheticAnnotatedTypeImpl<T>(beanManager, annotatedType, discovery, source);
+                event = new ProcessSyntheticAnnotatedTypeImpl<T>(beanManager, annotatedTypeContext, discovery);
             }
             event.fire();
             return event;
         }
-        return null;
     }
 
     public void fireProcessBean(BeanManagerImpl beanManager, Bean<?> bean) {

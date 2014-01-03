@@ -20,7 +20,6 @@ import static org.jboss.weld.util.cache.LoadingCacheUtils.getCacheValue;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -50,16 +49,12 @@ import org.jboss.weld.bootstrap.events.ProcessAnnotatedTypeImpl;
 import org.jboss.weld.ejb.EjbDescriptors;
 import org.jboss.weld.ejb.InternalEjbDescriptor;
 import org.jboss.weld.ejb.spi.EjbServices;
-import org.jboss.weld.event.ExtensionObserverMethodImpl;
 import org.jboss.weld.event.GlobalObserverNotifierService;
-import org.jboss.weld.exceptions.DefinitionException;
 import org.jboss.weld.injection.producer.InterceptionModelInitializer;
 import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionModel;
 import org.jboss.weld.logging.BootstrapLogger;
 import org.jboss.weld.manager.BeanManagerImpl;
-import org.jboss.weld.resolution.Resolvable;
-import org.jboss.weld.resources.spi.AnnotationDiscovery;
 import org.jboss.weld.resources.spi.ClassFileServices;
 import org.jboss.weld.resources.spi.ResourceLoader;
 import org.jboss.weld.util.AnnotatedTypes;
@@ -164,40 +159,7 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
 
         for (SlimAnnotatedTypeContext<?> annotatedTypeContext : getEnvironment().getAnnotatedTypes()) {
             SlimAnnotatedType<?> annotatedType = annotatedTypeContext.getAnnotatedType();
-            ProcessAnnotatedTypeImpl<?> event = null;
-            final Extension source = annotatedTypeContext.getExtension();
-
-            if (annotatedTypeContext.getResolvedProcessAnnotatedTypeObservers() != null && source == null) {
-                Set<ExtensionObserverMethodImpl<?, ?>> observers = annotatedTypeContext.getResolvedProcessAnnotatedTypeObservers();
-                if (observers.isEmpty()) {
-                    // TODO: unify this
-                    processPriority(annotatedType);
-                    continue;
-                }
-                // TODO: implement this properly
-                event = new ProcessAnnotatedTypeImpl(getManager() , annotatedType, null) {
-                    @Override
-                    protected Resolvable createResolvable(SlimAnnotatedType annotatedType, AnnotationDiscovery discovery) {
-                        return null;
-                    }
-                };
-                if (event != null) {
-                    List<Throwable> errors = new LinkedList<Throwable>();
-                    for (ExtensionObserverMethodImpl observer : annotatedTypeContext.getResolvedProcessAnnotatedTypeObservers()) {
-                        try {
-                            observer.notify(event);
-                        } catch (Throwable e) {
-                            errors.add(e);
-                        }
-                    }
-                    if (!errors.isEmpty()) {
-                        throw new DefinitionException(errors);
-                    }
-                }
-            } else {
-                // fire event
-                event = containerLifecycleEvents.fireProcessAnnotatedType(getManager(), annotatedType, source);
-            }
+            final ProcessAnnotatedTypeImpl<?> event = containerLifecycleEvents.fireProcessAnnotatedType(getManager(), annotatedTypeContext);
 
             // process the result
             if (event != null) {
