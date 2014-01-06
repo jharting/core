@@ -59,7 +59,7 @@ import org.jboss.weld.bootstrap.events.AfterTypeDiscoveryImpl;
 import org.jboss.weld.bootstrap.events.BeforeBeanDiscoveryImpl;
 import org.jboss.weld.bootstrap.events.ContainerLifecycleEventPreloader;
 import org.jboss.weld.bootstrap.events.ContainerLifecycleEvents;
-import org.jboss.weld.bootstrap.events.SimpleAnnotationDiscovery;
+import org.jboss.weld.bootstrap.events.RequiredAnnotationDiscovery;
 import org.jboss.weld.bootstrap.spi.BeanDeploymentArchive;
 import org.jboss.weld.bootstrap.spi.BootstrapConfiguration;
 import org.jboss.weld.bootstrap.spi.CDI11Deployment;
@@ -270,9 +270,7 @@ public class WeldStartup {
             }
         }
 
-        if (!services.contains(AnnotationDiscovery.class)) {
-            services.add(AnnotationDiscovery.class, new SimpleAnnotationDiscovery(services.get(ReflectionCache.class)));
-        }
+        services.add(RequiredAnnotationDiscovery.class, new RequiredAnnotationDiscovery(services.get(ReflectionCache.class)));
 
         /*
          * Setup Validator
