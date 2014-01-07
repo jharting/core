@@ -115,7 +115,6 @@ import org.jboss.weld.resources.ReflectionCacheFactory;
 import org.jboss.weld.resources.SharedObjectCache;
 import org.jboss.weld.resources.SingleThreadScheduledExecutorServiceFactory;
 import org.jboss.weld.resources.WeldClassLoaderResourceLoader;
-import org.jboss.weld.resources.spi.AnnotationDiscovery;
 import org.jboss.weld.resources.spi.ResourceLoader;
 import org.jboss.weld.resources.spi.ScheduledExecutorServiceFactory;
 import org.jboss.weld.serialization.ContextualStoreImpl;
@@ -290,7 +289,7 @@ public class WeldStartup {
         if (preloaderThreadPoolSize > 0) {
             preloader = new ContainerLifecycleEventPreloader(preloaderThreadPoolSize, observerNotificationService.getGlobalLenientObserverNotifier());
         }
-        services.add(ContainerLifecycleEvents.class, new ContainerLifecycleEvents(preloader, services.get(AnnotationDiscovery.class)));
+        services.add(ContainerLifecycleEvents.class, new ContainerLifecycleEvents(preloader, services.get(RequiredAnnotationDiscovery.class)));
         services.add(GlobalEnablementBuilder.class, new GlobalEnablementBuilder());
 
         if (!services.contains(HttpContextActivationFilter.class)) {

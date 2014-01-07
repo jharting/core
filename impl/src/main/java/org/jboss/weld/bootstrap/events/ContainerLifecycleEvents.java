@@ -20,6 +20,7 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Type;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import javax.enterprise.inject.spi.Annotated;
 import javax.enterprise.inject.spi.AnnotatedType;
@@ -34,8 +35,8 @@ import javax.enterprise.inject.spi.ProcessInjectionPoint;
 import javax.enterprise.inject.spi.ProcessInjectionTarget;
 import javax.enterprise.inject.spi.ProcessObserverMethod;
 import javax.enterprise.inject.spi.ProcessProducer;
+import javax.enterprise.inject.spi.ProcessSyntheticAnnotatedType;
 
-import org.jboss.weld.annotated.slim.SlimAnnotatedType;
 import org.jboss.weld.annotated.slim.SlimAnnotatedTypeContext;
 import org.jboss.weld.bean.AbstractClassBean;
 import org.jboss.weld.bean.AbstractProducerBean;
@@ -50,7 +51,6 @@ import org.jboss.weld.injection.attributes.FieldInjectionPointAttributes;
 import org.jboss.weld.injection.attributes.ParameterInjectionPointAttributes;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.resolution.Resolvable;
-import org.jboss.weld.resources.spi.AnnotationDiscovery;
 import org.jboss.weld.util.reflection.Reflections;
 
 public class ContainerLifecycleEvents extends AbstractBootstrapService {
@@ -63,11 +63,11 @@ public class ContainerLifecycleEvents extends AbstractBootstrapService {
     private boolean processInjectionTargetObserved;
     private boolean processProducerObserved;
     private boolean processObserverMethodObserved;
-    private final AnnotationDiscovery discovery;
+    private final RequiredAnnotationDiscovery discovery;
 
     private final ContainerLifecycleEventPreloader preloader;
 
-    public ContainerLifecycleEvents(ContainerLifecycleEventPreloader preloader, AnnotationDiscovery discovery) {
+    public ContainerLifecycleEvents(ContainerLifecycleEventPreloader preloader, RequiredAnnotationDiscovery discovery) {
         this.preloader = preloader;
         this.discovery = discovery;
     }
@@ -138,46 +138,62 @@ public class ContainerLifecycleEvents extends AbstractBootstrapService {
         return processInjectionPointObserved;
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     public <T> ProcessAnnotatedTypeImpl<T> fireProcessAnnotatedType(BeanManagerImpl beanManager, SlimAnnotatedTypeContext<T> annotatedTypeContext) {
         if (!isProcessAnnotatedTypeObserved()) {
             return null;
         }
+        final Set<ExtensionObserverMethodImpl<?, ?>> observers = annotatedTypeContext.getResolvedProcessAnnotatedTypeObservers();
+        // if the fast resolver resolved an empty set of observer methods, skip this event
+        if (observers != null && observers.isEmpty()) {
+            return null;
+        }
 
-        if (annotatedTypeContext.getResolvedProcessAnnotatedTypeObservers() != null && annotatedTypeContext.getExtension() == null) {
-            if (annotatedTypeContext.getResolvedProcessAnnotatedTypeObservers().isEmpty()) {
-                return null;
-            }
-            final ProcessAnnotatedTypeImpl event = new ProcessAnnotatedTypeImpl(beanManager, annotatedTypeContext.getAnnotatedType(), null) {
-                @Override
-                protected Resolvable createResolvable(SlimAnnotatedType annotatedType, AnnotationDiscovery discovery) {
-                    return null;
-                }
-            };
-
-            List<Throwable> errors = new LinkedList<Throwable>();
-            for (ExtensionObserverMethodImpl observer : annotatedTypeContext.getResolvedProcessAnnotatedTypeObservers()) {
-                try {
-                    observer.notify(event);
-                } catch (Throwable e) {
-                    errors.add(e);
-                }
-            }
-            if (!errors.isEmpty()) {
-                throw new DefinitionException(errors);
-            }
-            return event;
+        ProcessAnnotatedTypeImpl<T> event = null;
+        if (annotatedTypeContext.getExtension() == null) {
+            event = new ProcessAnnotatedTypeImpl<T>(beanManager, annotatedTypeContext.getAnnotatedType());
         } else {
-            ProcessAnnotatedTypeImpl<T> event = null;
-            if (annotatedTypeContext.getExtension() == null) {
-                event = new ProcessAnnotatedTypeImpl<T>(beanManager, annotatedTypeContext.getAnnotatedType(), discovery);
-            } else {
-                event = new ProcessSyntheticAnnotatedTypeImpl<T>(beanManager, annotatedTypeContext, discovery);
-            }
-            event.fire();
-            return event;
+            event = new ProcessSyntheticAnnotatedTypeImpl<T>(beanManager, annotatedTypeContext);
+        }
+
+        if (observers == null) {
+            fireProcessAnnotatedType(event, beanManager);
+        } else {
+            fireProcessAnnotatedType(event, annotatedTypeContext.getResolvedProcessAnnotatedTypeObservers());
+        }
+        return event;
+    }
+
+    /**
+     * Fires a {@link ProcessAnnotatedType} or {@link ProcessSyntheticAnnotatedType} using the default event mechanism.
+     */
+    private void fireProcessAnnotatedType(ProcessAnnotatedTypeImpl<?> event, BeanManagerImpl beanManager) {
+        final Resolvable resolvable = ProcessAnnotatedTypeEventResolvable.of(event, discovery);
+        try {
+            beanManager.getGlobalLenientObserverNotifier().fireEvent(event, resolvable);
+        } catch (Exception e) {
+            throw new DefinitionException(e);
         }
     }
+
+    /**
+     * Fires a {@link ProcessAnnotatedType}. Instead of using the default event dispatching mechanism, this method directly notifies
+     * extension observers resolved by FastProcessAnnotatedTypeResolver.
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private void fireProcessAnnotatedType(ProcessAnnotatedTypeImpl<?> event, Set<ExtensionObserverMethodImpl<?, ?>> observers) {
+        List<Throwable> errors = new LinkedList<Throwable>();
+        for (ExtensionObserverMethodImpl observer : observers) {
+            try {
+                observer.notify(event);
+            } catch (Throwable e) {
+                errors.add(e);
+            }
+        }
+        if (!errors.isEmpty()) {
+            throw new DefinitionException(errors);
+        }
+    }
+
 
     public void fireProcessBean(BeanManagerImpl beanManager, Bean<?> bean) {
         if (isProcessBeanObserved()) {

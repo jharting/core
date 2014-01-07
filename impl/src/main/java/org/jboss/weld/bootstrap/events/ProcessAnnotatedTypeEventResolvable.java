@@ -38,7 +38,6 @@ import org.jboss.weld.annotated.slim.backed.BackedAnnotatedType;
 import org.jboss.weld.annotated.slim.unbacked.UnbackedAnnotatedType;
 import org.jboss.weld.resolution.QualifierInstance;
 import org.jboss.weld.resolution.Resolvable;
-import org.jboss.weld.resources.spi.AnnotationDiscovery;
 import org.jboss.weld.util.reflection.ParameterizedTypeImpl;
 
 import com.google.common.base.Predicate;
@@ -52,12 +51,20 @@ import com.google.common.collect.Sets;
  */
 public class ProcessAnnotatedTypeEventResolvable implements Resolvable {
 
-    public static ProcessAnnotatedTypeEventResolvable forProcessAnnotatedType(SlimAnnotatedType<?> annotatedType, AnnotationDiscovery discovery) {
+    public static ProcessAnnotatedTypeEventResolvable of(ProcessAnnotatedTypeImpl<?> event, RequiredAnnotationDiscovery discovery) {
+        if (event instanceof ProcessSyntheticAnnotatedType) {
+            return forProcessSyntheticAnnotatedType(event.getOriginalAnnotatedType(), discovery);
+        } else {
+            return forProcessAnnotatedType(event.getOriginalAnnotatedType(), discovery);
+        }
+    }
+
+    public static ProcessAnnotatedTypeEventResolvable forProcessAnnotatedType(SlimAnnotatedType<?> annotatedType, RequiredAnnotationDiscovery discovery) {
         ParameterizedType type = new ParameterizedTypeImpl(ProcessAnnotatedType.class, new Type[] { annotatedType.getJavaClass() }, null);
         return new ProcessAnnotatedTypeEventResolvable(Sets.<Type> newHashSet(Object.class, type), annotatedType, discovery);
     }
 
-    public static ProcessAnnotatedTypeEventResolvable forProcessSyntheticAnnotatedType(SlimAnnotatedType<?> annotatedType, AnnotationDiscovery discovery) {
+    public static ProcessAnnotatedTypeEventResolvable forProcessSyntheticAnnotatedType(SlimAnnotatedType<?> annotatedType, RequiredAnnotationDiscovery discovery) {
         ParameterizedType type1 = new ParameterizedTypeImpl(ProcessAnnotatedType.class, new Type[] { annotatedType.getJavaClass() }, null);
         ParameterizedType type2 = new ParameterizedTypeImpl(ProcessSyntheticAnnotatedType.class, new Type[] { annotatedType.getJavaClass() }, null);
         return new ProcessAnnotatedTypeEventResolvable(Sets.<Type> newHashSet(Object.class, type1, type2), annotatedType, discovery);
@@ -66,9 +73,9 @@ public class ProcessAnnotatedTypeEventResolvable implements Resolvable {
     private static final Set<QualifierInstance> QUALIFIERS = Collections.singleton(QualifierInstance.ANY);
     private final Set<Type> types;
     private final SlimAnnotatedType<?> annotatedType;
-    private final AnnotationDiscovery discovery;
+    private final RequiredAnnotationDiscovery discovery;
 
-    protected ProcessAnnotatedTypeEventResolvable(Set<Type> types, SlimAnnotatedType<?> annotatedType, AnnotationDiscovery discovery) {
+    protected ProcessAnnotatedTypeEventResolvable(Set<Type> types, SlimAnnotatedType<?> annotatedType, RequiredAnnotationDiscovery discovery) {
         this.types = types;
         this.annotatedType = annotatedType;
         this.discovery = discovery;
