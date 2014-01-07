@@ -30,11 +30,11 @@ import org.jboss.weld.bean.builtin.BeanManagerProxy;
 import org.jboss.weld.bootstrap.FastProcessAnnotatedTypeResolver;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
 import org.jboss.weld.bootstrap.events.ProcessAnnotatedTypeEventResolvable;
+import org.jboss.weld.bootstrap.events.RequiredAnnotationDiscovery;
 import org.jboss.weld.event.GlobalObserverNotifierService;
 import org.jboss.weld.event.ObserverNotifier;
 import org.jboss.weld.resolution.Resolvable;
 import org.jboss.weld.resources.ClassTransformer;
-import org.jboss.weld.resources.spi.AnnotationDiscovery;
 import org.jboss.weld.resources.spi.ClassFileServices;
 import org.junit.Assert;
 
@@ -42,7 +42,7 @@ public class VerifyingExtension implements Extension {
 
     private ObserverNotifier notifier;
     private FastProcessAnnotatedTypeResolver resolver;
-    private AnnotationDiscovery discovery;
+    private RequiredAnnotationDiscovery discovery;
     private ClassTransformer transformer;
     private boolean initialized;
 
@@ -50,7 +50,7 @@ public class VerifyingExtension implements Extension {
         ServiceRegistry services = BeanManagerProxy.unwrap(manager).getServices();
         this.resolver = new FastProcessAnnotatedTypeResolver(services.get(ClassFileServices.class), services.get(GlobalObserverNotifierService.class).getAllObserverMethods());
         this.notifier = BeanManagerProxy.unwrap(manager).getGlobalLenientObserverNotifier();
-        this.discovery = services.get(AnnotationDiscovery.class);
+        this.discovery = services.get(RequiredAnnotationDiscovery.class);
         this.transformer = services.get(ClassTransformer.class);
     }
 

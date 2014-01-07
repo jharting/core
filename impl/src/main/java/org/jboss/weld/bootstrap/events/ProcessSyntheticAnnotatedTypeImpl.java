@@ -19,11 +19,8 @@ package org.jboss.weld.bootstrap.events;
 import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.ProcessSyntheticAnnotatedType;
 
-import org.jboss.weld.annotated.slim.SlimAnnotatedType;
 import org.jboss.weld.annotated.slim.SlimAnnotatedTypeContext;
 import org.jboss.weld.manager.BeanManagerImpl;
-import org.jboss.weld.resolution.Resolvable;
-import org.jboss.weld.resources.spi.AnnotationDiscovery;
 
 /**
  *
@@ -34,14 +31,9 @@ public class ProcessSyntheticAnnotatedTypeImpl<T> extends ProcessAnnotatedTypeIm
 
     private Extension source;
 
-    public ProcessSyntheticAnnotatedTypeImpl(BeanManagerImpl beanManager, SlimAnnotatedTypeContext<T> annotatedTypeContext, AnnotationDiscovery discovery) {
-        super(beanManager, annotatedTypeContext.getAnnotatedType(), ProcessSyntheticAnnotatedType.class, discovery);
+    public ProcessSyntheticAnnotatedTypeImpl(BeanManagerImpl beanManager, SlimAnnotatedTypeContext<T> annotatedTypeContext) {
+        super(beanManager, annotatedTypeContext.getAnnotatedType(), ProcessSyntheticAnnotatedType.class);
         this.source = annotatedTypeContext.getExtension();
-    }
-
-    @Override
-    protected Resolvable createResolvable(SlimAnnotatedType<T> annotatedType, AnnotationDiscovery discovery) {
-        return ProcessAnnotatedTypeEventResolvable.forProcessSyntheticAnnotatedType(annotatedType, discovery);
     }
 
     @Override
