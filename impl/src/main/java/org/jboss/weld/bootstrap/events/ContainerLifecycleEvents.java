@@ -37,6 +37,7 @@ import javax.enterprise.inject.spi.ProcessObserverMethod;
 import javax.enterprise.inject.spi.ProcessProducer;
 import javax.enterprise.inject.spi.ProcessSyntheticAnnotatedType;
 
+import org.jboss.weld.annotated.slim.SlimAnnotatedType;
 import org.jboss.weld.annotated.slim.SlimAnnotatedTypeContext;
 import org.jboss.weld.bean.AbstractClassBean;
 import org.jboss.weld.bean.AbstractProducerBean;
@@ -49,6 +50,7 @@ import org.jboss.weld.event.ExtensionObserverMethodImpl;
 import org.jboss.weld.exceptions.DefinitionException;
 import org.jboss.weld.injection.attributes.FieldInjectionPointAttributes;
 import org.jboss.weld.injection.attributes.ParameterInjectionPointAttributes;
+import org.jboss.weld.logging.BootstrapLogger;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.resolution.Resolvable;
 import org.jboss.weld.util.reflection.Reflections;
@@ -143,21 +145,25 @@ public class ContainerLifecycleEvents extends AbstractBootstrapService {
             return null;
         }
         final Set<ExtensionObserverMethodImpl<?, ?>> observers = annotatedTypeContext.getResolvedProcessAnnotatedTypeObservers();
+        final SlimAnnotatedType<T> annotatedType = annotatedTypeContext.getAnnotatedType();
         // if the fast resolver resolved an empty set of observer methods, skip this event
         if (observers != null && observers.isEmpty()) {
+            BootstrapLogger.LOG.patSkipped(annotatedType);
             return null;
         }
 
         ProcessAnnotatedTypeImpl<T> event = null;
         if (annotatedTypeContext.getExtension() == null) {
-            event = new ProcessAnnotatedTypeImpl<T>(beanManager, annotatedTypeContext.getAnnotatedType());
+            event = new ProcessAnnotatedTypeImpl<T>(beanManager, annotatedType);
         } else {
             event = new ProcessSyntheticAnnotatedTypeImpl<T>(beanManager, annotatedTypeContext);
         }
 
         if (observers == null) {
+            BootstrapLogger.LOG.patDefaultResolver(annotatedType);
             fireProcessAnnotatedType(event, beanManager);
         } else {
+            BootstrapLogger.LOG.patFastResolver(annotatedType);
             fireProcessAnnotatedType(event, annotatedTypeContext.getResolvedProcessAnnotatedTypeObservers());
         }
         return event;
