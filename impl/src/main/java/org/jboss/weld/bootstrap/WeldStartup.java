@@ -115,6 +115,7 @@ import org.jboss.weld.resources.ReflectionCacheFactory;
 import org.jboss.weld.resources.SharedObjectCache;
 import org.jboss.weld.resources.SingleThreadScheduledExecutorServiceFactory;
 import org.jboss.weld.resources.WeldClassLoaderResourceLoader;
+import org.jboss.weld.resources.spi.ClassFileServices;
 import org.jboss.weld.resources.spi.ResourceLoader;
 import org.jboss.weld.resources.spi.ScheduledExecutorServiceFactory;
 import org.jboss.weld.serialization.ContextualStoreImpl;
@@ -297,6 +298,21 @@ public class WeldStartup {
         }
     }
 
+    // needs to be resolved one extension beans are deployed
+    private void installFastProcessAnnotatedTypeResolver(ServiceRegistry services) {
+        ClassFileServices classFileServices = services.get(ClassFileServices.class);
+        if (classFileServices != null) {
+            final GlobalObserverNotifierService observers = services.get(GlobalObserverNotifierService.class);
+            try {
+                final FastProcessAnnotatedTypeResolver resolver = new FastProcessAnnotatedTypeResolver(classFileServices, observers.getAllObserverMethods());
+                services.add(FastProcessAnnotatedTypeResolver.class, resolver);
+            } catch (UnsupportedObserverMethodException e) {
+                BootstrapLogger.LOG.notUsingFastResolver(e.getObserver());
+                return;
+            }
+        }
+    }
+
     public void startInitialization() {
         if (deploymentManager == null) {
             throw BootstrapLogger.LOG.managerNotInitialized();
@@ -308,6 +324,8 @@ public class WeldStartup {
         ExtensionBeanDeployer extensionBeanDeployer = new ExtensionBeanDeployer(deploymentManager, deployment, bdaMapping, contexts);
         extensionBeanDeployer.addExtensions(extensions);
         extensionBeanDeployer.deployBeans();
+
+        installFastProcessAnnotatedTypeResolver(deploymentManager.getServices());
 
         // Add the Deployment BeanManager Bean to the Deployment BeanManager
         deploymentManager.addBean(new BeanManagerBean(deploymentManager));

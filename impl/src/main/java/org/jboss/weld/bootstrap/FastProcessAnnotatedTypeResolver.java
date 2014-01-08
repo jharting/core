@@ -29,6 +29,7 @@ import java.util.Set;
 import javax.enterprise.inject.spi.ObserverMethod;
 import javax.enterprise.inject.spi.ProcessAnnotatedType;
 
+import org.jboss.weld.bootstrap.api.helpers.AbstractBootstrapService;
 import org.jboss.weld.event.ExtensionObserverMethodImpl;
 import org.jboss.weld.resolution.TypeSafeObserverResolver;
 import org.jboss.weld.resources.spi.ClassFileInfo;
@@ -51,7 +52,7 @@ import com.google.common.collect.Sets;
  * @author Jozef Hartinger
  *
  */
-public class FastProcessAnnotatedTypeResolver {
+public class FastProcessAnnotatedTypeResolver extends AbstractBootstrapService {
 
     private static class ExactTypePredicate implements Predicate<ClassFileInfo> {
         private final Class<?> type;
@@ -221,5 +222,11 @@ public class FastProcessAnnotatedTypeResolver {
             }
         }
         return false;
+    }
+
+    @Override
+    public void cleanupAfterBoot() {
+        catchAllObservers.clear();
+        observers.clear();
     }
 }

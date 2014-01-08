@@ -28,12 +28,12 @@ import javax.decorator.Decorator;
 import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.Extension;
-import javax.enterprise.inject.spi.ObserverMethod;
 import javax.enterprise.inject.spi.ProcessBean;
 import javax.enterprise.inject.spi.ProcessBeanAttributes;
 import javax.enterprise.inject.spi.ProcessManagedBean;
 import javax.interceptor.Interceptor;
 
+import org.jboss.weld.Container;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
 import org.jboss.weld.annotated.slim.SlimAnnotatedType;
 import org.jboss.weld.annotated.slim.SlimAnnotatedTypeContext;
@@ -49,7 +49,6 @@ import org.jboss.weld.bootstrap.events.ProcessAnnotatedTypeImpl;
 import org.jboss.weld.ejb.EjbDescriptors;
 import org.jboss.weld.ejb.InternalEjbDescriptor;
 import org.jboss.weld.ejb.spi.EjbServices;
-import org.jboss.weld.event.GlobalObserverNotifierService;
 import org.jboss.weld.injection.producer.InterceptionModelInitializer;
 import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionModel;
@@ -141,15 +140,13 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
 
     protected AnnotatedTypeLoader createAnnotatedTypeLoader() {
         if (classFileServices != null) {
-            try {
-                final Iterable<ObserverMethod<?>> observers = getManager().getServices().get(GlobalObserverNotifierService.class).getAllObserverMethods();
-                final FastProcessAnnotatedTypeResolver resolver = new FastProcessAnnotatedTypeResolver(classFileServices, observers);
+            // Since FastProcessAnnotatedTypeResolver is installed after BeanDeployers are created, we need to query deploymentManager's services instead of the manager of this deployer
+            final FastProcessAnnotatedTypeResolver resolver = Container.instance(getManager()).deploymentManager().getServices().get(FastProcessAnnotatedTypeResolver.class);
+            if (resolver != null) {
                 return new FastAnnotatedTypeLoader(getManager(), classTransformer, classFileServices, containerLifecycleEvents, resolver);
-            } catch (UnsupportedObserverMethodException e) {
-                BootstrapLogger.LOG.notUsingFastResolver(e.getObserver());
-                // fallback to AnnotatedTypeLoader
             }
         }
+        // if FastProcessAnnotatedTypeResolver is not available, fall back to AnnotatedTypeLoader
         return new AnnotatedTypeLoader(getManager(), classTransformer, containerLifecycleEvents);
     }
 
