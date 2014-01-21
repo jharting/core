@@ -45,6 +45,7 @@ import org.jboss.weld.metadata.cache.MergedStereotypes;
 import org.jboss.weld.resources.SharedObjectCache;
 import org.jboss.weld.util.Beans;
 import org.jboss.weld.util.collections.ArraySet;
+import org.jboss.weld.util.collections.WeldCollections;
 import org.jboss.weld.util.reflection.Reflections;
 
 /**
@@ -104,9 +105,9 @@ public class BeanAttributesFactory {
             initQualifiers(annotated);
             initScope(annotated);
             if (descriptor == null) {
-                types = SharedObjectCache.instance(manager).getSharedSet(Beans.getTypes(annotated));
+                types = WeldCollections.immutableGuavaSet(Beans.getTypes(annotated));
             } else {
-                types = SharedObjectCache.instance(manager).getSharedSet(Beans.getTypes(annotated, descriptor));
+                types = WeldCollections.immutableGuavaSet(Beans.getTypes(annotated, descriptor));
             }
         }
 
