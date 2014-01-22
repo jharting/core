@@ -16,9 +16,9 @@
  */
 package org.jboss.weld.injection;
 
-import static org.jboss.weld.util.collections.WeldCollections.immutableList;
 import static org.jboss.weld.util.collections.WeldCollections.immutableGuavaList;
 import static org.jboss.weld.util.collections.WeldCollections.immutableGuavaSet;
+import static org.jboss.weld.util.collections.WeldCollections.immutableList;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -174,8 +174,8 @@ public class InjectionPointFactory {
     }
 
     public <T, X> MethodInjectionPoint<T, X> createMethodInjectionPoint(EnhancedAnnotatedMethod<T, X> enhancedMethod,
-            Bean<?> declaringBean, Class<?> declaringComponentClass, boolean observerOrDisposer, BeanManagerImpl manager) {
-        return new MethodInjectionPoint<T, X>(enhancedMethod, declaringBean, declaringComponentClass, observerOrDisposer, this,
+            Bean<?> declaringBean, Class<?> declaringComponentClass, boolean observerOrDisposer, boolean disableMethodLookup, BeanManagerImpl manager) {
+        return new MethodInjectionPoint<T, X>(enhancedMethod, declaringBean, declaringComponentClass, observerOrDisposer, disableMethodLookup, this,
                 manager);
     }
 

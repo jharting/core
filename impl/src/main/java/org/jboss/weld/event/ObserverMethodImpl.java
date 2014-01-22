@@ -135,7 +135,7 @@ public class ObserverMethodImpl<T, X> implements ObserverMethod<T> {
 
     protected MethodInjectionPoint<T, ? super X> initMethodInjectionPoint(EnhancedAnnotatedMethod<T, ? super X> observer, RIBean<X> declaringBean,
             BeanManagerImpl manager) {
-        return InjectionPointFactory.instance().createMethodInjectionPoint(observer, declaringBean, declaringBean.getBeanClass(), true, manager);
+        return InjectionPointFactory.instance().createMethodInjectionPoint(observer, declaringBean, declaringBean.getBeanClass(), true, false, manager);
     }
 
     public Set<WeldInjectionPointAttributes<?, ?>> getInjectionPoints() {

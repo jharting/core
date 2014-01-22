@@ -52,7 +52,7 @@ public abstract class ProducerMethodProducer<X, T> extends AbstractMemberProduce
 
     public ProducerMethodProducer(EnhancedAnnotatedMethod<T, ? super X> enhancedAnnotatedMethod, DisposalMethod<?, ?> disposalMethod) {
         super(enhancedAnnotatedMethod, disposalMethod);
-        this.method = InjectionPointFactory.instance().createMethodInjectionPoint(enhancedAnnotatedMethod, getBean(), enhancedAnnotatedMethod.getDeclaringType().getJavaClass(), false, getBeanManager());
+        this.method = InjectionPointFactory.instance().createMethodInjectionPoint(enhancedAnnotatedMethod, getBean(), enhancedAnnotatedMethod.getDeclaringType().getJavaClass(), false, false, getBeanManager());
         checkProducerMethod(enhancedAnnotatedMethod);
         checkDelegateInjectionPoints();
     }
@@ -104,10 +104,12 @@ public abstract class ProducerMethodProducer<X, T> extends AbstractMemberProduce
         return method.getAnnotated();
     }
 
+    @Override
     protected DefinitionException producerCannotHaveWildcardBeanType(Object member) {
         return BeanLogger.LOG.producerMethodCannotHaveAWildcardReturnType(member);
     }
 
+    @Override
     protected DefinitionException producerWithTypeVariableBeanTypeMustBeDependent(Object member) {
         return BeanLogger.LOG.producerMethodWithTypeVariableReturnTypeMustBeDependent(member);
     }

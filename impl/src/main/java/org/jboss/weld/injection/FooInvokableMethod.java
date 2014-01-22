@@ -1,0 +1,55 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2013, Red Hat, Inc., and individual contributors
+ * by the @authors tag. See the copyright.txt in the distribution for a
+ * full listing of individual contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.jboss.weld.injection;
+
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
+import org.jboss.weld.exceptions.WeldException;
+
+public class FooInvokableMethod implements InvokableMethod {
+
+    private final MethodHandle method;
+
+    public FooInvokableMethod(Method method) {
+        try {
+            MethodType type = MethodType.methodType(method.getReturnType(), method.getParameterTypes());
+            this.method = MethodHandles.publicLookup().findVirtual(method.getDeclaringClass(), method.getName(), type).asSpreader(Object[].class, method.getParameterTypes().length);
+//            this.method = MethodHandles.publicLookup().findVirtual(method.getDeclaringClass(), method.getName(), type).asSpreader(Object[].class, method.getParameterTypes().length);
+//            this.method = MethodHandles.publicLookup().unreflect(method).asSpreader(Object[].class, method.getParameterTypes().length);
+        } catch (IllegalAccessException e) {
+            throw new WeldException(e); // TODO
+        } catch (NoSuchMethodException e) {
+            throw new WeldException(e); // TODO
+        }
+    }
+
+    @Override
+    public Object invoke(Object instance, Object... parameters) throws InvocationTargetException, IllegalAccessException, IllegalArgumentException,
+            NoSuchMethodException {
+        try {
+//            return MethodHandles.insertArguments(method, 0, instance).asSpreader(Object[].class, parameters.length).invoke(parameters);
+            return MethodHandles.insertArguments(method, 0, instance).invoke(parameters);
+        } catch (Throwable e) {
+            throw new InvocationTargetException(e);
+        }
+    }
+
+}

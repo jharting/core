@@ -61,7 +61,7 @@ public class DisposalMethod<X, T> {
     }
 
     protected DisposalMethod(BeanManagerImpl beanManager, EnhancedAnnotatedMethod<T, ? super X> enhancedAnnotatedMethod, AbstractClassBean<X> declaringBean) {
-        this.disposalMethodInjectionPoint = InjectionPointFactory.instance().createMethodInjectionPoint(enhancedAnnotatedMethod, declaringBean, declaringBean.getBeanClass(), true, beanManager);
+        this.disposalMethodInjectionPoint = InjectionPointFactory.instance().createMethodInjectionPoint(enhancedAnnotatedMethod, declaringBean, declaringBean.getBeanClass(), true, false, beanManager);
         this.beanManager = beanManager;
         this.declaringBean = declaringBean;
         EnhancedAnnotatedParameter<?, ? super X> enhancedDisposesParameter = getEnhancedDisposesParameter(enhancedAnnotatedMethod);
