@@ -39,6 +39,7 @@ import org.jboss.weld.exceptions.WeldException;
 import org.jboss.weld.interceptor.proxy.InterceptorInvocation;
 import org.jboss.weld.interceptor.proxy.InterceptorInvocationContext;
 import org.jboss.weld.interceptor.proxy.SimpleInterceptionChain;
+import org.jboss.weld.interceptor.reader.InterceptorMetadataUtils;
 import org.jboss.weld.interceptor.spi.context.InterceptionChain;
 import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
@@ -80,10 +81,11 @@ public class InterceptorImpl<T> extends ManagedBean<T> implements Interceptor<T>
         }
     }
 
+    @SuppressWarnings("unchecked")
     private static <T> InterceptorMetadata<T> getInterceptorMetadata(EnhancedAnnotatedType<T> type, Interceptor<T> interceptor, BeanManagerImpl manager) {
         ClassMetadata<T> classMetadata = WeldInterceptorClassMetadata.of(type);
         CdiInterceptorFactory<T> reference = new CdiInterceptorFactory<T>(classMetadata, interceptor);
-        return manager.getInterceptorMetadataReader().getInterceptorMetadata(reference);
+        return InterceptorMetadataUtils.readMetadataForInterceptorClass(reference);
     }
 
     @Override
