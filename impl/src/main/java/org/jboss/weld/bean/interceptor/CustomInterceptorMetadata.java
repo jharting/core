@@ -1,5 +1,7 @@
 package org.jboss.weld.bean.interceptor;
 
+import javax.enterprise.inject.spi.Interceptor;
+
 import org.jboss.weld.interceptor.proxy.CustomInterceptorInvocation;
 import org.jboss.weld.interceptor.proxy.InterceptorInvocation;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
@@ -10,10 +12,15 @@ import org.jboss.weld.interceptor.spi.model.InterceptionType;
  */
 public class CustomInterceptorMetadata<T> implements InterceptorMetadata<T> {
 
+    @SuppressWarnings("unchecked")
+    public static <T> CustomInterceptorMetadata<T> of(Interceptor<T> interceptor) {
+        return new CustomInterceptorMetadata<T>(new CdiInterceptorFactory<T>(interceptor), (Class<T>) interceptor.getBeanClass());
+    }
+
     private final CdiInterceptorFactory<T> factory;
     private final Class<T> javaClass;
 
-    public CustomInterceptorMetadata(CdiInterceptorFactory<T> factory, Class<T> javaClass) {
+    private CustomInterceptorMetadata(CdiInterceptorFactory<T> factory, Class<T> javaClass) {
         this.factory = factory;
         this.javaClass = javaClass;
     }

@@ -40,9 +40,6 @@ import javax.enterprise.inject.spi.Interceptor;
 import javax.interceptor.ExcludeClassInterceptors;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
-import org.jboss.weld.bean.InterceptorImpl;
-import org.jboss.weld.bean.interceptor.CdiInterceptorFactory;
-import org.jboss.weld.bean.interceptor.CustomInterceptorMetadata;
 import org.jboss.weld.ejb.EJBApiAbstraction;
 import org.jboss.weld.exceptions.DeploymentException;
 import org.jboss.weld.interceptor.builder.InterceptionModelBuilder;
@@ -85,7 +82,6 @@ public class InterceptionModelInitializer<T> {
     private final InterceptorsApiAbstraction interceptorsApi;
     private final EJBApiAbstraction ejbApi;
 
-    private Map<Interceptor<?>, InterceptorMetadata<?>> interceptorMetadatas = new HashMap<Interceptor<?>, InterceptorMetadata<?>>();
     private List<AnnotatedMethod<?>> businessMethods;
     private final InterceptionModelBuilder<?> builder;
     private boolean hasSerializationOrInvocationInterceptorMethods;
@@ -306,28 +302,13 @@ public class InterceptionModelInitializer<T> {
     private InterceptorMetadata<?>[] toSerializableContextualArray(List<Interceptor<?>> interceptors) {
         List<InterceptorMetadata<?>> serializableContextuals = new ArrayList<InterceptorMetadata<?>>();
         for (Interceptor<?> interceptor : interceptors) {
-            serializableContextuals.add(getCachedInterceptorMetadata(interceptor));
+            serializableContextuals.add(getInterceptorMetadata(interceptor));
         }
         return serializableContextuals.toArray(InterceptionModelInitializer.<SerializableContextual<?, ?>>emptyInterceptorMetadataArray());
     }
 
-    private InterceptorMetadata<?> getCachedInterceptorMetadata(Interceptor<?> interceptor) {
-        InterceptorMetadata<?> interceptorMetadata = interceptorMetadatas.get(interceptor);
-        if (interceptorMetadata == null) {
-            interceptorMetadata = getInterceptorMetadata(interceptor);
-            interceptorMetadatas.put(interceptor, interceptorMetadata);
-        }
-        return interceptorMetadata;
-    }
-
-    private <T> InterceptorMetadata<T> getInterceptorMetadata(Interceptor<T> interceptor) {
-        if (interceptor instanceof InterceptorImpl) {
-            InterceptorImpl<T> interceptorImpl = (InterceptorImpl<T>) interceptor;
-            return interceptorImpl.getInterceptorMetadata();
-        } else {
-            //custom interceptor
-            return new CustomInterceptorMetadata(new CdiInterceptorFactory<T>(interceptor), interceptor.getBeanClass());
-        }
+    private <X> InterceptorMetadata<X> getInterceptorMetadata(Interceptor<X> interceptor) {
+        return manager.getInterceptorMetadataReader().getCdiInterceptorMetadata(interceptor);
     }
 
     /**
