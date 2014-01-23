@@ -80,9 +80,10 @@ public class InterceptorImpl<T> extends ManagedBean<T> implements Interceptor<T>
         }
     }
 
+    @SuppressWarnings("unchecked")
     private InterceptorMetadata<T> initInterceptorMetadata() {
         CdiInterceptorFactory<T> reference = new CdiInterceptorFactory<T>(this);
-        return new DefaultInterceptorMetadata<T>(getBeanClass(), reference, InterceptorMetadataUtils.buildMethodMap(getEnhancedAnnotated(), false, getBeanManager()));
+        return new DefaultInterceptorMetadata<T>((Class<T>) getBeanClass(), reference, InterceptorMetadataUtils.buildMethodMap(getEnhancedAnnotated(), false, getBeanManager()));
     }
 
     @Override
