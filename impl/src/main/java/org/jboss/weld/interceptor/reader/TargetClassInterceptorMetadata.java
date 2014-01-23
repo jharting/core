@@ -33,7 +33,7 @@ public class TargetClassInterceptorMetadata<T> extends AbstractInterceptorMetada
     private final Class<T> javaClass;
 
     public TargetClassInterceptorMetadata(Class<T> javaClass, Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap) {
-        super(null, interceptorMethodMap);
+        super(interceptorMethodMap);
         this.javaClass = javaClass;
     }
 

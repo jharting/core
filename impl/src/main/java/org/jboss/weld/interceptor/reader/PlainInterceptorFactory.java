@@ -21,7 +21,6 @@ import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.InjectionTarget;
 
 import org.jboss.weld.context.WeldCreationalContext;
-import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorFactory;
 import org.jboss.weld.manager.BeanManagerImpl;
 
@@ -40,11 +39,6 @@ public class PlainInterceptorFactory<T> implements InterceptorFactory<T> {
     }
 
     @Override
-    public ClassMetadata<T> getClassMetadata() {
-        return null;
-    }
-
-    @Override
     public T create(CreationalContext<T> ctx, BeanManagerImpl manager) {
         if (ctx instanceof WeldCreationalContext<?>) {
             WeldCreationalContext<?> weldCtx = (WeldCreationalContext<?>) ctx;
@@ -55,4 +49,7 @@ public class PlainInterceptorFactory<T> implements InterceptorFactory<T> {
         return instance;
     }
 
+    public InjectionTarget<T> getInjectionTarget() {
+        return injectionTarget;
+    }
 }

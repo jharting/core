@@ -89,7 +89,7 @@ import org.jboss.weld.exceptions.DeploymentException;
 import org.jboss.weld.exceptions.UnproxyableResolutionException;
 import org.jboss.weld.injection.producer.AbstractMemberProducer;
 import org.jboss.weld.injection.producer.BasicInjectionTarget;
-import org.jboss.weld.interceptor.reader.ClassMetadataInterceptorFactory;
+import org.jboss.weld.interceptor.reader.PlainInterceptorFactory;
 import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionModel;
@@ -227,8 +227,8 @@ public class Validator implements Service {
                             validateInterceptorDecoratorInjectionPointPassivationCapable(injectionPoint, resolvedBean, beanManager, classBean);
                         }
                     }
-                    if (interceptorMetadata.getInterceptorFactory() instanceof ClassMetadataInterceptorFactory<?>) {
-                        ClassMetadataInterceptorFactory<?> factory = (ClassMetadataInterceptorFactory<?>) interceptorMetadata.getInterceptorFactory();
+                    if (interceptorMetadata.getInterceptorFactory() instanceof PlainInterceptorFactory<?>) {
+                        PlainInterceptorFactory<?> factory = (PlainInterceptorFactory<?>) interceptorMetadata.getInterceptorFactory();
                         Class<?> interceptorClass = interceptorMetadata.getJavaClass();
                         if (passivationCapabilityCheckRequired && !Reflections.isSerializable(interceptorClass)) {
                             throw ValidatorLogger.LOG.passivatingBeanWithNonserializableInterceptor(this, interceptorClass.getName());

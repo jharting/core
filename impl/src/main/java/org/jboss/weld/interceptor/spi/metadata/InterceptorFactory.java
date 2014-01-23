@@ -29,7 +29,5 @@ import org.jboss.weld.manager.BeanManagerImpl;
  */
 public interface InterceptorFactory<T> {
 
-    ClassMetadata<T> getClassMetadata();
-
     T create(CreationalContext<T> ctx, BeanManagerImpl manager);
 }

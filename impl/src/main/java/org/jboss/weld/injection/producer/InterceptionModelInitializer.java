@@ -331,8 +331,7 @@ public class InterceptionModelInitializer<T> {
             return interceptorImpl.getInterceptorMetadata();
         } else {
             //custom interceptor
-            ClassMetadata<T> classMetadata = cast(manager.getInterceptorMetadataReader().getClassMetadata(interceptor.getBeanClass()));
-            return new CustomInterceptorMetadata(new CdiInterceptorFactory<T>(classMetadata, interceptor), classMetadata);
+            return new CustomInterceptorMetadata(new CdiInterceptorFactory<T>(interceptor), interceptor.getBeanClass());
         }
     }
 

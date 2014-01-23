@@ -34,8 +34,6 @@ public interface InterceptorMetadata<T> {
      */
     InterceptorFactory<T> getInterceptorFactory();
 
-    ClassMetadata<?> getInterceptorClass();
-
     /**
      * Returns true if the interceptor corresponding to this {@link InterceptorMetadata}
      * has interceptor methods for the given <code>interceptionType</code>. Else returns false.

@@ -18,8 +18,6 @@ import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
 import org.jboss.weld.annotated.enhanced.MethodSignature;
 import org.jboss.weld.annotated.enhanced.jlr.MethodSignatureImpl;
 import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
-import org.jboss.weld.interceptor.spi.metadata.InterceptorFactory;
-import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
 import org.jboss.weld.interceptor.spi.metadata.MethodMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionType;
 import org.jboss.weld.interceptor.util.InterceptionTypeRegistry;
@@ -40,9 +38,9 @@ public class InterceptorMetadataUtils {
     private InterceptorMetadataUtils() {
     }
 
-    public static InterceptorMetadata readMetadataForInterceptorClass(InterceptorFactory<?> interceptorReference, BeanManagerImpl manager) {
-        return new DefaultInterceptorMetadata(interceptorReference.getClassMetadata().getJavaClass(), interceptorReference, buildMethodMap(interceptorReference.getClassMetadata(), false, manager));
-    }
+//    public static InterceptorMetadata readMetadataForInterceptorClass(InterceptorFactory<?> interceptorReference, BeanManagerImpl manager) {
+//        return new DefaultInterceptorMetadata(interceptorReference.getClassMetadata().getJavaClass(), interceptorReference, buildMethodMap(interceptorReference.getClassMetadata(), false, manager));
+//    }
 
 //    public static <T> TargetClassInterceptorMetadata readMetadataForTargetClass(ClassMetadata<T> classMetadata, BeanManagerImpl manager) {
 //        return new TargetClassInterceptorMetadata(classMetadata, buildMethodMap(classMetadata, true, manager));

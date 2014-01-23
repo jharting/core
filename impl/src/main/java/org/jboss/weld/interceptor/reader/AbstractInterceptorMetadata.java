@@ -23,7 +23,6 @@ import java.util.Map;
 
 import org.jboss.weld.interceptor.proxy.InterceptorInvocation;
 import org.jboss.weld.interceptor.proxy.SimpleInterceptorInvocation;
-import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
 import org.jboss.weld.interceptor.spi.metadata.MethodMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionType;
@@ -37,20 +36,13 @@ public abstract class AbstractInterceptorMetadata<T> implements InterceptorMetad
 
     protected final Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap;
 
-    private final ClassMetadata<?> classMetadata;
-
-    public AbstractInterceptorMetadata(ClassMetadata<?> classMetadata, Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap) {
-        this.classMetadata = classMetadata;
+    public AbstractInterceptorMetadata(Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap) {
         this.interceptorMethodMap = interceptorMethodMap;
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override
-    public ClassMetadata<?> getInterceptorClass() {
-        return classMetadata;
-    }
 
     public List<MethodMetadata> getInterceptorMethods(InterceptionType interceptionType) {
         if (interceptorMethodMap != null) {

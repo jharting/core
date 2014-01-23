@@ -2,33 +2,25 @@ package org.jboss.weld.bean.interceptor;
 
 import org.jboss.weld.interceptor.proxy.CustomInterceptorInvocation;
 import org.jboss.weld.interceptor.proxy.InterceptorInvocation;
-import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionType;
-import org.jboss.weld.util.reflection.Reflections;
 
 /**
  * @author Marius Bogoevici
  */
 public class CustomInterceptorMetadata<T> implements InterceptorMetadata<T> {
 
-    private CdiInterceptorFactory<T> factory;
+    private final CdiInterceptorFactory<T> factory;
+    private final Class<T> javaClass;
 
-    private ClassMetadata<?> classMetadata;
-
-    public CustomInterceptorMetadata(CdiInterceptorFactory<T> factory, ClassMetadata<?> classMetadata) {
+    public CustomInterceptorMetadata(CdiInterceptorFactory<T> factory, Class<T> javaClass) {
         this.factory = factory;
-        this.classMetadata = classMetadata;
+        this.javaClass = javaClass;
     }
 
     @Override
     public CdiInterceptorFactory<T> getInterceptorFactory() {
        return factory;
-    }
-
-    @Override
-    public ClassMetadata<?> getInterceptorClass() {
-        return classMetadata;
     }
 
     @Override
@@ -49,6 +41,6 @@ public class CustomInterceptorMetadata<T> implements InterceptorMetadata<T> {
 
     @Override
     public Class<T> getJavaClass() {
-        return Reflections.cast(classMetadata.getJavaClass());
+        return javaClass;
     }
 }
