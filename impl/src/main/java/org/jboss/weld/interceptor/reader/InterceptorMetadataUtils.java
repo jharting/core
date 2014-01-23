@@ -1,7 +1,7 @@
 package org.jboss.weld.interceptor.reader;
 
 import java.lang.reflect.Method;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -14,6 +14,8 @@ import org.jboss.weld.interceptor.util.InterceptionTypeRegistry;
 import org.jboss.weld.logging.ValidatorLogger;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.util.BeanMethods;
+
+import com.google.common.collect.ImmutableMap;
 
 /**
  * @author Marius Bogoevici
@@ -59,7 +61,7 @@ public class InterceptorMetadataUtils {
          * Again, we relax the check and allow both void and Object return types as we cannot distinguish between
          * a managed bean and an interceptor class.
          */
-        if (!Void.TYPE.equals(method.getReturnType()) && !Object.class.equals(method.getReturnType())) {
+        if (!Void.TYPE.equals(javaMethod.getReturnType()) && !Object.class.equals(javaMethod.getReturnType())) {
             throw ValidatorLogger.LOG.interceptorMethodDoesNotHaveVoidReturnType(
                     javaMethod.getName(), javaMethod.getDeclaringClass().getName(),
                     interceptionType.annotationClassName(), Void.TYPE.getName());
@@ -86,7 +88,7 @@ public class InterceptorMetadataUtils {
 
     private static boolean isValidInterceptorClassLifecycleInterceptorMethod(InterceptionType interceptionType, MethodMetadata method) {
         Method javaMethod = method.getJavaMethod();
-        if (!Object.class.equals(method.getReturnType()) && !Void.TYPE.equals(method.getReturnType())) {
+        if (!Object.class.equals(javaMethod.getReturnType()) && !Void.TYPE.equals(javaMethod.getReturnType())) {
             throw ValidatorLogger.LOG.interceptorMethodDoesNotReturnObjectOrVoid(
                     javaMethod.getName(), javaMethod.getDeclaringClass().getName(),
                     interceptionType.annotationClassName(), Void.TYPE.getName(), OBJECT_CLASS_NAME);
@@ -111,7 +113,7 @@ public class InterceptorMetadataUtils {
 
     private static boolean isValidBusinessMethodInterceptorMethod(InterceptionType interceptionType, MethodMetadata method) {
         Method javaMethod = method.getJavaMethod();
-        if (!Object.class.equals(method.getReturnType())) {
+        if (!Object.class.equals(javaMethod.getReturnType())) {
             throw ValidatorLogger.LOG.interceptorMethodDoesNotReturnObject(
                     javaMethod.getName(), javaMethod.getDeclaringClass().getName(),
                     interceptionType.annotationClassName(), OBJECT_CLASS_NAME);
@@ -132,13 +134,19 @@ public class InterceptorMetadataUtils {
     }
 
     public static Map<InterceptionType, List<MethodMetadata>> buildMethodMap(EnhancedAnnotatedType<?> type, boolean forTargetClass, BeanManagerImpl manager) {
-        Map<InterceptionType, List<MethodMetadata>> result = new HashMap<InterceptionType, List<MethodMetadata>>();
+        ImmutableMap.Builder<InterceptionType, List<MethodMetadata>> builder = null;
         for (InterceptionType interceptionType : InterceptionTypeRegistry.getSupportedInterceptionTypes()) {
             List<MethodMetadata> value = BeanMethods.getInterceptorMethods(type, interceptionType, forTargetClass);
             if (!value.isEmpty()) {
-                result.put(interceptionType, value);
+                if (builder == null) {
+                    builder = ImmutableMap.builder();
+                }
+                builder.put(interceptionType, value);
             }
         }
-        return result;
+        if (builder == null) {
+            return Collections.emptyMap();
+        }
+        return builder.build();
     }
 }

@@ -27,6 +27,7 @@ public class InterceptorMetadataReader {
         final CacheBuilder<Object, Object> cacheBuilder = CacheBuilder.newBuilder();
 
         this.plainInterceptorMetadataCache = cacheBuilder.build(new CacheLoader<Class<?>, InterceptorMetadata<?>>() {
+            @SuppressWarnings({ "rawtypes", "unchecked" })
             @Override
             public InterceptorMetadata<?> load(Class<?> key) throws Exception {
                 EnhancedAnnotatedType<?> type = manager.getServices().get(ClassTransformer.class).getEnhancedAnnotatedType(key, manager.getId());
@@ -60,5 +61,9 @@ public class InterceptorMetadataReader {
     }
 
     public void cleanAfterBoot() {
+        plainInterceptorMetadataCache.invalidateAll();
+        plainInterceptorMetadataCache.cleanUp();
+        cdiInterceptorMetadataCache.invalidateAll();
+        cdiInterceptorMetadataCache.cleanUp();
     }
 }

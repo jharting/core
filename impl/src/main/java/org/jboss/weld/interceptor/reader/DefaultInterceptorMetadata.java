@@ -26,9 +26,9 @@ import org.jboss.weld.interceptor.spi.model.InterceptionType;
 public class DefaultInterceptorMetadata<T> extends AbstractInterceptorMetadata<T> {
 
     private final InterceptorFactory<T> reference;
-    private final Class<?> javaClass;
+    private final Class<T> javaClass;
 
-    public DefaultInterceptorMetadata(Class<?> javaClass, InterceptorFactory<T> reference, Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap) {
+    public DefaultInterceptorMetadata(Class<T> javaClass, InterceptorFactory<T> reference, Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap) {
         super(interceptorMethodMap);
         this.reference = reference;
         this.javaClass = javaClass;
@@ -46,6 +46,6 @@ public class DefaultInterceptorMetadata<T> extends AbstractInterceptorMetadata<T
 
     @Override
     public Class<T> getJavaClass() {
-        return (Class<T>) javaClass;
+        return javaClass;
     }
 }

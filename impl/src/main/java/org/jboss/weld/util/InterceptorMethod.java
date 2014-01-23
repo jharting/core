@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.weld.interceptor.reader;
+package org.jboss.weld.util;
 
 import java.lang.reflect.Method;
 import java.util.Set;
@@ -26,7 +26,7 @@ import org.jboss.weld.interceptor.util.InterceptionTypeRegistry;
 
 import com.google.common.collect.ImmutableSet;
 
-public class InterceptorMethod implements MethodMetadata {
+class InterceptorMethod implements MethodMetadata {
 
     private final Set<InterceptionType> supportedInterceptorTypes;
     private final Method method;
@@ -55,15 +55,5 @@ public class InterceptorMethod implements MethodMetadata {
     @Override
     public Set<InterceptionType> getSupportedInterceptionTypes() {
         return supportedInterceptorTypes;
-    }
-
-    @Override
-    public Class<?> getReturnType() {
-        return method.getReturnType();
-    }
-
-    @Override
-    public boolean isInterceptorMethod() {
-        return true;
     }
 }
