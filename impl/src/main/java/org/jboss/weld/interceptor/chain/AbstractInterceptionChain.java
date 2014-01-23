@@ -27,7 +27,6 @@ import javax.interceptor.InvocationContext;
 import org.jboss.weld.interceptor.proxy.InterceptionContext;
 import org.jboss.weld.interceptor.proxy.InterceptorInvocation;
 import org.jboss.weld.interceptor.proxy.InterceptorMethodInvocation;
-import org.jboss.weld.interceptor.reader.TargetClassInterceptorMetadata;
 import org.jboss.weld.interceptor.spi.context.InterceptionChain;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionType;
@@ -49,7 +48,7 @@ public abstract class AbstractInterceptionChain implements InterceptionChain {
         for (InterceptorMetadata<?> interceptorMetadata : interceptorList) {
             interceptorInvocations.add(interceptorMetadata.getInterceptorInvocation(ctx.getInterceptorInstance(interceptorMetadata), interceptionType));
         }
-        TargetClassInterceptorMetadata<?> targetClassInterceptorMetadata = ctx.getTargetClassInterceptorMetadata();
+        InterceptorMetadata<?> targetClassInterceptorMetadata = ctx.getInterceptionModel().getTargetClassInterceptorMetadata();
         if (targetClassInterceptorMetadata != null && targetClassInterceptorMetadata.isEligible(interceptionType)) {
             interceptorInvocations.add(targetClassInterceptorMetadata.getInterceptorInvocation(instance, interceptionType));
         }

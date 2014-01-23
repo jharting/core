@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.jboss.weld.interceptor.reader.TargetClassInterceptorMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionModel;
 import org.jboss.weld.interceptor.spi.model.InterceptionType;
@@ -56,6 +57,8 @@ class InterceptionModelImpl<T> implements InterceptionModel<T> {
 
     private final boolean hasExternalNonConstructorInterceptors;
 
+    private final TargetClassInterceptorMetadata<?> targetClassInterceptorMetadata;
+
     /**
      *
      * @param builder
@@ -68,8 +71,10 @@ class InterceptionModelImpl<T> implements InterceptionModel<T> {
         this.methodBoundInterceptors = ImmutableMap.<InterceptionType, Map<Method,List<InterceptorMetadata<?>>>>copyOf(builder.getMethodBoundInterceptors());
         this.methodsIgnoringGlobalInterceptors = ImmutableSet.<Method>copyOf(builder.getMethodsIgnoringGlobalInterceptors());
         this.allInterceptors = ImmutableSet.<InterceptorMetadata<?>>copyOf(builder.getAllInterceptors());
+        this.targetClassInterceptorMetadata = builder.getTargetClassInterceptorMetadata();
     }
 
+    @Override
     public List<InterceptorMetadata<?>> getInterceptors(InterceptionType interceptionType, Method method) {
         if (InterceptionType.AROUND_CONSTRUCT.equals(interceptionType)) {
             throw new IllegalStateException("Cannot use getInterceptors() for @AroundConstruct interceptor lookup. Use getConstructorInvocationInterceptors() instead.");
@@ -103,10 +108,12 @@ class InterceptionModelImpl<T> implements InterceptionModel<T> {
         return Collections.emptyList();
     }
 
+    @Override
     public Set<InterceptorMetadata<?>> getAllInterceptors() {
         return Collections.unmodifiableSet(allInterceptors);
     }
 
+    @Override
     public T getInterceptedEntity() {
         return this.interceptedEntity;
     }
@@ -132,5 +139,10 @@ class InterceptionModelImpl<T> implements InterceptionModel<T> {
     @Override
     public boolean hasTargetClassInterceptors() {
         return hasTargetClassInterceptors;
+    }
+
+    @Override
+    public TargetClassInterceptorMetadata<?> getTargetClassInterceptorMetadata() {
+        return targetClassInterceptorMetadata;
     }
 }

@@ -16,18 +16,25 @@
  */
 package org.jboss.weld.interceptor.reader;
 
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 
-import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorFactory;
 import org.jboss.weld.interceptor.spi.metadata.MethodMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionType;
 
 public class TargetClassInterceptorMetadata<T> extends AbstractInterceptorMetadata<T> {
 
-    public TargetClassInterceptorMetadata(ClassMetadata<?> classMetadata, Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap) {
-        super(classMetadata, interceptorMethodMap);
+    public static <T> TargetClassInterceptorMetadata<T> of(Class<T> javaClass, Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap) {
+        return new TargetClassInterceptorMetadata<T>(javaClass, interceptorMethodMap);
+    }
+
+    private final Class<T> javaClass;
+
+    public TargetClassInterceptorMetadata(Class<T> javaClass, Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap) {
+        super(null, interceptorMethodMap);
+        this.javaClass = javaClass;
     }
 
     @Override
@@ -42,7 +49,18 @@ public class TargetClassInterceptorMetadata<T> extends AbstractInterceptorMetada
 
     @Override
     public Class<T> getJavaClass() {
-        return (Class<T>) getInterceptorClass().getJavaClass();
+        return javaClass;
     }
 
+    // TODO: fixme!!!
+    public boolean isInterceptorMethod(Method method) {
+        for (List<MethodMetadata> list : interceptorMethodMap.values()) {
+            for (MethodMetadata methodMetadata : list) {
+                if (methodMetadata.getJavaMethod().equals(method)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }

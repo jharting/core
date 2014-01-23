@@ -35,7 +35,7 @@ import org.jboss.weld.interceptor.spi.model.InterceptionType;
  */
 public abstract class AbstractInterceptorMetadata<T> implements InterceptorMetadata<T> {
 
-    private final Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap;
+    protected final Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap;
 
     private final ClassMetadata<?> classMetadata;
 
@@ -47,6 +47,7 @@ public abstract class AbstractInterceptorMetadata<T> implements InterceptorMetad
     /**
      * {@inheritDoc}
      */
+    @Override
     public ClassMetadata<?> getInterceptorClass() {
         return classMetadata;
     }
@@ -63,6 +64,7 @@ public abstract class AbstractInterceptorMetadata<T> implements InterceptorMetad
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean isEligible(InterceptionType interceptionType) {
         if (this.interceptorMethodMap == null) {
             return false;

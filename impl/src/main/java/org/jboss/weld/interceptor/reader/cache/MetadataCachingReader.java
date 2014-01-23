@@ -17,6 +17,7 @@
 
 package org.jboss.weld.interceptor.reader.cache;
 
+import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
 import org.jboss.weld.interceptor.reader.TargetClassInterceptorMetadata;
 import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
@@ -26,7 +27,7 @@ import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
  */
 public interface MetadataCachingReader {
 
-    <T> TargetClassInterceptorMetadata<T> getTargetClassInterceptorMetadata(ClassMetadata<T> classMetadata);
+    <T> TargetClassInterceptorMetadata<T> getTargetClassInterceptorMetadata(EnhancedAnnotatedType<T> type);
 
 //    <T> InterceptorMetadata<T> getInterceptorMetadata(Class<T> clazz);
 

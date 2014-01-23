@@ -43,11 +43,11 @@ import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
 import org.jboss.weld.bean.InterceptorImpl;
 import org.jboss.weld.bean.interceptor.CdiInterceptorFactory;
 import org.jboss.weld.bean.interceptor.CustomInterceptorMetadata;
-import org.jboss.weld.bean.interceptor.WeldInterceptorClassMetadata;
 import org.jboss.weld.ejb.EJBApiAbstraction;
 import org.jboss.weld.exceptions.DeploymentException;
 import org.jboss.weld.interceptor.builder.InterceptionModelBuilder;
 import org.jboss.weld.interceptor.builder.InterceptorsApiAbstraction;
+import org.jboss.weld.interceptor.reader.TargetClassInterceptorMetadata;
 import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionModel;
@@ -126,7 +126,8 @@ public class InterceptionModelInitializer<T> {
 
     private void initTargetClassInterceptors() {
         if (!Beans.isInterceptor(annotatedType)) {
-            InterceptorMetadata<T> interceptorClassMetadata = manager.getInterceptorMetadataReader().getTargetClassInterceptorMetadata(WeldInterceptorClassMetadata.of(annotatedType));
+            TargetClassInterceptorMetadata<T> interceptorClassMetadata = manager.getInterceptorMetadataReader().getTargetClassInterceptorMetadata(annotatedType);
+            builder.setTargetClassInterceptorMetadata(interceptorClassMetadata);
             hasSerializationOrInvocationInterceptorMethods = interceptorClassMetadata.isEligible(org.jboss.weld.interceptor.spi.model.InterceptionType.AROUND_INVOKE)
                     || interceptorClassMetadata.isEligible(org.jboss.weld.interceptor.spi.model.InterceptionType.AROUND_TIMEOUT)
                     || interceptorClassMetadata.isEligible(org.jboss.weld.interceptor.spi.model.InterceptionType.PRE_PASSIVATE)

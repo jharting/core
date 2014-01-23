@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.jboss.weld.interceptor.reader.TargetClassInterceptorMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionModel;
 import org.jboss.weld.interceptor.spi.model.InterceptionType;
@@ -57,6 +58,8 @@ public class InterceptionModelBuilder<T> {
     private final Map<InterceptionType, List<InterceptorMetadata<?>>> globalInterceptors = new HashMap<InterceptionType, List<InterceptorMetadata<?>>>();
 
     private final Map<InterceptionType, Map<Method, List<InterceptorMetadata<?>>>> methodBoundInterceptors = new HashMap<InterceptionType, Map<Method, List<InterceptorMetadata<?>>>>();
+
+    private TargetClassInterceptorMetadata<?> targetClassInterceptorMetadata;
 
     /**
      *
@@ -217,6 +220,14 @@ public class InterceptionModelBuilder<T> {
         if(isModelBuilt) {
             throw new IllegalStateException("InterceptionModelBuilder cannot be reused");
         }
+    }
+
+    public TargetClassInterceptorMetadata<?> getTargetClassInterceptorMetadata() {
+        return targetClassInterceptorMetadata;
+    }
+
+    public void setTargetClassInterceptorMetadata(TargetClassInterceptorMetadata<?> targetClassInterceptorMetadata) {
+        this.targetClassInterceptorMetadata = targetClassInterceptorMetadata;
     }
 
 }

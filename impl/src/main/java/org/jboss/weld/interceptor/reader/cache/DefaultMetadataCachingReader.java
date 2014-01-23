@@ -23,9 +23,9 @@ import com.google.common.cache.LoadingCache;
  */
 public class DefaultMetadataCachingReader implements MetadataCachingReader {
 
-    private final LoadingCache<InterceptorFactory<?>, InterceptorMetadata<?>> interceptorMetadataCache;
+//    private final LoadingCache<InterceptorFactory<?>, InterceptorMetadata<?>> interceptorMetadataCache;
 
-    private final LoadingCache<ClassMetadata<?>, InterceptorMetadata<?>> classMetadataInterceptorMetadataCache;
+//    private final LoadingCache<ClassMetadata<?>, InterceptorMetadata<?>> classMetadataInterceptorMetadataCache;
 
     private final LoadingCache<Class<?>, ClassMetadata<?>> reflectiveClassMetadataCache;
 
@@ -35,20 +35,20 @@ public class DefaultMetadataCachingReader implements MetadataCachingReader {
         this.manager = manager;
         CacheBuilder<Object, Object> cacheBuilder = CacheBuilder.newBuilder();
 
-        this.interceptorMetadataCache = cacheBuilder.build(new CacheLoader<InterceptorFactory<?>, InterceptorMetadata<?>>() {
-            @Override
-            public InterceptorMetadata<?> load(InterceptorFactory<?> from) {
-                return InterceptorMetadataUtils.readMetadataForInterceptorClass(from, manager);
-            }
-        });
-
-        this.classMetadataInterceptorMetadataCache = cacheBuilder
-                .build(new CacheLoader<ClassMetadata<?>, InterceptorMetadata<?>>() {
-                    @Override
-                    public InterceptorMetadata<?> load(ClassMetadata<?> from) {
-                return InterceptorMetadataUtils.readMetadataForTargetClass(from, manager);
-            }
-        });
+//        this.interceptorMetadataCache = cacheBuilder.build(new CacheLoader<InterceptorFactory<?>, InterceptorMetadata<?>>() {
+//            @Override
+//            public InterceptorMetadata<?> load(InterceptorFactory<?> from) {
+//                return InterceptorMetadataUtils.readMetadataForInterceptorClass(from, manager);
+//            }
+//        });
+//
+//        this.classMetadataInterceptorMetadataCache = cacheBuilder
+//                .build(new CacheLoader<ClassMetadata<?>, InterceptorMetadata<?>>() {
+//                    @Override
+//                    public InterceptorMetadata<?> load(ClassMetadata<?> from) {
+//                return InterceptorMetadataUtils.readMetadataForTargetClass(from, manager);
+//            }
+//        });
 
         this.reflectiveClassMetadataCache = cacheBuilder.build(new CacheLoader<Class<?>, ClassMetadata<?>>() {
             @Override
@@ -68,10 +68,10 @@ public class DefaultMetadataCachingReader implements MetadataCachingReader {
         });
     }
 
-    @Override
-    public <T> TargetClassInterceptorMetadata<T> getTargetClassInterceptorMetadata(ClassMetadata<T> classMetadata) {
-        return getCastCacheValue(classMetadataInterceptorMetadataCache, classMetadata);
-    }
+//    @Override
+//    public <T> TargetClassInterceptorMetadata<T> getTargetClassInterceptorMetadata(ClassMetadata<T> classMetadata) {
+//        return getCastCacheValue(classMetadataInterceptorMetadataCache, classMetadata);
+//    }
 
 //    @Override
 //    public <T> InterceptorMetadata<T> getInterceptorMetadata(Class<T> clazz) {
@@ -85,7 +85,7 @@ public class DefaultMetadataCachingReader implements MetadataCachingReader {
 
     @Override
     public void cleanAfterBoot() {
-        classMetadataInterceptorMetadataCache.invalidateAll();
+//        classMetadataInterceptorMetadataCache.invalidateAll();
     }
 
     private final LoadingCache<Class<?>, InterceptorMetadata<?>> plainInterceptorMetadataCache;
@@ -93,5 +93,10 @@ public class DefaultMetadataCachingReader implements MetadataCachingReader {
     @Override
     public <T> InterceptorMetadata<T> getPlainInterceptorMetadata(Class<T> clazz) {
         return getCastCacheValue(plainInterceptorMetadataCache, clazz);
+    }
+
+    @Override
+    public <T> TargetClassInterceptorMetadata<T> getTargetClassInterceptorMetadata(EnhancedAnnotatedType<T> type) {
+        return TargetClassInterceptorMetadata.of(type.getJavaClass(), InterceptorMetadataUtils.buildMethodMap(type, true, manager));
     }
 }

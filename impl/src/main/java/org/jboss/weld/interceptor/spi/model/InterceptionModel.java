@@ -23,6 +23,7 @@ import java.util.Set;
 
 import javax.interceptor.AroundConstruct;
 
+import org.jboss.weld.interceptor.reader.TargetClassInterceptorMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
 
 /**
@@ -35,7 +36,7 @@ import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
 public interface InterceptionModel<T> {
 
     /**
-     * Returns the interceptors applicable for the given interception type and method. For resolving {@link AroundConstruct} interceptors use {@link #getConstructorInvocationInterceptors(Constructor)}.
+     * Returns the interceptors applicable for the given interception type and method. For resolving {@link AroundConstruct} interceptors use {@link #getConstructorInvocationInterceptors(java.lang.reflect.Constructor)}.
      *
      * @param interceptionType
      * @param method           - null if the interception type is lifecycle
@@ -76,5 +77,7 @@ public interface InterceptionModel<T> {
      * Indicates whether the given entity has target class interceptor methods.
      */
     boolean hasTargetClassInterceptors();
+
+    TargetClassInterceptorMetadata<?> getTargetClassInterceptorMetadata();
 
 }

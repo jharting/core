@@ -44,9 +44,9 @@ public class InterceptorMetadataUtils {
         return new DefaultInterceptorMetadata(interceptorReference.getClassMetadata().getJavaClass(), interceptorReference, buildMethodMap(interceptorReference.getClassMetadata(), false, manager));
     }
 
-    public static <T> TargetClassInterceptorMetadata readMetadataForTargetClass(ClassMetadata<T> classMetadata, BeanManagerImpl manager) {
-        return new TargetClassInterceptorMetadata(classMetadata, buildMethodMap(classMetadata, true, manager));
-    }
+//    public static <T> TargetClassInterceptorMetadata readMetadataForTargetClass(ClassMetadata<T> classMetadata, BeanManagerImpl manager) {
+//        return new TargetClassInterceptorMetadata(classMetadata, buildMethodMap(classMetadata, true, manager));
+//    }
 
     public static boolean isInterceptorMethod(InterceptionType interceptionType, MethodMetadata method, boolean forTargetClass) {
         if (!method.getSupportedInterceptionTypes().contains(interceptionType)) {
