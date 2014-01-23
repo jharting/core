@@ -90,7 +90,7 @@ public class InterceptionContext implements Serializable {
         for (InterceptorMetadata<?> interceptor : model.getAllInterceptors()) {
             for (InterceptionType interceptionType : interceptionTypes) {
                 if (interceptor.isEligible(interceptionType)) {
-                    interceptorInstances.put(interceptor.getInterceptorClass().getJavaClass(), interceptor.getInterceptorFactory().create(ctx, manager));
+                    interceptorInstances.put(interceptor.getJavaClass(), interceptor.getInterceptorFactory().create(ctx, manager));
                 }
             }
         }
@@ -106,7 +106,7 @@ public class InterceptionContext implements Serializable {
     }
 
     public <T> T getInterceptorInstance(InterceptorMetadata<T> interceptorMetadata) {
-        return cast(interceptorInstances.get(interceptorMetadata.getInterceptorClass().getJavaClass()));
+        return cast(interceptorInstances.get(interceptorMetadata.getJavaClass()));
     }
 
     private Object readResolve() throws ObjectStreamException {

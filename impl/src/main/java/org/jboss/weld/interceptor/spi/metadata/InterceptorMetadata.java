@@ -46,4 +46,6 @@ public interface InterceptorMetadata<T> {
     boolean isEligible(InterceptionType interceptionType);
 
     InterceptorInvocation getInterceptorInvocation(Object interceptorInstance, InterceptionType interceptionType);
+
+    Class<T> getJavaClass();
 }

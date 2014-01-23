@@ -229,9 +229,9 @@ public class Validator implements Service {
                     }
                     if (interceptorMetadata.getInterceptorFactory() instanceof ClassMetadataInterceptorFactory<?>) {
                         ClassMetadataInterceptorFactory<?> factory = (ClassMetadataInterceptorFactory<?>) interceptorMetadata.getInterceptorFactory();
-                        ClassMetadata<?> classMetadata = interceptorMetadata.getInterceptorClass();
-                        if (passivationCapabilityCheckRequired && !Reflections.isSerializable(classMetadata.getJavaClass())) {
-                            throw ValidatorLogger.LOG.passivatingBeanWithNonserializableInterceptor(this, classMetadata.getJavaClass().getName());
+                        Class<?> interceptorClass = interceptorMetadata.getJavaClass();
+                        if (passivationCapabilityCheckRequired && !Reflections.isSerializable(interceptorClass)) {
+                            throw ValidatorLogger.LOG.passivatingBeanWithNonserializableInterceptor(this, interceptorClass.getName());
                         }
                         // if we can't get to the interceptor's BeanManager, we will use the bean's BM instead
                         InjectionTarget<?> injectionTarget = factory.getInjectionTarget();

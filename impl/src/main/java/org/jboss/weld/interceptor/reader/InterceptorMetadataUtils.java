@@ -41,7 +41,7 @@ public class InterceptorMetadataUtils {
     }
 
     public static InterceptorMetadata readMetadataForInterceptorClass(InterceptorFactory<?> interceptorReference, BeanManagerImpl manager) {
-        return new DefaultInterceptorMetadata(interceptorReference, buildMethodMap(interceptorReference.getClassMetadata(), false, manager));
+        return new DefaultInterceptorMetadata(interceptorReference.getClassMetadata().getJavaClass(), interceptorReference, buildMethodMap(interceptorReference.getClassMetadata(), false, manager));
     }
 
     public static <T> TargetClassInterceptorMetadata readMetadataForTargetClass(ClassMetadata<T> classMetadata, BeanManagerImpl manager) {
@@ -199,6 +199,17 @@ public class InterceptorMetadataUtils {
 
     static Map<InterceptionType, List<MethodMetadata>> buildMethodMap(ClassMetadata<?> interceptorClass, boolean forTargetClass, BeanManagerImpl manager) {
         EnhancedAnnotatedType<?> type = manager.getServices().get(ClassTransformer.class).getEnhancedAnnotatedType(interceptorClass.getJavaClass(), manager.getId());
+        Map<InterceptionType, List<MethodMetadata>> result = new HashMap<InterceptionType, List<MethodMetadata>>();
+        for (InterceptionType interceptionType : InterceptionTypeRegistry.getSupportedInterceptionTypes()) {
+            List<MethodMetadata> value = BeanMethods.getInterceptorMethods(type, interceptionType, forTargetClass);
+            if (!value.isEmpty()) {
+                result.put(interceptionType, value);
+            }
+        }
+        return result;
+    }
+
+    public static Map<InterceptionType, List<MethodMetadata>> buildMethodMap(EnhancedAnnotatedType<?> type, boolean forTargetClass, BeanManagerImpl manager) {
         Map<InterceptionType, List<MethodMetadata>> result = new HashMap<InterceptionType, List<MethodMetadata>>();
         for (InterceptionType interceptionType : InterceptionTypeRegistry.getSupportedInterceptionTypes()) {
             List<MethodMetadata> value = BeanMethods.getInterceptorMethods(type, interceptionType, forTargetClass);

@@ -40,4 +40,9 @@ public class TargetClassInterceptorMetadata<T> extends AbstractInterceptorMetada
         return true;
     }
 
+    @Override
+    public Class<T> getJavaClass() {
+        return (Class<T>) getInterceptorClass().getJavaClass();
+    }
+
 }

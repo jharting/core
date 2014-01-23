@@ -28,10 +28,12 @@ import org.jboss.weld.util.reflection.Reflections;
 public class DefaultInterceptorMetadata<T> extends AbstractInterceptorMetadata<T> {
 
     private final InterceptorFactory<T> reference;
+    private final Class<?> javaClass;
 
-    public DefaultInterceptorMetadata(InterceptorFactory<T> reference, Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap) {
+    public DefaultInterceptorMetadata(Class<?> javaClass, InterceptorFactory<T> reference, Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap) {
         super(Reflections.<ClassMetadata<T>>cast(reference.getClassMetadata()), interceptorMethodMap);
         this.reference = reference;
+        this.javaClass = javaClass;
     }
 
     @Override
@@ -42,5 +44,10 @@ public class DefaultInterceptorMetadata<T> extends AbstractInterceptorMetadata<T
     @Override
     protected boolean isTargetClassInterceptor() {
         return false;
+    }
+
+    @Override
+    public Class<T> getJavaClass() {
+        return (Class<T>) javaClass;
     }
 }

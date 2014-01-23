@@ -132,7 +132,7 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
 
     private InterceptorMetadata<?> getFirstNonPassivationCapableInterceptor() {
         for (InterceptorMetadata<?> interceptorMetadata : getBeanManager().getInterceptorModelRegistry().get(getAnnotated()).getAllInterceptors()) {
-            if (!Reflections.isSerializable(interceptorMetadata.getInterceptorClass().getJavaClass())) {
+            if (!Reflections.isSerializable(interceptorMetadata.getJavaClass())) {
                 return interceptorMetadata;
             }
         }

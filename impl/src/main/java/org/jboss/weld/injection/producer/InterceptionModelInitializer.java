@@ -245,7 +245,7 @@ public class InterceptionModelInitializer<T> {
 
         if (classDeclaredInterceptors != null) {
             for (Class<?> clazz : classDeclaredInterceptors) {
-                InterceptorMetadata<?> interceptor = manager.getInterceptorMetadataReader().getInterceptorMetadata(clazz);
+                InterceptorMetadata<?> interceptor = manager.getInterceptorMetadataReader().getPlainInterceptorMetadata(clazz);
                 for (InterceptionType interceptionType : InterceptionType.values()) {
                     if (excludeClassLevelAroundConstructInterceptors && interceptionType.equals(InterceptionType.AROUND_CONSTRUCT)) {
                         /*
@@ -268,7 +268,7 @@ public class InterceptionModelInitializer<T> {
         Class<?>[] constructorDeclaredInterceptors = interceptorsApi.extractInterceptorClasses(constructor);
         if (constructorDeclaredInterceptors != null) {
             for (Class<?> clazz : constructorDeclaredInterceptors) {
-                builder.intercept(InterceptionType.AROUND_CONSTRUCT).with(manager.getInterceptorMetadataReader().getInterceptorMetadata(clazz));
+                builder.intercept(InterceptionType.AROUND_CONSTRUCT).with(manager.getInterceptorMetadataReader().getPlainInterceptorMetadata(clazz));
             }
         }
     }
@@ -298,7 +298,7 @@ public class InterceptionModelInitializer<T> {
     private InterceptorMetadata<?>[] getMethodDeclaredInterceptorMetadatas(Class<?>[] methodDeclaredInterceptors) {
         List<InterceptorMetadata<?>> list = new ArrayList<InterceptorMetadata<?>>();
         for (Class<?> clazz : methodDeclaredInterceptors) {
-            list.add(manager.getInterceptorMetadataReader().getInterceptorMetadata(clazz));
+            list.add(manager.getInterceptorMetadataReader().getPlainInterceptorMetadata(clazz));
         }
         return list.toArray(new InterceptorMetadata[list.size()]);
     }

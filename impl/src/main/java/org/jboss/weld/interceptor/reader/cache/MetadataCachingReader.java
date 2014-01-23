@@ -28,9 +28,11 @@ public interface MetadataCachingReader {
 
     <T> TargetClassInterceptorMetadata<T> getTargetClassInterceptorMetadata(ClassMetadata<T> classMetadata);
 
-    <T> InterceptorMetadata<T> getInterceptorMetadata(Class<T> clazz);
+//    <T> InterceptorMetadata<T> getInterceptorMetadata(Class<T> clazz);
 
     <T> ClassMetadata<T> getClassMetadata(Class<T> clazz);
 
     void cleanAfterBoot();
+
+    <T> InterceptorMetadata<T> getPlainInterceptorMetadata(Class<T> clazz);
 }
