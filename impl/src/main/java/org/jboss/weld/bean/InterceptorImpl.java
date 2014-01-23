@@ -85,7 +85,7 @@ public class InterceptorImpl<T> extends ManagedBean<T> implements Interceptor<T>
     private static <T> InterceptorMetadata<T> getInterceptorMetadata(EnhancedAnnotatedType<T> type, Interceptor<T> interceptor, BeanManagerImpl manager) {
         ClassMetadata<T> classMetadata = WeldInterceptorClassMetadata.of(type);
         CdiInterceptorFactory<T> reference = new CdiInterceptorFactory<T>(classMetadata, interceptor);
-        return InterceptorMetadataUtils.readMetadataForInterceptorClass(reference);
+        return InterceptorMetadataUtils.readMetadataForInterceptorClass(reference, manager);
     }
 
     @Override

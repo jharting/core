@@ -19,6 +19,7 @@ package org.jboss.weld.util;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -36,6 +37,11 @@ import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedMethod;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
 import org.jboss.weld.injection.InjectionPointFactory;
 import org.jboss.weld.injection.MethodInjectionPoint;
+import org.jboss.weld.interceptor.reader.InterceptorMetadataUtils;
+import org.jboss.weld.interceptor.reader.InterceptorMethod;
+import org.jboss.weld.interceptor.spi.metadata.MethodMetadata;
+import org.jboss.weld.interceptor.spi.model.InterceptionType;
+import org.jboss.weld.interceptor.util.InterceptionTypeRegistry;
 import org.jboss.weld.logging.BeanLogger;
 import org.jboss.weld.logging.EventLogger;
 import org.jboss.weld.logging.UtilLogger;
@@ -45,6 +51,7 @@ import org.jboss.weld.util.collections.WeldCollections;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableList;
 
 public class BeanMethods {
 
@@ -308,5 +315,45 @@ public class BeanMethods {
      */
     public static <T> Collection<EnhancedAnnotatedMethod<?, ? super T>> filterOutBridgeMethods(final Collection<EnhancedAnnotatedMethod<?, ? super T>> methods) {
         return Collections2.filter(methods, BRIDGE_METHOD_FILTER_PREDICATE);
+    }
+
+    public static <T> List<MethodMetadata> getInterceptorMethods(EnhancedAnnotatedType<T> type, final InterceptionType interceptionType, final boolean targetClass) {
+        return getMethods(type, new MethodListBuilder<T, List<MethodMetadata>>() {
+
+            List<MethodMetadata> methodMetadata = null;
+
+            @Override
+            public Collection<EnhancedAnnotatedMethod<?, ? super T>> getAllMethods(EnhancedAnnotatedType<T> type) {
+                return type.getEnhancedMethods(InterceptionTypeRegistry.getAnnotationClass(interceptionType));
+            }
+
+            @Override
+            public void levelStart(Class<? super T> clazz) {
+            }
+
+            @Override
+            public void processMethod(EnhancedAnnotatedMethod<?, ? super T> method) {
+                InterceptorMethod interceptorMethod = new InterceptorMethod(method);
+                if (InterceptorMetadataUtils.isInterceptorMethod(interceptionType, interceptorMethod, targetClass)) {
+                    if (methodMetadata == null) {
+                        methodMetadata = new LinkedList<MethodMetadata>();
+                    }
+                    methodMetadata.add(new InterceptorMethod(method));
+                }
+            }
+
+            @Override
+            public void levelFinish() {
+            }
+
+            @Override
+            public List<MethodMetadata> create() {
+                if (methodMetadata == null) {
+                    return Collections.emptyList();
+                }
+                Collections.reverse(methodMetadata);
+                return ImmutableList.copyOf(methodMetadata);
+            }
+        });
     }
 }

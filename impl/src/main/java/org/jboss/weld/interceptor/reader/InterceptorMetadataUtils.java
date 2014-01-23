@@ -14,6 +14,7 @@ import java.util.Set;
 
 import javax.interceptor.InvocationContext;
 
+import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
 import org.jboss.weld.annotated.enhanced.MethodSignature;
 import org.jboss.weld.annotated.enhanced.jlr.MethodSignatureImpl;
 import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
@@ -24,7 +25,10 @@ import org.jboss.weld.interceptor.spi.model.InterceptionType;
 import org.jboss.weld.interceptor.util.InterceptionTypeRegistry;
 import org.jboss.weld.interceptor.util.InterceptorMetadataException;
 import org.jboss.weld.logging.ValidatorLogger;
+import org.jboss.weld.manager.BeanManagerImpl;
+import org.jboss.weld.resources.ClassTransformer;
 import org.jboss.weld.security.SetAccessibleAction;
+import org.jboss.weld.util.BeanMethods;
 
 /**
  * @author Marius Bogoevici
@@ -36,12 +40,12 @@ public class InterceptorMetadataUtils {
     private InterceptorMetadataUtils() {
     }
 
-    public static InterceptorMetadata readMetadataForInterceptorClass(InterceptorFactory<?> interceptorReference) {
-        return new DefaultInterceptorMetadata(interceptorReference, buildMethodMap(interceptorReference.getClassMetadata(), false));
+    public static InterceptorMetadata readMetadataForInterceptorClass(InterceptorFactory<?> interceptorReference, BeanManagerImpl manager) {
+        return new DefaultInterceptorMetadata(interceptorReference, buildMethodMap(interceptorReference.getClassMetadata(), false, manager));
     }
 
-    public static <T> TargetClassInterceptorMetadata readMetadataForTargetClass(ClassMetadata<T> classMetadata) {
-        return new TargetClassInterceptorMetadata(classMetadata, buildMethodMap(classMetadata, true));
+    public static <T> TargetClassInterceptorMetadata readMetadataForTargetClass(ClassMetadata<T> classMetadata, BeanManagerImpl manager) {
+        return new TargetClassInterceptorMetadata(classMetadata, buildMethodMap(classMetadata, true, manager));
     }
 
     public static boolean isInterceptorMethod(InterceptionType interceptionType, MethodMetadata method, boolean forTargetClass) {
@@ -191,5 +195,17 @@ public class InterceptorMetadataUtils {
         }
         while (currentClass != null && !OBJECT_CLASS_NAME.equals(currentClass.getJavaClass().getName()));
         return immutableMap(methodMap);
+    }
+
+    static Map<InterceptionType, List<MethodMetadata>> buildMethodMap(ClassMetadata<?> interceptorClass, boolean forTargetClass, BeanManagerImpl manager) {
+        EnhancedAnnotatedType<?> type = manager.getServices().get(ClassTransformer.class).getEnhancedAnnotatedType(interceptorClass.getJavaClass(), manager.getId());
+        Map<InterceptionType, List<MethodMetadata>> result = new HashMap<InterceptionType, List<MethodMetadata>>();
+        for (InterceptionType interceptionType : InterceptionTypeRegistry.getSupportedInterceptionTypes()) {
+            List<MethodMetadata> value = BeanMethods.getInterceptorMethods(type, interceptionType, forTargetClass);
+            if (!value.isEmpty()) {
+                result.put(interceptionType, value);
+            }
+        }
+        return result;
     }
 }
