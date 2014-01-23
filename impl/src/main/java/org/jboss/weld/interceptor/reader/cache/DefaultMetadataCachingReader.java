@@ -102,6 +102,7 @@ public class DefaultMetadataCachingReader implements MetadataCachingReader {
         return TargetClassInterceptorMetadata.of(type.getJavaClass(), InterceptorMetadataUtils.buildMethodMap(type, true, manager));
     }
 
+    // TODO move to interceptor impl
     @Override
     public <T> InterceptorMetadata<T> getCdiInterceptorMetadata(InterceptorImpl<T> interceptor) {
         CdiInterceptorFactory<T> reference = new CdiInterceptorFactory<T>(interceptor);

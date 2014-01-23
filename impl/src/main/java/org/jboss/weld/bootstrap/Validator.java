@@ -90,7 +90,6 @@ import org.jboss.weld.exceptions.UnproxyableResolutionException;
 import org.jboss.weld.injection.producer.AbstractMemberProducer;
 import org.jboss.weld.injection.producer.BasicInjectionTarget;
 import org.jboss.weld.interceptor.reader.PlainInterceptorFactory;
-import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionModel;
 import org.jboss.weld.literal.AnyLiteral;
@@ -204,7 +203,7 @@ public class Validator implements Service {
     }
 
     private void validateInterceptors(BeanManagerImpl beanManager, AbstractClassBean<?> classBean) {
-        InterceptionModel<ClassMetadata<?>> interceptionModel = beanManager.getInterceptorModelRegistry().get(classBean.getAnnotated());
+        InterceptionModel<?> interceptionModel = beanManager.getInterceptorModelRegistry().get(classBean.getAnnotated());
         if (interceptionModel != null) {
             Set<? extends InterceptorMetadata<?>> interceptors = interceptionModel.getAllInterceptors();
             if (interceptors.size() > 0) {

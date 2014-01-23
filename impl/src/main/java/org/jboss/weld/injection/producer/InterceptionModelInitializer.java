@@ -48,7 +48,6 @@ import org.jboss.weld.exceptions.DeploymentException;
 import org.jboss.weld.interceptor.builder.InterceptionModelBuilder;
 import org.jboss.weld.interceptor.builder.InterceptorsApiAbstraction;
 import org.jboss.weld.interceptor.reader.TargetClassInterceptorMetadata;
-import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionModel;
 import org.jboss.weld.logging.BeanLogger;
@@ -88,14 +87,14 @@ public class InterceptionModelInitializer<T> {
 
     private Map<Interceptor<?>, InterceptorMetadata<?>> interceptorMetadatas = new HashMap<Interceptor<?>, InterceptorMetadata<?>>();
     private List<AnnotatedMethod<?>> businessMethods;
-    private final InterceptionModelBuilder<ClassMetadata<?>> builder;
+    private final InterceptionModelBuilder<?> builder;
     private boolean hasSerializationOrInvocationInterceptorMethods;
 
     public InterceptionModelInitializer(BeanManagerImpl manager, EnhancedAnnotatedType<T> annotatedType, AnnotatedConstructor<T> constructor, Bean<?> bean) {
         this.constructor = constructor;
         this.manager = manager;
         this.annotatedType = annotatedType;
-        this.builder = InterceptionModelBuilder.<ClassMetadata<?>>newBuilderFor(getClassMetadata());
+        this.builder = InterceptionModelBuilder.newBuilderFor(null); // TODO fixme
         if (bean == null) {
             stereotypes = Collections.emptySet();
         } else {
@@ -112,7 +111,7 @@ public class InterceptionModelInitializer<T> {
         initEjbInterceptors();
         initCdiInterceptors();
 
-        InterceptionModel<ClassMetadata<?>> interceptionModel = builder.build();
+        InterceptionModel<?> interceptionModel = builder.build();
         if (interceptionModel.getAllInterceptors().size() > 0 || hasSerializationOrInvocationInterceptorMethods) {
             if (annotatedType.isFinal()) {
                 throw BeanLogger.LOG.finalBeanClassWithInterceptorsNotAllowed(annotatedType.getJavaClass());
@@ -138,10 +137,6 @@ public class InterceptionModelInitializer<T> {
             hasSerializationOrInvocationInterceptorMethods = false;
         }
         builder.setHasTargetClassInterceptors(hasSerializationOrInvocationInterceptorMethods);
-    }
-
-    private ClassMetadata<T> getClassMetadata() {
-        return manager.getInterceptorMetadataReader().getClassMetadata(annotatedType.getJavaClass());
     }
 
     private void initCdiInterceptors() {

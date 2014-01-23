@@ -27,7 +27,6 @@ import javax.enterprise.inject.spi.InterceptionType;
 import javax.enterprise.inject.spi.Interceptor;
 
 import org.jboss.weld.ejb.spi.InterceptorBindings;
-import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorFactory;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionModel;
@@ -38,20 +37,22 @@ import org.jboss.weld.logging.BeanLogger;
  */
 public class InterceptorBindingsAdapter implements InterceptorBindings {
 
-    private InterceptionModel<ClassMetadata<?>> interceptionModel;
+    private InterceptionModel<?> interceptionModel;
 
-    public InterceptorBindingsAdapter(InterceptionModel<ClassMetadata<?>> interceptionModel) {
+    public InterceptorBindingsAdapter(InterceptionModel<?> interceptionModel) {
         if (interceptionModel == null) {
             throw BeanLogger.LOG.interceptionModelNull();
         }
         this.interceptionModel = interceptionModel;
     }
 
+    @Override
     public Collection<Interceptor<?>> getAllInterceptors() {
         Set<? extends InterceptorMetadata<?>> interceptorMetadataSet = interceptionModel.getAllInterceptors();
         return extractCdiInterceptors(interceptorMetadataSet);
     }
 
+    @Override
     public List<Interceptor<?>> getMethodInterceptors(InterceptionType interceptionType, Method method) {
         if (interceptionType == null) {
             throw BeanLogger.LOG.interceptionTypeNull();
@@ -71,6 +72,7 @@ public class InterceptorBindingsAdapter implements InterceptorBindings {
 
     }
 
+    @Override
     public List<Interceptor<?>> getLifecycleInterceptors(InterceptionType interceptionType) {
         if (interceptionType == null) {
             throw BeanLogger.LOG.interceptionTypeNull();

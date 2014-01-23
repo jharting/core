@@ -35,7 +35,6 @@ import org.jboss.weld.interceptor.proxy.InterceptionContext;
 import org.jboss.weld.interceptor.proxy.InterceptorInvocation;
 import org.jboss.weld.interceptor.proxy.InterceptorInvocationContext;
 import org.jboss.weld.interceptor.proxy.SimpleInterceptionChain;
-import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionModel;
 import org.jboss.weld.interceptor.spi.model.InterceptionType;
@@ -50,10 +49,10 @@ import org.jboss.weld.util.reflection.Reflections;
  */
 public class ConstructorInterceptionInstantiator<T> extends ForwardingInstantiator<T> {
 
-    private final InterceptionModel<ClassMetadata<?>> model;
+    private final InterceptionModel<?> model;
     private final SlimAnnotatedType<?> annotatedType;
 
-    public ConstructorInterceptionInstantiator(Instantiator<T> delegate, InterceptionModel<ClassMetadata<?>> model, SlimAnnotatedType<?> type) {
+    public ConstructorInterceptionInstantiator(Instantiator<T> delegate, InterceptionModel<?> model, SlimAnnotatedType<?> type) {
         super(delegate);
         this.model = model;
         this.annotatedType = type;

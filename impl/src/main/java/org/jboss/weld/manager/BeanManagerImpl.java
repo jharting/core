@@ -115,7 +115,6 @@ import org.jboss.weld.injection.attributes.InferringParameterInjectionPointAttri
 import org.jboss.weld.injection.attributes.ParameterInjectionPointAttributes;
 import org.jboss.weld.interceptor.reader.cache.DefaultMetadataCachingReader;
 import org.jboss.weld.interceptor.reader.cache.MetadataCachingReader;
-import org.jboss.weld.interceptor.spi.metadata.ClassMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionModel;
 import org.jboss.weld.logging.BeanManagerLogger;
 import org.jboss.weld.logging.BootstrapLogger;
@@ -271,7 +270,7 @@ public class BeanManagerImpl implements WeldManager, Serializable {
     /**
      * Interception model
      */
-    private final transient ConcurrentMap<SlimAnnotatedType<?>, InterceptionModel<ClassMetadata<?>>> interceptorModelRegistry = new ConcurrentHashMap<SlimAnnotatedType<?>, InterceptionModel<ClassMetadata<?>>>();
+    private final transient ConcurrentMap<SlimAnnotatedType<?>, InterceptionModel<?>> interceptorModelRegistry = new ConcurrentHashMap<SlimAnnotatedType<?>, InterceptionModel<?>>();
     private final transient MetadataCachingReader interceptorMetadataReader = new DefaultMetadataCachingReader(this);
 
     private final transient ContainerLifecycleEvents containerLifecycleEvents;
@@ -1225,7 +1224,7 @@ public class BeanManagerImpl implements WeldManager, Serializable {
         }
     }
 
-    public ConcurrentMap<SlimAnnotatedType<?>, InterceptionModel<ClassMetadata<?>>> getInterceptorModelRegistry() {
+    public ConcurrentMap<SlimAnnotatedType<?>, InterceptionModel<?>> getInterceptorModelRegistry() {
         return interceptorModelRegistry;
     }
 
