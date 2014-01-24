@@ -32,7 +32,7 @@ public class InterceptorMetadataReader {
             public InterceptorClassMetadata<?> load(Class<?> key) throws Exception {
                 EnhancedAnnotatedType<?> type = manager.getServices().get(ClassTransformer.class).getEnhancedAnnotatedType(key, manager.getId());
                 InterceptorFactory<?> factory = PlainInterceptorFactory.of(key, manager);
-                return new DefaultInterceptorMetadata(key, factory, InterceptorMetadataUtils.buildMethodMap(type, false, manager));
+                return new InterceptorMetadataImpl(key, factory, InterceptorMetadataUtils.buildMethodMap(type, false, manager));
             }
         });
 

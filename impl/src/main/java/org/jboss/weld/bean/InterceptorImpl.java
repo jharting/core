@@ -38,7 +38,7 @@ import org.jboss.weld.exceptions.WeldException;
 import org.jboss.weld.interceptor.proxy.InterceptorInvocation;
 import org.jboss.weld.interceptor.proxy.InterceptorInvocationContext;
 import org.jboss.weld.interceptor.proxy.SimpleInterceptionChain;
-import org.jboss.weld.interceptor.reader.DefaultInterceptorMetadata;
+import org.jboss.weld.interceptor.reader.InterceptorMetadataImpl;
 import org.jboss.weld.interceptor.reader.InterceptorMetadataUtils;
 import org.jboss.weld.interceptor.spi.context.InterceptionChain;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorClassMetadata;
@@ -83,7 +83,7 @@ public class InterceptorImpl<T> extends ManagedBean<T> implements Interceptor<T>
     @SuppressWarnings("unchecked")
     private InterceptorClassMetadata<T> initInterceptorMetadata() {
         CdiInterceptorFactory<T> reference = new CdiInterceptorFactory<T>(this);
-        return new DefaultInterceptorMetadata<T>((Class<T>) getBeanClass(), reference, InterceptorMetadataUtils.buildMethodMap(getEnhancedAnnotated(), false, getBeanManager()));
+        return new InterceptorMetadataImpl<T>((Class<T>) getBeanClass(), reference, InterceptorMetadataUtils.buildMethodMap(getEnhancedAnnotated(), false, getBeanManager()));
     }
 
     @Override

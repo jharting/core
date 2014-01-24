@@ -19,14 +19,19 @@ package org.jboss.weld.interceptor.spi.metadata;
 import org.jboss.weld.interceptor.proxy.InterceptorInvocation;
 import org.jboss.weld.interceptor.spi.model.InterceptionType;
 
+/**
+ * Metadata about a type that may have interceptor methods. This may either be an interceptor class or a component's target class.
+ *
+ * @author Jozef Hartinger
+ *
+ */
 public interface InterceptorMetadata {
 
     /**
-     * Returns true if the interceptor corresponding to this {@link InterceptorClassMetadata} has interceptor methods for the given
-     * <code>interceptionType</code>. Else returns false.
+     * Indicates, whether the given interception type is supported.
      *
      * @param interceptionType The {@link org.jboss.weld.interceptor.spi.model.InterceptionType}
-     * @return
+     * @return true if the given interception type is supported, false otherwise
      */
     boolean isEligible(InterceptionType interceptionType);
 

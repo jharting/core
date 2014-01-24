@@ -24,12 +24,19 @@ import org.jboss.weld.interceptor.spi.metadata.InterceptorFactory;
 import org.jboss.weld.interceptor.spi.metadata.MethodMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionType;
 
-public class DefaultInterceptorMetadata<T> extends AbstractInterceptorMetadata implements InterceptorClassMetadata<T> {
+/**
+ * Interceptor class metadata. This class is immutable.
+ *
+ * @author Jozef Hartinger
+ *
+ * @param <T> type the type of the interceptor
+ */
+public class InterceptorMetadataImpl<T> extends AbstractInterceptorMetadata implements InterceptorClassMetadata<T> {
 
     private final InterceptorFactory<T> reference;
     private final Class<T> javaClass;
 
-    public DefaultInterceptorMetadata(Class<T> javaClass, InterceptorFactory<T> reference, Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap) {
+    public InterceptorMetadataImpl(Class<T> javaClass, InterceptorFactory<T> reference, Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap) {
         super(interceptorMethodMap);
         this.reference = reference;
         this.javaClass = javaClass;
@@ -48,5 +55,35 @@ public class DefaultInterceptorMetadata<T> extends AbstractInterceptorMetadata i
     @Override
     public Class<T> getJavaClass() {
         return javaClass;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((javaClass == null) ? 0 : javaClass.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        InterceptorMetadataImpl<?> other = (InterceptorMetadataImpl<?>) obj;
+        if (javaClass == null) {
+            if (other.javaClass != null)
+                return false;
+        } else if (!javaClass.equals(other.javaClass))
+            return false;
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return "InterceptorMetadataImpl [javaClass=" + javaClass + "]";
     }
 }

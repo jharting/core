@@ -27,6 +27,12 @@ import org.jboss.weld.interceptor.spi.model.InterceptionType;
 
 import com.google.common.collect.ImmutableSet;
 
+/**
+ * Component's target class interceptor metadata. This class is immutable.
+ *
+ * @author Jozef Hartinger
+ *
+ */
 public class TargetClassInterceptorMetadata extends AbstractInterceptorMetadata {
 
     public static final TargetClassInterceptorMetadata EMPTY_INSTANCE = new TargetClassInterceptorMetadata(Collections.<InterceptionType, List<MethodMetadata>>emptyMap());

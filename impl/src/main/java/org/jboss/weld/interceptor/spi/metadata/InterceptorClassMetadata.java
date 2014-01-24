@@ -19,18 +19,25 @@ package org.jboss.weld.interceptor.spi.metadata;
 
 
 /**
- * This class is parametrized for
+ * Metadata about an interceptor component.
  *
  * @author <a href="mailto:mariusb@redhat.com">Marius Bogoevici</a>
+ * @author Jozef Hartinger
+ *
  * @param <T> The type (class) of the interceptor bean
  */
 public interface InterceptorClassMetadata<T> extends InterceptorMetadata {
+
     /**
-     * Returns the class for which this interceptor metadata was created
+     * Returns an InterceptorFactory capable of creating instances of this interceptor..
      *
-     * @return
+     * @return the interceptor factory
      */
     InterceptorFactory<T> getInterceptorFactory();
 
+    /**
+     * Returns the class of this interceptor.
+     * @return
+     */
     Class<T> getJavaClass();
 }
