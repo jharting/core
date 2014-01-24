@@ -41,7 +41,7 @@ import com.google.common.collect.ImmutableSet;
  *
  * @param <T> the type of the intercepted entity
  */
-class InterceptionModelImpl<T> implements InterceptionModel<T> {
+class InterceptionModelImpl<T> implements InterceptionModel {
 
     private final Map<InterceptionType, List<InterceptorClassMetadata<?>>> globalInterceptors;
 
@@ -50,8 +50,6 @@ class InterceptionModelImpl<T> implements InterceptionModel<T> {
     private final Set<Method> methodsIgnoringGlobalInterceptors;
 
     private final Set<InterceptorClassMetadata<?>> allInterceptors;
-
-    private final T interceptedEntity;
 
     private final boolean hasTargetClassInterceptors;
 
@@ -63,8 +61,7 @@ class InterceptionModelImpl<T> implements InterceptionModel<T> {
      *
      * @param builder
      */
-    InterceptionModelImpl(InterceptionModelBuilder<T> builder) {
-        this.interceptedEntity = builder.getInterceptedEntity();
+    InterceptionModelImpl(InterceptionModelBuilder builder) {
         this.hasTargetClassInterceptors = builder.isHasTargetClassInterceptors();
         this.hasExternalNonConstructorInterceptors = builder.isHasExternalNonConstructorInterceptors();
         this.globalInterceptors = ImmutableMap.<InterceptionType, List<InterceptorClassMetadata<?>>>copyOf(builder.getGlobalInterceptors());
@@ -111,11 +108,6 @@ class InterceptionModelImpl<T> implements InterceptionModel<T> {
     @Override
     public Set<InterceptorClassMetadata<?>> getAllInterceptors() {
         return Collections.unmodifiableSet(allInterceptors);
-    }
-
-    @Override
-    public T getInterceptedEntity() {
-        return this.interceptedEntity;
     }
 
     @Override

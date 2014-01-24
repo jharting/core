@@ -83,14 +83,14 @@ public class InterceptionModelInitializer<T> {
     private final EJBApiAbstraction ejbApi;
 
     private List<AnnotatedMethod<?>> businessMethods;
-    private final InterceptionModelBuilder<?> builder;
+    private final InterceptionModelBuilder builder;
     private boolean hasSerializationOrInvocationInterceptorMethods;
 
     public InterceptionModelInitializer(BeanManagerImpl manager, EnhancedAnnotatedType<T> annotatedType, AnnotatedConstructor<T> constructor, Bean<?> bean) {
         this.constructor = constructor;
         this.manager = manager;
         this.annotatedType = annotatedType;
-        this.builder = InterceptionModelBuilder.newBuilderFor(null); // TODO fixme
+        this.builder = new InterceptionModelBuilder();
         if (bean == null) {
             stereotypes = Collections.emptySet();
         } else {
@@ -107,7 +107,7 @@ public class InterceptionModelInitializer<T> {
         initEjbInterceptors();
         initCdiInterceptors();
 
-        InterceptionModel<?> interceptionModel = builder.build();
+        InterceptionModel interceptionModel = builder.build();
         if (interceptionModel.getAllInterceptors().size() > 0 || hasSerializationOrInvocationInterceptorMethods) {
             if (annotatedType.isFinal()) {
                 throw BeanLogger.LOG.finalBeanClassWithInterceptorsNotAllowed(annotatedType.getJavaClass());

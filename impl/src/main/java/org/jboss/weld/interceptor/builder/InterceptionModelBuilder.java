@@ -41,11 +41,9 @@ import org.jboss.weld.interceptor.spi.model.InterceptionType;
  *
  * @param <T> the intercepted entity class
  */
-public class InterceptionModelBuilder<T> {
+public class InterceptionModelBuilder {
 
     private boolean isModelBuilt = false;
-
-    private final T interceptedEntity;
 
     private boolean hasTargetClassInterceptors;
 
@@ -61,30 +59,16 @@ public class InterceptionModelBuilder<T> {
 
     private TargetClassInterceptorMetadata targetClassInterceptorMetadata;
 
-    /**
-     *
-     * @param interceptedEntity
-     */
-    private InterceptionModelBuilder(T interceptedEntity) {
-        this.interceptedEntity = interceptedEntity;
-    }
-
-    /**
-     *
-     * @param entity
-     * @return
-     */
-    public static <T> InterceptionModelBuilder<T> newBuilderFor(T entity) {
-        return new InterceptionModelBuilder<T>(entity);
+    public InterceptionModelBuilder() {
     }
 
     /**
      * @return an immutable {@link InterceptionModel} instance
      */
-    public InterceptionModel<T> build() {
+    public InterceptionModel build() {
         checkModelNotBuilt();
         isModelBuilt = true;
-        return new InterceptionModelImpl<T>(this);
+        return new InterceptionModelImpl(this);
     }
 
     public MethodInterceptorDescriptor interceptAll() {
@@ -185,11 +169,6 @@ public class InterceptionModelBuilder<T> {
             interceptorsList.addAll(Arrays.asList(interceptors));
         }
         allInterceptors.addAll(Arrays.asList(interceptors));
-    }
-
-
-    T getInterceptedEntity() {
-        return interceptedEntity;
     }
 
     boolean isHasTargetClassInterceptors() {
