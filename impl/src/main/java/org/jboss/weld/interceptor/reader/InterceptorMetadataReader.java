@@ -16,6 +16,14 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
+/**
+ * InterceptorMetadata reader. The reader produces InterceptorMetadata instances for plain interceptors, CDI interceptors and components' target classes.
+ * <p>
+ * This class is thread-safe.
+ *
+ * @author Jozef Hartinger
+ *
+ */
 public class InterceptorMetadataReader {
 
     private final BeanManagerImpl manager;

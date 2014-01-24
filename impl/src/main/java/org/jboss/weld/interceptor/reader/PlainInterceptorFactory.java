@@ -24,6 +24,13 @@ import org.jboss.weld.context.WeldCreationalContext;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorFactory;
 import org.jboss.weld.manager.BeanManagerImpl;
 
+/**
+ * InterceptorFactory that uses an {@link InjectionTarget} as a factory for interceptor instances.
+ *
+ * @author Jozef Hartinger
+ *
+ * @param <T> the type of the interceptor
+ */
 public class PlainInterceptorFactory<T> implements InterceptorFactory<T> {
 
     public static <T> PlainInterceptorFactory<T> of(Class<T> javaClass, BeanManagerImpl manager) {

@@ -24,6 +24,13 @@ import javax.enterprise.inject.spi.Interceptor;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorFactory;
 import org.jboss.weld.manager.BeanManagerImpl;
 
+/**
+ * InterceptorFactory that obtains an interceptor instance using {@link BeanManagerImpl}.
+ *
+ * @author Jozef Hartinger
+ *
+ * @param <T> the type of the interceptor
+ */
 public class CdiInterceptorFactory<T> implements InterceptorFactory<T> {
 
     private final Interceptor<T> interceptor;

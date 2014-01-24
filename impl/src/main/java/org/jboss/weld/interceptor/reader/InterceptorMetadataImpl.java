@@ -67,18 +67,23 @@ public class InterceptorMetadataImpl<T> extends AbstractInterceptorMetadata impl
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         InterceptorMetadataImpl<?> other = (InterceptorMetadataImpl<?>) obj;
         if (javaClass == null) {
-            if (other.javaClass != null)
+            if (other.javaClass != null) {
                 return false;
-        } else if (!javaClass.equals(other.javaClass))
+            }
+        } else if (!javaClass.equals(other.javaClass)) {
             return false;
+        }
         return true;
     }
 
