@@ -158,7 +158,7 @@ public class InterceptionModelInitializer<T> {
     private void initLifeCycleInterceptor(InterceptionType interceptionType, Map<Class<? extends Annotation>, Annotation> classBindingAnnotations) {
         List<Interceptor<?>> resolvedInterceptors = manager.resolveInterceptors(interceptionType, classBindingAnnotations.values());
         if (!resolvedInterceptors.isEmpty()) {
-            builder.intercept(interceptionType).with(asInterceptorMetadata(resolvedInterceptors));
+            builder.intercept(interceptionType, asInterceptorMetadata(resolvedInterceptors));
         }
     }
 
@@ -187,7 +187,7 @@ public class InterceptionModelInitializer<T> {
                 throw BeanLogger.LOG.finalInterceptedBeanMethodNotAllowed(method, methodBoundInterceptors.get(0).getBeanClass().getName());
             }
             Method javaMethod = Reflections.<AnnotatedMethod<T>>cast(method).getJavaMember();
-            builder.intercept(interceptionType, javaMethod).with(asInterceptorMetadata(methodBoundInterceptors));
+            builder.intercept(interceptionType, javaMethod, asInterceptorMetadata(methodBoundInterceptors));
         }
     }
 
@@ -202,7 +202,7 @@ public class InterceptionModelInitializer<T> {
         }
         List<Interceptor<?>> constructorBoundInterceptors = manager.resolveInterceptors(InterceptionType.AROUND_CONSTRUCT, constructorBindings);
         if (!constructorBoundInterceptors.isEmpty()) {
-            builder.intercept(InterceptionType.AROUND_CONSTRUCT).with(asInterceptorMetadata(constructorBoundInterceptors));
+            builder.intercept(InterceptionType.AROUND_CONSTRUCT, asInterceptorMetadata(constructorBoundInterceptors));
         }
     }
 
@@ -241,7 +241,7 @@ public class InterceptionModelInitializer<T> {
                         continue;
                     }
                     if (interceptor.isEligible(org.jboss.weld.interceptor.spi.model.InterceptionType.valueOf(interceptionType))) {
-                        builder.intercept(interceptionType).with(Collections.<InterceptorClassMetadata<?>>singleton(interceptor));
+                        builder.intercept(interceptionType, Collections.<InterceptorClassMetadata<?>>singleton(interceptor));
                     }
                 }
             }
@@ -255,7 +255,7 @@ public class InterceptionModelInitializer<T> {
         Class<?>[] constructorDeclaredInterceptors = interceptorsApi.extractInterceptorClasses(constructor);
         if (constructorDeclaredInterceptors != null) {
             for (Class<?> clazz : constructorDeclaredInterceptors) {
-                builder.intercept(InterceptionType.AROUND_CONSTRUCT).with(Collections.<InterceptorClassMetadata<?>>singleton(reader.getPlainInterceptorMetadata(clazz)));
+                builder.intercept(InterceptionType.AROUND_CONSTRUCT, Collections.<InterceptorClassMetadata<?>>singleton(reader.getPlainInterceptorMetadata(clazz)));
             }
         }
     }
@@ -277,7 +277,7 @@ public class InterceptionModelInitializer<T> {
             InterceptionType interceptionType = isTimeoutAnnotationPresentOn(method)
                     ? InterceptionType.AROUND_TIMEOUT
                     : InterceptionType.AROUND_INVOKE;
-            builder.intercept(interceptionType, javaMethod).with(getMethodDeclaredInterceptorMetadatas(methodDeclaredInterceptors));
+            builder.intercept(interceptionType, javaMethod, getMethodDeclaredInterceptorMetadatas(methodDeclaredInterceptors));
         }
     }
 

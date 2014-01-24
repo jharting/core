@@ -69,39 +69,24 @@ public class InterceptionModelBuilder {
         return new InterceptionModelImpl(this);
     }
 
-    public MethodInterceptorDescriptor intercept(javax.enterprise.inject.spi.InterceptionType interceptionType, Method method) {
+    public void intercept(javax.enterprise.inject.spi.InterceptionType interceptionType, Method method, Collection<InterceptorClassMetadata<?>> interceptors) {
         checkModelNotBuilt();
         InterceptionType weldInterceptionType = InterceptionType.valueOf(interceptionType);
         if (weldInterceptionType.isLifecycleCallback()) {
             throw new IllegalArgumentException("Illegal interception type: " + interceptionType);
         }
-        return new MethodInterceptorDescriptor(method, weldInterceptionType);
+        appendInterceptors(weldInterceptionType, method, interceptors);
     }
 
-    public MethodInterceptorDescriptor intercept(javax.enterprise.inject.spi.InterceptionType interceptionType) {
+    public void intercept(javax.enterprise.inject.spi.InterceptionType interceptionType, Collection<InterceptorClassMetadata<?>> interceptors) {
         checkModelNotBuilt();
         InterceptionType weldInterceptionType = InterceptionType.valueOf(interceptionType);
-        return new MethodInterceptorDescriptor(null, weldInterceptionType);
+        appendInterceptors(weldInterceptionType, null, interceptors);
     }
 
     public void addMethodIgnoringGlobalInterceptors(Method method) {
         checkModelNotBuilt();
         this.methodsIgnoringGlobalInterceptors.add(method);
-    }
-
-    public final class MethodInterceptorDescriptor {
-
-        private final Method method;
-        private final InterceptionType interceptionType;
-
-        public MethodInterceptorDescriptor(Method m, InterceptionType interceptionType) {
-            this.method = m;
-            this.interceptionType = interceptionType;
-        }
-
-        public void with(Collection<InterceptorClassMetadata<?>> interceptors) {
-            appendInterceptors(interceptionType, method, interceptors);
-        }
     }
 
     private void appendInterceptors(InterceptionType interceptionType, Method method, Collection<InterceptorClassMetadata<?>> interceptors) {
