@@ -132,7 +132,6 @@ public class InterceptionModelInitializer<T> {
             // target class
             hasSerializationOrInvocationInterceptorMethods = false;
         }
-        builder.setHasTargetClassInterceptors(hasSerializationOrInvocationInterceptorMethods);
     }
 
     private void initCdiInterceptors() {

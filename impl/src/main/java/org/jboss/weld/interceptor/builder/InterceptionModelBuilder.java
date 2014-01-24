@@ -45,8 +45,6 @@ public class InterceptionModelBuilder {
 
     private boolean isModelBuilt = false;
 
-    private boolean hasTargetClassInterceptors;
-
     private boolean hasExternalNonConstructorInterceptors;
 
     private final Set<Method> methodsIgnoringGlobalInterceptors = new HashSet<Method>();
@@ -115,11 +113,6 @@ public class InterceptionModelBuilder {
         return new MethodInterceptorDescriptor(null, weldInterceptionType);
     }
 
-    public void setHasTargetClassInterceptors(boolean hasTargetClassInterceptors) {
-        checkModelNotBuilt();
-        this.hasTargetClassInterceptors = hasTargetClassInterceptors;
-    }
-
     public void addMethodIgnoringGlobalInterceptors(Method method) {
         checkModelNotBuilt();
         this.methodsIgnoringGlobalInterceptors.add(method);
@@ -169,10 +162,6 @@ public class InterceptionModelBuilder {
             interceptorsList.addAll(Arrays.asList(interceptors));
         }
         allInterceptors.addAll(Arrays.asList(interceptors));
-    }
-
-    boolean isHasTargetClassInterceptors() {
-        return hasTargetClassInterceptors;
     }
 
     boolean isHasExternalNonConstructorInterceptors() {
