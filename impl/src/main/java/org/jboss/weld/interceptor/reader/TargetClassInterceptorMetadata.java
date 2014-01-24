@@ -17,29 +17,42 @@
 package org.jboss.weld.interceptor.reader;
 
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import org.jboss.weld.interceptor.spi.metadata.InterceptorFactory;
 import org.jboss.weld.interceptor.spi.metadata.MethodMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionType;
 
-public class TargetClassInterceptorMetadata<T> extends AbstractInterceptorMetadata<T> {
+import com.google.common.collect.ImmutableSet;
 
-    public static <T> TargetClassInterceptorMetadata<T> of(Class<T> javaClass, Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap) {
-        return new TargetClassInterceptorMetadata<T>(javaClass, interceptorMethodMap);
+public class TargetClassInterceptorMetadata extends AbstractInterceptorMetadata {
+
+    public static final TargetClassInterceptorMetadata EMPTY_INSTANCE = new TargetClassInterceptorMetadata(Collections.<InterceptionType, List<MethodMetadata>>emptyMap());
+
+    public static TargetClassInterceptorMetadata of(Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap) {
+        if (interceptorMethodMap.isEmpty()) {
+            return EMPTY_INSTANCE;
+        }
+        return new TargetClassInterceptorMetadata(interceptorMethodMap);
     }
 
-    private final Class<T> javaClass;
+    private final Set<Method> interceptorMethods;
 
-    public TargetClassInterceptorMetadata(Class<T> javaClass, Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap) {
+    private TargetClassInterceptorMetadata(Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap) {
         super(interceptorMethodMap);
-        this.javaClass = javaClass;
+        this.interceptorMethods = initInterceptorMethods(interceptorMethodMap);
     }
 
-    @Override
-    public InterceptorFactory<T> getInterceptorFactory() {
-        return null;
+    private Set<Method> initInterceptorMethods(Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap) {
+        ImmutableSet.Builder<Method> builder = ImmutableSet.builder();
+        for (List<MethodMetadata> methodList : interceptorMethodMap.values()) {
+            for (MethodMetadata method : methodList) {
+                builder.add(method.getJavaMethod());
+            }
+        }
+        return builder.build();
     }
 
     @Override
@@ -47,20 +60,7 @@ public class TargetClassInterceptorMetadata<T> extends AbstractInterceptorMetada
         return true;
     }
 
-    @Override
-    public Class<T> getJavaClass() {
-        return javaClass;
-    }
-
-    // TODO: fixme!!!
     public boolean isInterceptorMethod(Method method) {
-        for (List<MethodMetadata> list : interceptorMethodMap.values()) {
-            for (MethodMetadata methodMetadata : list) {
-                if (methodMetadata.getJavaMethod().equals(method)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return interceptorMethods.contains(method);
     }
 }

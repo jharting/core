@@ -45,7 +45,7 @@ import org.jboss.weld.exceptions.DeploymentException;
 import org.jboss.weld.interceptor.builder.InterceptionModelBuilder;
 import org.jboss.weld.interceptor.builder.InterceptorsApiAbstraction;
 import org.jboss.weld.interceptor.reader.TargetClassInterceptorMetadata;
-import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
+import org.jboss.weld.interceptor.spi.metadata.InterceptorClassMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionModel;
 import org.jboss.weld.logging.BeanLogger;
 import org.jboss.weld.logging.ValidatorLogger;
@@ -64,9 +64,9 @@ import org.jboss.weld.util.reflection.Reflections;
  */
 public class InterceptionModelInitializer<T> {
 
-    private static final InterceptorMetadata<?>[] EMPTY_INTERCEPTOR_METADATA_ARRAY = new InterceptorMetadata[0];
+    private static final InterceptorClassMetadata<?>[] EMPTY_INTERCEPTOR_METADATA_ARRAY = new InterceptorClassMetadata[0];
 
-    private static <T> InterceptorMetadata<T>[] emptyInterceptorMetadataArray() {
+    private static <T> InterceptorClassMetadata<T>[] emptyInterceptorMetadataArray() {
         return cast(EMPTY_INTERCEPTOR_METADATA_ARRAY);
     }
 
@@ -121,7 +121,7 @@ public class InterceptionModelInitializer<T> {
 
     private void initTargetClassInterceptors() {
         if (!Beans.isInterceptor(annotatedType)) {
-            TargetClassInterceptorMetadata<T> interceptorClassMetadata = manager.getInterceptorMetadataReader().getTargetClassInterceptorMetadata(annotatedType);
+            TargetClassInterceptorMetadata interceptorClassMetadata = manager.getInterceptorMetadataReader().getTargetClassInterceptorMetadata(annotatedType);
             builder.setTargetClassInterceptorMetadata(interceptorClassMetadata);
             hasSerializationOrInvocationInterceptorMethods = interceptorClassMetadata.isEligible(org.jboss.weld.interceptor.spi.model.InterceptionType.AROUND_INVOKE)
                     || interceptorClassMetadata.isEligible(org.jboss.weld.interceptor.spi.model.InterceptionType.AROUND_TIMEOUT)
@@ -237,7 +237,7 @@ public class InterceptionModelInitializer<T> {
 
         if (classDeclaredInterceptors != null) {
             for (Class<?> clazz : classDeclaredInterceptors) {
-                InterceptorMetadata<?> interceptor = manager.getInterceptorMetadataReader().getPlainInterceptorMetadata(clazz);
+                InterceptorClassMetadata<?> interceptor = manager.getInterceptorMetadataReader().getPlainInterceptorMetadata(clazz);
                 for (InterceptionType interceptionType : InterceptionType.values()) {
                     if (excludeClassLevelAroundConstructInterceptors && interceptionType.equals(InterceptionType.AROUND_CONSTRUCT)) {
                         /*
@@ -282,32 +282,32 @@ public class InterceptionModelInitializer<T> {
             InterceptionType interceptionType = isTimeoutAnnotationPresentOn(method)
                     ? InterceptionType.AROUND_TIMEOUT
                     : InterceptionType.AROUND_INVOKE;
-            InterceptorMetadata<?>[] interceptors = getMethodDeclaredInterceptorMetadatas(methodDeclaredInterceptors);
+            InterceptorClassMetadata<?>[] interceptors = getMethodDeclaredInterceptorMetadatas(methodDeclaredInterceptors);
             builder.intercept(interceptionType, javaMethod).with(interceptors);
         }
     }
 
-    private InterceptorMetadata<?>[] getMethodDeclaredInterceptorMetadatas(Class<?>[] methodDeclaredInterceptors) {
-        List<InterceptorMetadata<?>> list = new ArrayList<InterceptorMetadata<?>>();
+    private InterceptorClassMetadata<?>[] getMethodDeclaredInterceptorMetadatas(Class<?>[] methodDeclaredInterceptors) {
+        List<InterceptorClassMetadata<?>> list = new ArrayList<InterceptorClassMetadata<?>>();
         for (Class<?> clazz : methodDeclaredInterceptors) {
             list.add(manager.getInterceptorMetadataReader().getPlainInterceptorMetadata(clazz));
         }
-        return list.toArray(new InterceptorMetadata[list.size()]);
+        return list.toArray(new InterceptorClassMetadata[list.size()]);
     }
 
     private boolean isTimeoutAnnotationPresentOn(AnnotatedMethod<?> method) {
         return method.isAnnotationPresent(ejbApi.TIMEOUT_ANNOTATION_CLASS);
     }
 
-    private InterceptorMetadata<?>[] toSerializableContextualArray(List<Interceptor<?>> interceptors) {
-        List<InterceptorMetadata<?>> serializableContextuals = new ArrayList<InterceptorMetadata<?>>();
+    private InterceptorClassMetadata<?>[] toSerializableContextualArray(List<Interceptor<?>> interceptors) {
+        List<InterceptorClassMetadata<?>> serializableContextuals = new ArrayList<InterceptorClassMetadata<?>>();
         for (Interceptor<?> interceptor : interceptors) {
             serializableContextuals.add(getInterceptorMetadata(interceptor));
         }
         return serializableContextuals.toArray(InterceptionModelInitializer.<SerializableContextual<?, ?>>emptyInterceptorMetadataArray());
     }
 
-    private <X> InterceptorMetadata<X> getInterceptorMetadata(Interceptor<X> interceptor) {
+    private <X> InterceptorClassMetadata<X> getInterceptorMetadata(Interceptor<X> interceptor) {
         return manager.getInterceptorMetadataReader().getCdiInterceptorMetadata(interceptor);
     }
 

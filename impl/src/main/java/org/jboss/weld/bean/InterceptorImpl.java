@@ -41,7 +41,7 @@ import org.jboss.weld.interceptor.proxy.SimpleInterceptionChain;
 import org.jboss.weld.interceptor.reader.DefaultInterceptorMetadata;
 import org.jboss.weld.interceptor.reader.InterceptorMetadataUtils;
 import org.jboss.weld.interceptor.spi.context.InterceptionChain;
-import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
+import org.jboss.weld.interceptor.spi.metadata.InterceptorClassMetadata;
 import org.jboss.weld.logging.BeanLogger;
 import org.jboss.weld.logging.ReflectionLogger;
 import org.jboss.weld.manager.BeanManagerImpl;
@@ -56,7 +56,7 @@ import org.jboss.weld.util.reflection.Formats;
  */
 public class InterceptorImpl<T> extends ManagedBean<T> implements Interceptor<T> {
 
-    private final InterceptorMetadata<T> interceptorMetadata;
+    private final InterceptorClassMetadata<T> interceptorMetadata;
 
     private final Set<Annotation> interceptorBindingTypes;
 
@@ -81,7 +81,7 @@ public class InterceptorImpl<T> extends ManagedBean<T> implements Interceptor<T>
     }
 
     @SuppressWarnings("unchecked")
-    private InterceptorMetadata<T> initInterceptorMetadata() {
+    private InterceptorClassMetadata<T> initInterceptorMetadata() {
         CdiInterceptorFactory<T> reference = new CdiInterceptorFactory<T>(this);
         return new DefaultInterceptorMetadata<T>((Class<T>) getBeanClass(), reference, InterceptorMetadataUtils.buildMethodMap(getEnhancedAnnotated(), false, getBeanManager()));
     }
@@ -91,7 +91,7 @@ public class InterceptorImpl<T> extends ManagedBean<T> implements Interceptor<T>
         return interceptorBindingTypes;
     }
 
-    public InterceptorMetadata<T> getInterceptorMetadata() {
+    public InterceptorClassMetadata<T> getInterceptorMetadata() {
         return interceptorMetadata;
     }
 

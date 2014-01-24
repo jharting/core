@@ -32,17 +32,13 @@ import org.jboss.weld.interceptor.spi.model.InterceptionType;
  * @author <a href="mailto:mariusb@redhat.com">Marius Bogoevici</a>
  * @author Jozef Hartinger
  */
-public abstract class AbstractInterceptorMetadata<T> implements InterceptorMetadata<T> {
+public abstract class AbstractInterceptorMetadata implements InterceptorMetadata {
 
     protected final Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap;
 
     public AbstractInterceptorMetadata(Map<InterceptionType, List<MethodMetadata>> interceptorMethodMap) {
         this.interceptorMethodMap = interceptorMethodMap;
     }
-
-    /**
-     * {@inheritDoc}
-     */
 
     public List<MethodMetadata> getInterceptorMethods(InterceptionType interceptionType) {
         if (interceptorMethodMap != null) {
@@ -53,9 +49,6 @@ public abstract class AbstractInterceptorMetadata<T> implements InterceptorMetad
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public boolean isEligible(InterceptionType interceptionType) {
         if (this.interceptorMethodMap == null) {

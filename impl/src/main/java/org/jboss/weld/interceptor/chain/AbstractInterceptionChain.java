@@ -27,8 +27,9 @@ import javax.interceptor.InvocationContext;
 import org.jboss.weld.interceptor.proxy.InterceptionContext;
 import org.jboss.weld.interceptor.proxy.InterceptorInvocation;
 import org.jboss.weld.interceptor.proxy.InterceptorMethodInvocation;
+import org.jboss.weld.interceptor.reader.TargetClassInterceptorMetadata;
 import org.jboss.weld.interceptor.spi.context.InterceptionChain;
-import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
+import org.jboss.weld.interceptor.spi.metadata.InterceptorClassMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionType;
 import org.jboss.weld.logging.InterceptorLogger;
 
@@ -43,12 +44,12 @@ public abstract class AbstractInterceptionChain implements InterceptionChain {
     private final List<InterceptorMethodInvocation> interceptorMethodInvocations;
 
     private static Collection<InterceptorInvocation> buildInterceptorMethodInvocations(Object instance, Method method, Object[] args, InterceptionType interceptionType, InterceptionContext ctx) {
-        List<? extends InterceptorMetadata<?>> interceptorList = ctx.getInterceptionModel().getInterceptors(interceptionType, method);
+        List<? extends InterceptorClassMetadata<?>> interceptorList = ctx.getInterceptionModel().getInterceptors(interceptionType, method);
         Collection<InterceptorInvocation> interceptorInvocations = new ArrayList<InterceptorInvocation>(interceptorList.size());
-        for (InterceptorMetadata<?> interceptorMetadata : interceptorList) {
+        for (InterceptorClassMetadata<?> interceptorMetadata : interceptorList) {
             interceptorInvocations.add(interceptorMetadata.getInterceptorInvocation(ctx.getInterceptorInstance(interceptorMetadata), interceptionType));
         }
-        InterceptorMetadata<?> targetClassInterceptorMetadata = ctx.getInterceptionModel().getTargetClassInterceptorMetadata();
+        TargetClassInterceptorMetadata targetClassInterceptorMetadata = ctx.getInterceptionModel().getTargetClassInterceptorMetadata();
         if (targetClassInterceptorMetadata != null && targetClassInterceptorMetadata.isEligible(interceptionType)) {
             interceptorInvocations.add(targetClassInterceptorMetadata.getInterceptorInvocation(instance, interceptionType));
         }

@@ -24,10 +24,10 @@ import java.util.Set;
 import javax.interceptor.AroundConstruct;
 
 import org.jboss.weld.interceptor.reader.TargetClassInterceptorMetadata;
-import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
+import org.jboss.weld.interceptor.spi.metadata.InterceptorClassMetadata;
 
 /**
- * Describes the {@link org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata}s that apply to a particular entity.
+ * Describes the {@link org.jboss.weld.interceptor.spi.metadata.InterceptorClassMetadata}s that apply to a particular entity.
  * <p/>
  * Implementors must implement equals() and hashcode() consistently
  *
@@ -44,19 +44,19 @@ public interface InterceptionModel<T> {
      * @throws IllegalArgumentException if interceptionType is business method or around timeout
      *                                  but method is null, as well as if interceptionType is callback and method is not null
      */
-    List<InterceptorMetadata<?>> getInterceptors(InterceptionType interceptionType, Method method);
+    List<InterceptorClassMetadata<?>> getInterceptors(InterceptionType interceptionType, Method method);
 
     /**
      * Returns {@link AroundConstruct} interceptors applicable for the given constructor.
      */
-    List<InterceptorMetadata<?>> getConstructorInvocationInterceptors();
+    List<InterceptorClassMetadata<?>> getConstructorInvocationInterceptors();
 
     /**
      * Returns all interceptor classes that are applicable to the given intercepted entity
      *
      * @return all interceptors
      */
-    Set<InterceptorMetadata<?>> getAllInterceptors();
+    Set<InterceptorClassMetadata<?>> getAllInterceptors();
 
     /**
      * @return the intercepted entity
@@ -78,6 +78,6 @@ public interface InterceptionModel<T> {
      */
     boolean hasTargetClassInterceptors();
 
-    TargetClassInterceptorMetadata<?> getTargetClassInterceptorMetadata();
+    TargetClassInterceptorMetadata getTargetClassInterceptorMetadata();
 
 }

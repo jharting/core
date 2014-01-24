@@ -19,11 +19,12 @@ package org.jboss.weld.interceptor.reader;
 import java.util.List;
 import java.util.Map;
 
+import org.jboss.weld.interceptor.spi.metadata.InterceptorClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorFactory;
 import org.jboss.weld.interceptor.spi.metadata.MethodMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionType;
 
-public class DefaultInterceptorMetadata<T> extends AbstractInterceptorMetadata<T> {
+public class DefaultInterceptorMetadata<T> extends AbstractInterceptorMetadata implements InterceptorClassMetadata<T> {
 
     private final InterceptorFactory<T> reference;
     private final Class<T> javaClass;

@@ -1,8 +1,8 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2010, Red Hat, Inc. and/or its affiliates, and individual
- * contributors by the @authors tag. See the copyright.txt in the
- * distribution for a full listing of individual contributors.
+ * Copyright 2013, Red Hat, Inc., and individual contributors
+ * by the @authors tag. See the copyright.txt in the distribution for a
+ * full listing of individual contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,29 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jboss.weld.interceptor.spi.metadata;
 
 import org.jboss.weld.interceptor.proxy.InterceptorInvocation;
 import org.jboss.weld.interceptor.spi.model.InterceptionType;
 
-/**
- * This class is parametrized for
- *
- * @author <a href="mailto:mariusb@redhat.com">Marius Bogoevici</a>
- * @param <T> The type (class) of the interceptor bean
- */
-public interface InterceptorMetadata<T> {
-    /**
-     * Returns the class for which this interceptor metadata was created
-     *
-     * @return
-     */
-    InterceptorFactory<T> getInterceptorFactory();
+public interface InterceptorMetadata {
 
     /**
-     * Returns true if the interceptor corresponding to this {@link InterceptorMetadata}
-     * has interceptor methods for the given <code>interceptionType</code>. Else returns false.
+     * Returns true if the interceptor corresponding to this {@link InterceptorClassMetadata} has interceptor methods for the given
+     * <code>interceptionType</code>. Else returns false.
      *
      * @param interceptionType The {@link org.jboss.weld.interceptor.spi.model.InterceptionType}
      * @return
@@ -45,5 +32,4 @@ public interface InterceptorMetadata<T> {
 
     InterceptorInvocation getInterceptorInvocation(Object interceptorInstance, InterceptionType interceptionType);
 
-    Class<T> getJavaClass();
 }

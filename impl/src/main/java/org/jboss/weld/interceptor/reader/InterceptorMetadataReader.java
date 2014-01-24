@@ -7,8 +7,8 @@ import javax.enterprise.inject.spi.Interceptor;
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedType;
 import org.jboss.weld.bean.InterceptorImpl;
 import org.jboss.weld.bean.interceptor.CustomInterceptorMetadata;
+import org.jboss.weld.interceptor.spi.metadata.InterceptorClassMetadata;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorFactory;
-import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.resources.ClassTransformer;
 
@@ -19,40 +19,40 @@ import com.google.common.cache.LoadingCache;
 public class InterceptorMetadataReader {
 
     private final BeanManagerImpl manager;
-    private final LoadingCache<Class<?>, InterceptorMetadata<?>> plainInterceptorMetadataCache;
-    private final LoadingCache<Interceptor<?>, InterceptorMetadata<?>> cdiInterceptorMetadataCache;
+    private final LoadingCache<Class<?>, InterceptorClassMetadata<?>> plainInterceptorMetadataCache;
+    private final LoadingCache<Interceptor<?>, InterceptorClassMetadata<?>> cdiInterceptorMetadataCache;
 
     public InterceptorMetadataReader(final BeanManagerImpl manager) {
         this.manager = manager;
         final CacheBuilder<Object, Object> cacheBuilder = CacheBuilder.newBuilder();
 
-        this.plainInterceptorMetadataCache = cacheBuilder.build(new CacheLoader<Class<?>, InterceptorMetadata<?>>() {
+        this.plainInterceptorMetadataCache = cacheBuilder.build(new CacheLoader<Class<?>, InterceptorClassMetadata<?>>() {
             @SuppressWarnings({ "rawtypes", "unchecked" })
             @Override
-            public InterceptorMetadata<?> load(Class<?> key) throws Exception {
+            public InterceptorClassMetadata<?> load(Class<?> key) throws Exception {
                 EnhancedAnnotatedType<?> type = manager.getServices().get(ClassTransformer.class).getEnhancedAnnotatedType(key, manager.getId());
                 InterceptorFactory<?> factory = PlainInterceptorFactory.of(key, manager);
                 return new DefaultInterceptorMetadata(key, factory, InterceptorMetadataUtils.buildMethodMap(type, false, manager));
             }
         });
 
-        this.cdiInterceptorMetadataCache = cacheBuilder.build(new CacheLoader<Interceptor<?>, InterceptorMetadata<?>>() {
+        this.cdiInterceptorMetadataCache = cacheBuilder.build(new CacheLoader<Interceptor<?>, InterceptorClassMetadata<?>>() {
             @Override
-            public InterceptorMetadata<?> load(Interceptor<?> key) throws Exception {
+            public InterceptorClassMetadata<?> load(Interceptor<?> key) throws Exception {
                 return CustomInterceptorMetadata.of(key);
             }
         });
     }
 
-    public <T> InterceptorMetadata<T> getPlainInterceptorMetadata(Class<T> clazz) {
+    public <T> InterceptorClassMetadata<T> getPlainInterceptorMetadata(Class<T> clazz) {
         return getCastCacheValue(plainInterceptorMetadataCache, clazz);
     }
 
-    public <T> TargetClassInterceptorMetadata<T> getTargetClassInterceptorMetadata(EnhancedAnnotatedType<T> type) {
-        return TargetClassInterceptorMetadata.of(type.getJavaClass(), InterceptorMetadataUtils.buildMethodMap(type, true, manager));
+    public <T> TargetClassInterceptorMetadata getTargetClassInterceptorMetadata(EnhancedAnnotatedType<T> type) {
+        return TargetClassInterceptorMetadata.of(InterceptorMetadataUtils.buildMethodMap(type, true, manager));
     }
 
-    public <T> InterceptorMetadata<T> getCdiInterceptorMetadata(Interceptor<T> interceptor) {
+    public <T> InterceptorClassMetadata<T> getCdiInterceptorMetadata(Interceptor<T> interceptor) {
         if (interceptor instanceof InterceptorImpl) {
             InterceptorImpl<T> interceptorImpl = (InterceptorImpl<T>) interceptor;
             return interceptorImpl.getInterceptorMetadata();

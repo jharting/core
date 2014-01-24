@@ -28,7 +28,7 @@ import javax.enterprise.inject.spi.Interceptor;
 
 import org.jboss.weld.ejb.spi.InterceptorBindings;
 import org.jboss.weld.interceptor.spi.metadata.InterceptorFactory;
-import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
+import org.jboss.weld.interceptor.spi.metadata.InterceptorClassMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionModel;
 import org.jboss.weld.logging.BeanLogger;
 
@@ -48,7 +48,7 @@ public class InterceptorBindingsAdapter implements InterceptorBindings {
 
     @Override
     public Collection<Interceptor<?>> getAllInterceptors() {
-        Set<? extends InterceptorMetadata<?>> interceptorMetadataSet = interceptionModel.getAllInterceptors();
+        Set<? extends InterceptorClassMetadata<?>> interceptorMetadataSet = interceptionModel.getAllInterceptors();
         return extractCdiInterceptors(interceptorMetadataSet);
     }
 
@@ -90,10 +90,10 @@ public class InterceptorBindingsAdapter implements InterceptorBindings {
         return extractCdiInterceptors(interceptionModel.getInterceptors(internalInterceptionType, null));
     }
 
-    private List<Interceptor<?>> extractCdiInterceptors(Collection<? extends InterceptorMetadata<?>> interceptorMetadatas) {
+    private List<Interceptor<?>> extractCdiInterceptors(Collection<? extends InterceptorClassMetadata<?>> interceptorMetadatas) {
         // ignore interceptors which are not CDI interceptors
         ArrayList<Interceptor<?>> interceptors = new ArrayList<Interceptor<?>>();
-        for (InterceptorMetadata<?> interceptorMetadata : interceptorMetadatas) {
+        for (InterceptorClassMetadata<?> interceptorMetadata : interceptorMetadatas) {
             InterceptorFactory<?> interceptorFactory = interceptorMetadata.getInterceptorFactory();
             if (interceptorFactory instanceof CdiInterceptorFactory<?>) {
                 CdiInterceptorFactory<?> cdiInterceptorFactory = (CdiInterceptorFactory<?>) interceptorFactory;

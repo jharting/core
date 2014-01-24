@@ -35,7 +35,7 @@ import javax.enterprise.context.spi.CreationalContext;
 
 import org.jboss.weld.annotated.slim.SlimAnnotatedType;
 import org.jboss.weld.interceptor.reader.InterceptorMetadataReader;
-import org.jboss.weld.interceptor.spi.metadata.InterceptorMetadata;
+import org.jboss.weld.interceptor.spi.metadata.InterceptorClassMetadata;
 import org.jboss.weld.interceptor.spi.model.InterceptionModel;
 import org.jboss.weld.interceptor.spi.model.InterceptionType;
 import org.jboss.weld.manager.BeanManagerImpl;
@@ -82,7 +82,7 @@ public class InterceptionContext implements Serializable {
 
     private static Map<Class<?>, Object> initInterceptorInstanceMap(InterceptionModel<?> model, CreationalContext ctx, BeanManagerImpl manager, Set<InterceptionType> interceptionTypes) {
         Map<Class<?>, Object> interceptorInstances = new HashMap<Class<?>, Object>();
-        for (InterceptorMetadata<?> interceptor : model.getAllInterceptors()) {
+        for (InterceptorClassMetadata<?> interceptor : model.getAllInterceptors()) {
             for (InterceptionType interceptionType : interceptionTypes) {
                 if (interceptor.isEligible(interceptionType)) {
                     interceptorInstances.put(interceptor.getJavaClass(), interceptor.getInterceptorFactory().create(ctx, manager));
@@ -96,7 +96,7 @@ public class InterceptionContext implements Serializable {
         return interceptionModel;
     }
 
-    public <T> T getInterceptorInstance(InterceptorMetadata<T> interceptorMetadata) {
+    public <T> T getInterceptorInstance(InterceptorClassMetadata<T> interceptorMetadata) {
         return cast(interceptorInstances.get(interceptorMetadata.getJavaClass()));
     }
 
