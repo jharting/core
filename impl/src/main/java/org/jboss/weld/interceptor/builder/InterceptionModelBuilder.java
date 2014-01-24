@@ -69,11 +69,6 @@ public class InterceptionModelBuilder {
         return new InterceptionModelImpl(this);
     }
 
-    public MethodInterceptorDescriptor interceptAll() {
-        checkModelNotBuilt();
-        return new MethodInterceptorDescriptor(null, InterceptionType.values());
-    }
-
     public MethodInterceptorDescriptor interceptAroundInvoke(Method method) {
         return intercept(javax.enterprise.inject.spi.InterceptionType.AROUND_INVOKE, method);
     }
@@ -121,18 +116,19 @@ public class InterceptionModelBuilder {
     public final class MethodInterceptorDescriptor {
 
         private final Method method;
+        private final InterceptionType interceptionType;
 
-        private final InterceptionType[] interceptionTypes;
-
-        public MethodInterceptorDescriptor(Method m, InterceptionType... interceptionType) {
+        public MethodInterceptorDescriptor(Method m, InterceptionType interceptionType) {
             this.method = m;
-            this.interceptionTypes = interceptionType;
+            this.interceptionType = interceptionType;
         }
 
         public void with(InterceptorClassMetadata<?>... interceptors) {
-            for (InterceptionType interceptionType : interceptionTypes) {
-                appendInterceptors(interceptionType, method, interceptors);
-            }
+            appendInterceptors(interceptionType, method, interceptors);
+        }
+
+        public void with(List<InterceptorClassMetadata<?>> interceptors) {
+            appendInterceptors(interceptionType, method, interceptors);
         }
     }
 
@@ -162,6 +158,34 @@ public class InterceptionModelBuilder {
             interceptorsList.addAll(Arrays.asList(interceptors));
         }
         allInterceptors.addAll(Arrays.asList(interceptors));
+    }
+
+    private void appendInterceptors(InterceptionType interceptionType, Method method, List<InterceptorClassMetadata<?>> interceptors) {
+
+        checkModelNotBuilt();
+
+        if (interceptionType != InterceptionType.AROUND_CONSTRUCT) {
+            hasExternalNonConstructorInterceptors = true;
+        }
+        if (null == method) {
+            List<InterceptorClassMetadata<?>> interceptorsList = globalInterceptors.get(interceptionType);
+            if (interceptorsList == null) {
+                interceptorsList = new ArrayList<InterceptorClassMetadata<?>>();
+                globalInterceptors.put(interceptionType, interceptorsList);
+            }
+            interceptorsList.addAll(interceptors);
+        } else {
+            if (null == methodBoundInterceptors.get(interceptionType)) {
+                methodBoundInterceptors.put(interceptionType, new HashMap<Method, List<InterceptorClassMetadata<?>>>());
+            }
+            List<InterceptorClassMetadata<?>> interceptorsList = methodBoundInterceptors.get(interceptionType).get(method);
+            if (interceptorsList == null) {
+                interceptorsList = new ArrayList<InterceptorClassMetadata<?>>();
+                methodBoundInterceptors.get(interceptionType).put(method, interceptorsList);
+            }
+            interceptorsList.addAll(interceptors);
+        }
+        allInterceptors.addAll(interceptors);
     }
 
     boolean isHasExternalNonConstructorInterceptors() {
