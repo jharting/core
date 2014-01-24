@@ -39,7 +39,6 @@ import org.jboss.weld.interceptor.spi.model.InterceptionType;
  * @author <a href="mailto:marko.luksa@gmail.com">Marko Luksa</a>
  * @author Martin Kouba
  *
- * @param <T> the intercepted entity class
  */
 public class InterceptionModelBuilder {
 
@@ -57,9 +56,6 @@ public class InterceptionModelBuilder {
 
     private TargetClassInterceptorMetadata targetClassInterceptorMetadata;
 
-    public InterceptionModelBuilder() {
-    }
-
     /**
      * @return an immutable {@link InterceptionModel} instance
      */
@@ -75,46 +71,42 @@ public class InterceptionModelBuilder {
         if (weldInterceptionType.isLifecycleCallback()) {
             throw new IllegalArgumentException("Illegal interception type: " + interceptionType);
         }
-        appendInterceptors(weldInterceptionType, method, interceptors);
+
+        if (null == methodBoundInterceptors.get(weldInterceptionType)) {
+            methodBoundInterceptors.put(weldInterceptionType, new HashMap<Method, List<InterceptorClassMetadata<?>>>());
+        }
+        List<InterceptorClassMetadata<?>> interceptorsList = methodBoundInterceptors.get(weldInterceptionType).get(method);
+        if (interceptorsList == null) {
+            interceptorsList = new ArrayList<InterceptorClassMetadata<?>>();
+            methodBoundInterceptors.get(weldInterceptionType).put(method, interceptorsList);
+        }
+        interceptorsList.addAll(interceptors);
+        intercept(weldInterceptionType, interceptorsList);
     }
 
     public void intercept(javax.enterprise.inject.spi.InterceptionType interceptionType, Collection<InterceptorClassMetadata<?>> interceptors) {
         checkModelNotBuilt();
         InterceptionType weldInterceptionType = InterceptionType.valueOf(interceptionType);
-        appendInterceptors(weldInterceptionType, null, interceptors);
+
+        List<InterceptorClassMetadata<?>> interceptorsList = globalInterceptors.get(weldInterceptionType);
+        if (interceptorsList == null) {
+            interceptorsList = new ArrayList<InterceptorClassMetadata<?>>();
+            globalInterceptors.put(weldInterceptionType, interceptorsList);
+        }
+        interceptorsList.addAll(interceptors);
+        intercept(weldInterceptionType, interceptorsList);
+    }
+
+    private void intercept(InterceptionType interceptionType, Collection<InterceptorClassMetadata<?>> interceptors) {
+        if (interceptionType != InterceptionType.AROUND_CONSTRUCT) {
+            hasExternalNonConstructorInterceptors = true;
+        }
+        allInterceptors.addAll(interceptors);
     }
 
     public void addMethodIgnoringGlobalInterceptors(Method method) {
         checkModelNotBuilt();
         this.methodsIgnoringGlobalInterceptors.add(method);
-    }
-
-    private void appendInterceptors(InterceptionType interceptionType, Method method, Collection<InterceptorClassMetadata<?>> interceptors) {
-
-        checkModelNotBuilt();
-
-        if (interceptionType != InterceptionType.AROUND_CONSTRUCT) {
-            hasExternalNonConstructorInterceptors = true;
-        }
-        if (null == method) {
-            List<InterceptorClassMetadata<?>> interceptorsList = globalInterceptors.get(interceptionType);
-            if (interceptorsList == null) {
-                interceptorsList = new ArrayList<InterceptorClassMetadata<?>>();
-                globalInterceptors.put(interceptionType, interceptorsList);
-            }
-            interceptorsList.addAll(interceptors);
-        } else {
-            if (null == methodBoundInterceptors.get(interceptionType)) {
-                methodBoundInterceptors.put(interceptionType, new HashMap<Method, List<InterceptorClassMetadata<?>>>());
-            }
-            List<InterceptorClassMetadata<?>> interceptorsList = methodBoundInterceptors.get(interceptionType).get(method);
-            if (interceptorsList == null) {
-                interceptorsList = new ArrayList<InterceptorClassMetadata<?>>();
-                methodBoundInterceptors.get(interceptionType).put(method, interceptorsList);
-            }
-            interceptorsList.addAll(interceptors);
-        }
-        allInterceptors.addAll(interceptors);
     }
 
     boolean isHasExternalNonConstructorInterceptors() {
@@ -143,7 +135,7 @@ public class InterceptionModelBuilder {
         }
     }
 
-    public TargetClassInterceptorMetadata getTargetClassInterceptorMetadata() {
+    TargetClassInterceptorMetadata getTargetClassInterceptorMetadata() {
         return targetClassInterceptorMetadata;
     }
 

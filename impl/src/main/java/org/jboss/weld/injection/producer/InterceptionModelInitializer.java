@@ -186,7 +186,7 @@ public class InterceptionModelInitializer<T> {
             if (Reflections.isFinal(method.getJavaMember())) {
                 throw BeanLogger.LOG.finalInterceptedBeanMethodNotAllowed(method, methodBoundInterceptors.get(0).getBeanClass().getName());
             }
-            Method javaMethod = Reflections.<AnnotatedMethod<T>>cast(method).getJavaMember();
+            Method javaMethod = method.getJavaMember();
             builder.intercept(interceptionType, javaMethod, asInterceptorMetadata(methodBoundInterceptors));
         }
     }
