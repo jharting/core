@@ -18,7 +18,7 @@ package org.jboss.weld.interceptor.builder;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -69,14 +69,6 @@ public class InterceptionModelBuilder {
         return new InterceptionModelImpl(this);
     }
 
-    public MethodInterceptorDescriptor interceptAroundInvoke(Method method) {
-        return intercept(javax.enterprise.inject.spi.InterceptionType.AROUND_INVOKE, method);
-    }
-
-    public MethodInterceptorDescriptor interceptAroundTimeout(Method method) {
-        return intercept(javax.enterprise.inject.spi.InterceptionType.AROUND_TIMEOUT, method);
-    }
-
     public MethodInterceptorDescriptor intercept(javax.enterprise.inject.spi.InterceptionType interceptionType, Method method) {
         checkModelNotBuilt();
         InterceptionType weldInterceptionType = InterceptionType.valueOf(interceptionType);
@@ -84,22 +76,6 @@ public class InterceptionModelBuilder {
             throw new IllegalArgumentException("Illegal interception type: " + interceptionType);
         }
         return new MethodInterceptorDescriptor(method, weldInterceptionType);
-    }
-
-    public MethodInterceptorDescriptor interceptPostConstruct() {
-        return intercept(javax.enterprise.inject.spi.InterceptionType.POST_CONSTRUCT);
-    }
-
-    public MethodInterceptorDescriptor interceptPreDestroy() {
-        return intercept(javax.enterprise.inject.spi.InterceptionType.PRE_DESTROY);
-    }
-
-    public MethodInterceptorDescriptor interceptPrePassivate() {
-        return intercept(javax.enterprise.inject.spi.InterceptionType.PRE_PASSIVATE);
-    }
-
-    public MethodInterceptorDescriptor interceptPostActivate() {
-        return intercept(javax.enterprise.inject.spi.InterceptionType.POST_ACTIVATE);
     }
 
     public MethodInterceptorDescriptor intercept(javax.enterprise.inject.spi.InterceptionType interceptionType) {
@@ -123,44 +99,12 @@ public class InterceptionModelBuilder {
             this.interceptionType = interceptionType;
         }
 
-        public void with(InterceptorClassMetadata<?>... interceptors) {
-            appendInterceptors(interceptionType, method, interceptors);
-        }
-
-        public void with(List<InterceptorClassMetadata<?>> interceptors) {
+        public void with(Collection<InterceptorClassMetadata<?>> interceptors) {
             appendInterceptors(interceptionType, method, interceptors);
         }
     }
 
-    private void appendInterceptors(InterceptionType interceptionType, Method method, InterceptorClassMetadata<?>... interceptors) {
-
-        checkModelNotBuilt();
-
-        if (interceptionType != InterceptionType.AROUND_CONSTRUCT) {
-            hasExternalNonConstructorInterceptors = true;
-        }
-        if (null == method) {
-            List<InterceptorClassMetadata<?>> interceptorsList = globalInterceptors.get(interceptionType);
-            if (interceptorsList == null) {
-                interceptorsList = new ArrayList<InterceptorClassMetadata<?>>();
-                globalInterceptors.put(interceptionType, interceptorsList);
-            }
-            interceptorsList.addAll(Arrays.asList(interceptors));
-        } else {
-            if (null == methodBoundInterceptors.get(interceptionType)) {
-                methodBoundInterceptors.put(interceptionType, new HashMap<Method, List<InterceptorClassMetadata<?>>>());
-            }
-            List<InterceptorClassMetadata<?>> interceptorsList = methodBoundInterceptors.get(interceptionType).get(method);
-            if (interceptorsList == null) {
-                interceptorsList = new ArrayList<InterceptorClassMetadata<?>>();
-                methodBoundInterceptors.get(interceptionType).put(method, interceptorsList);
-            }
-            interceptorsList.addAll(Arrays.asList(interceptors));
-        }
-        allInterceptors.addAll(Arrays.asList(interceptors));
-    }
-
-    private void appendInterceptors(InterceptionType interceptionType, Method method, List<InterceptorClassMetadata<?>> interceptors) {
+    private void appendInterceptors(InterceptionType interceptionType, Method method, Collection<InterceptorClassMetadata<?>> interceptors) {
 
         checkModelNotBuilt();
 
