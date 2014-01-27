@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import javax.enterprise.inject.spi.ProcessAnnotatedType;
+import javax.inject.Inject;
 
 import org.jboss.weld.annotated.slim.SlimAnnotatedType;
 import org.jboss.weld.annotated.slim.SlimAnnotatedTypeContext;
@@ -81,7 +82,11 @@ public class FastAnnotatedTypeLoader extends AnnotatedTypeLoader {
 
             // lastly, check if this class fulfills CDI managed bean requirements - if it does, add the class
             if (Beans.isTypeManagedBeanOrDecoratorOrInterceptor(classFileInfo)) {
-                return createContext(className, classFileInfo, observerMethods, bdaId);
+                if (classFileInfo.containsAnnotation(Inject.class)) {
+                    return createContext(className, classFileInfo, observerMethods, bdaId);
+                } else {
+                    loadClass(className);
+                }
             }
             return null;
         } catch (ClassFileInfoException e) {
