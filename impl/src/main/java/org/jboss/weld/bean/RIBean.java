@@ -25,6 +25,7 @@ import javax.enterprise.inject.spi.PassivationCapable;
 import org.jboss.weld.bootstrap.BeanDeployerEnvironment;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.resolution.QualifierInstance;
+import org.jboss.weld.resources.SharedObjectCache;
 import org.jboss.weld.serialization.spi.BeanIdentifier;
 
 /**
@@ -49,6 +50,7 @@ public abstract class RIBean<T> extends CommonBean<T> implements PassivationCapa
 
     public abstract Class<T> getType();
 
+    @Override
     public Class<?> getBeanClass() {
         return getType();
     }
@@ -103,7 +105,7 @@ public abstract class RIBean<T> extends CommonBean<T> implements PassivationCapa
 
     public Set<QualifierInstance> getQualifierInstances() {
         if (qualifiers == null) {
-            qualifiers = QualifierInstance.qualifiers(beanManager, getQualifiers());
+            qualifiers = beanManager.getServices().get(SharedObjectCache.class).getSharedSet(QualifierInstance.qualifiers(beanManager, getQualifiers()));
         }
         return qualifiers;
     }
