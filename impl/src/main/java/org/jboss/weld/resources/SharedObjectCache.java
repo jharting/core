@@ -48,7 +48,7 @@ public class SharedObjectCache implements BootstrapService {
     private final LoadingCache<Set<?>, Set<?>> sharedSets = CacheBuilder.newBuilder().build(new CacheLoader<Set<?>, Set<?>>() {
         @Override
         public Set<?> load(Set<?> from) {
-            return WeldCollections.immutableSet(from);
+            return WeldCollections.immutableGuavaSet(from);
         }
     });
 
