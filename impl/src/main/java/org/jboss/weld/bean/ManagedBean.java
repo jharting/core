@@ -223,11 +223,11 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
 
     @Override
     protected void specialize() {
-        Set<? extends AbstractBean<?, ?>> specializedBeans = getSpecializedBeans();
+        Set<? extends AbstractBean<?, ?, ?>> specializedBeans = getSpecializedBeans();
         if (specializedBeans.isEmpty()) {
             throw BeanLogger.LOG.specializingBeanMustExtendABean(this);
         }
-        for (AbstractBean<?, ?> specializedBean : specializedBeans) {
+        for (AbstractBean<?, ?, ?> specializedBean : specializedBeans) {
             if (!(specializedBean instanceof ManagedBean<?>)) {
                 throw BeanLogger.LOG.specializingBeanMustExtendABean(this);
             }

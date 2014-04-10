@@ -76,11 +76,11 @@ public class SpecializationAndEnablementRegistry extends AbstractBootstrapServic
         }
     }
 
-    private class BeansSpecializedByBean extends CacheLoader<Bean<?>, Set<? extends AbstractBean<?, ?>>> {
+    private class BeansSpecializedByBean extends CacheLoader<Bean<?>, Set<? extends AbstractBean<?, ?, ?>>> {
 
         @Override
-        public Set<? extends AbstractBean<?, ?>> load(Bean<?> specializingBean) {
-            Set<? extends AbstractBean<?, ?>> result = null;
+        public Set<? extends AbstractBean<?, ?, ?>> load(Bean<?> specializingBean) {
+            Set<? extends AbstractBean<?, ?, ?>> result = null;
             if (specializingBean instanceof AbstractClassBean<?>) {
                 result = apply((AbstractClassBean<?>) specializingBean);
             }
@@ -112,9 +112,9 @@ public class SpecializationAndEnablementRegistry extends AbstractBootstrapServic
     private final LoadingCache<BeanManagerImpl, SpecializedBeanResolver> specializedBeanResolvers;
     private final Map<BeanManagerImpl, BeanDeployerEnvironment> environmentByManager = new ConcurrentHashMap<BeanManagerImpl, BeanDeployerEnvironment>();
     // maps specializing beans to the set of specialized beans
-    private final LoadingCache<Bean<?>, Set<? extends AbstractBean<?, ?>>> specializedBeans;
+    private final LoadingCache<Bean<?>, Set<? extends AbstractBean<?, ?, ?>>> specializedBeans;
     // fast lookup structure that allows us to figure out if a given bean is specialized in any of the bean deployments
-    private final Multiset<AbstractBean<?, ?>> specializedBeansSet = ConcurrentHashMultiset.create();
+    private final Multiset<AbstractBean<?, ?, ?>> specializedBeansSet = ConcurrentHashMultiset.create();
 
     public SpecializationAndEnablementRegistry() {
         CacheBuilder<Object, Object> cacheBuilder = CacheBuilder.newBuilder();
@@ -125,7 +125,7 @@ public class SpecializationAndEnablementRegistry extends AbstractBootstrapServic
     /**
      * Returns a set of beans specialized by this bean. An empty set is returned if this bean does not specialize another beans.
      */
-    public Set<? extends AbstractBean<?, ?>> resolveSpecializedBeans(Bean<?> specializingBean) {
+    public Set<? extends AbstractBean<?, ?, ?>> resolveSpecializedBeans(Bean<?> specializingBean) {
         if (specializingBean instanceof AbstractClassBean<?>) {
             AbstractClassBean<?> abstractClassBean = (AbstractClassBean<?>) specializingBean;
             if (abstractClassBean.isSpecializing()) {
@@ -142,10 +142,10 @@ public class SpecializationAndEnablementRegistry extends AbstractBootstrapServic
     }
 
     public void vetoSpecializingBean(Bean<?> bean) {
-        Set<? extends AbstractBean<?, ?>> noLongerSpecializedBeans = specializedBeans.getIfPresent(bean);
+        Set<? extends AbstractBean<?, ?, ?>> noLongerSpecializedBeans = specializedBeans.getIfPresent(bean);
         if (noLongerSpecializedBeans != null) {
             specializedBeans.invalidate(bean);
-            for (AbstractBean<?, ?> noLongerSpecializedBean : noLongerSpecializedBeans) {
+            for (AbstractBean<?, ?, ?> noLongerSpecializedBean : noLongerSpecializedBeans) {
                 specializedBeansSet.remove(noLongerSpecializedBean);
             }
         }
@@ -199,11 +199,11 @@ public class SpecializationAndEnablementRegistry extends AbstractBootstrapServic
         specializedBeansSet.clear();
     }
 
-    public Set<AbstractBean<?, ?>> getBeansSpecializedInAnyDeployment() {
+    public Set<AbstractBean<?, ?, ?>> getBeansSpecializedInAnyDeployment() {
         return specializedBeansSet.elementSet();
     }
 
-    public Multiset<AbstractBean<?, ?>> getBeansSpecializedInAnyDeploymentAsMultiset() {
+    public Multiset<AbstractBean<?, ?, ?>> getBeansSpecializedInAnyDeploymentAsMultiset() {
         return Multisets.unmodifiableMultiset(specializedBeansSet);
     }
 }

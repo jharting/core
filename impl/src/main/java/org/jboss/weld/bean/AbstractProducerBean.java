@@ -29,6 +29,7 @@ import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.AnnotatedMember;
 import javax.enterprise.inject.spi.BeanAttributes;
 import javax.enterprise.inject.spi.InjectionPoint;
+import javax.enterprise.inject.spi.Producer;
 
 import org.jboss.weld.annotated.enhanced.EnhancedAnnotatedMember;
 import org.jboss.weld.bootstrap.BeanDeployerEnvironment;
@@ -52,7 +53,7 @@ import com.google.common.base.Defaults;
  * @author David Allen
  * @author Jozef Hartinger
  */
-public abstract class AbstractProducerBean<X, T, S extends Member> extends AbstractBean<T, S> {
+public abstract class AbstractProducerBean<X, T, S extends Member> extends AbstractBean<T, S, Producer<T>> {
 
     private final AbstractClassBean<X> declaringBean;
 
@@ -179,12 +180,14 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
      *
      * @returns The instance
      */
+    @Override
     public T create(final CreationalContext<T> creationalContext) {
         T instance = getProducer().produce(creationalContext);
         instance = checkReturnValue(instance);
         return instance;
     }
 
+    @Override
     public void destroy(T instance, CreationalContext<T> creationalContext) {
         try {
             getProducer().dispose(instance);

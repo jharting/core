@@ -28,7 +28,7 @@ import org.jboss.weld.manager.BeanManagerImpl;
 
 public abstract class ProcessBeanImpl<X> extends AbstractDefinitionContainerEvent implements ProcessBean<X> {
 
-    protected static <X> void fire(BeanManagerImpl beanManager, AbstractBean<X, ?> bean) {
+    protected static <X> void fire(BeanManagerImpl beanManager, AbstractBean<X, ?, ?> bean) {
         fire(beanManager, bean, bean.getAnnotated());
     }
 
@@ -52,11 +52,13 @@ public abstract class ProcessBeanImpl<X> extends AbstractDefinitionContainerEven
         this.annotated = annotated;
     }
 
+    @Override
     public Annotated getAnnotated() {
         checkWithinObserverNotification();
         return annotated;
     }
 
+    @Override
     public Bean<X> getBean() {
         checkWithinObserverNotification();
         return bean;

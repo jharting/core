@@ -322,7 +322,7 @@ public class AbstractBeanDeployer<E extends BeanDeployerEnvironment> {
         getEnvironment().addExtension(bean);
     }
 
-    protected <T, S> boolean fireProcessBeanAttributes(AbstractBean<T, S> bean) {
+    protected <T, S> boolean fireProcessBeanAttributes(AbstractBean<T, S, ?> bean) {
         if (!specializationAndEnablementRegistry.isCandidateForLifecycleEvent(bean)) {
             return false;
         }

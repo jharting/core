@@ -128,11 +128,11 @@ public class SessionBean<T> extends AbstractClassBean<T> {
 
     @Override
     protected void specialize() {
-        Set<? extends AbstractBean<?, ?>> specializedBeans = getSpecializedBeans();
+        Set<? extends AbstractBean<?, ?, ?>> specializedBeans = getSpecializedBeans();
         if (specializedBeans.isEmpty()) {
             throw BeanLogger.LOG.specializingEnterpriseBeanMustExtendAnEnterpriseBean(this);
         }
-        for (AbstractBean<?, ?> specializedBean : specializedBeans) {
+        for (AbstractBean<?, ?, ?> specializedBean : specializedBeans) {
             if (!(specializedBean instanceof SessionBean<?>)) {
                 throw BeanLogger.LOG.specializingEnterpriseBeanMustExtendAnEnterpriseBean(this);
             }

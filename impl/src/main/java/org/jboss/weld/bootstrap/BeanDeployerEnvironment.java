@@ -239,7 +239,7 @@ public class BeanDeployerEnvironment {
         beans.add(bean);
     }
 
-    protected void addAbstractBean(AbstractBean<?, ?> bean) {
+    protected void addAbstractBean(AbstractBean<?, ?, ?> bean) {
         beans.add(bean);
     }
 
@@ -261,7 +261,7 @@ public class BeanDeployerEnvironment {
         addNewBeansFromInjectionPoints(observerInitializer.getObserver().getInjectionPoints());
     }
 
-    public void addNewBeansFromInjectionPoints(AbstractBean<?, ?> bean) {
+    public void addNewBeansFromInjectionPoints(AbstractBean<?, ?, ?> bean) {
         addNewBeansFromInjectionPoints(bean.getInjectionPoints());
     }
 
@@ -396,7 +396,7 @@ public class BeanDeployerEnvironment {
         }
     }
 
-    public void vetoBean(AbstractBean<?, ?> bean) {
+    public void vetoBean(AbstractBean<?, ?, ?> bean) {
         beans.remove(bean);
         if (bean instanceof AbstractClassBean<?>) {
             getCacheValue(classBeanMap, bean.getBeanClass()).remove(bean);

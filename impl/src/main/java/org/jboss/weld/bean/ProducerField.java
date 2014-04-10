@@ -130,7 +130,7 @@ public class ProducerField<X, T> extends AbstractProducerBean<X, T, Field> {
     }
 
     @Override
-    public Set<AbstractBean<?, ?>> getSpecializedBeans() {
+    public Set<AbstractBean<?, ?, ?>> getSpecializedBeans() {
         throw new UnsupportedOperationException("Producer field may not specialize other beans " + this);
     }
 }

@@ -500,7 +500,7 @@ public class Validator implements Service {
 
     public void validateSpecialization(BeanManagerImpl manager) {
         SpecializationAndEnablementRegistry registry = manager.getServices().get(SpecializationAndEnablementRegistry.class);
-        for (Entry<AbstractBean<?, ?>> entry : registry.getBeansSpecializedInAnyDeploymentAsMultiset().entrySet()) {
+        for (Entry<AbstractBean<?, ?, ?>> entry : registry.getBeansSpecializedInAnyDeploymentAsMultiset().entrySet()) {
             if (entry.getCount() > 1) {
                 throw ValidatorLogger.LOG.beanSpecializedTooManyTimes(entry.getElement());
             }

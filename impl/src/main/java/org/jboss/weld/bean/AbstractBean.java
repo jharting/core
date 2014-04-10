@@ -46,14 +46,14 @@ import org.jboss.weld.serialization.spi.BeanIdentifier;
  * @author Ales Justin
  * @author Jozef Hartinger
  */
-public abstract class AbstractBean<T, S> extends RIBean<T> {
+public abstract class AbstractBean<T, S, P extends Producer<T>> extends RIBean<T> {
 
     protected Class<T> type;
 
     private boolean preInitialized;
     private boolean proxyRequired;
 
-    private Producer<T> producer;
+    private P producer;
 
     /**
      * Constructor
@@ -112,7 +112,7 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
         if (isSpecializing()) {
             boolean isNameDefined = getAnnotated().isAnnotationPresent(Named.class);
             String previousSpecializedBeanName = null;
-            for (AbstractBean<?, ?> specializedBean : getSpecializedBeans()) {
+            for (AbstractBean<?, ?, ?> specializedBean : getSpecializedBeans()) {
                 String name = specializedBean.getName();
                 if (previousSpecializedBeanName != null && name != null && !previousSpecializedBeanName.equals(specializedBean.getName())) {
                     // there may be multiple beans specialized by this bean - make sure they all share the same name
@@ -137,7 +137,7 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
         qualifiers.addAll(attributes().getQualifiers());
         // override name
         String name = attributes().getName();
-        for (AbstractBean<?, ?> specializedBean : getSpecializedBeans()) {
+        for (AbstractBean<?, ?, ?> specializedBean : getSpecializedBeans()) {
             qualifiers.addAll(specializedBean.getQualifiers());
             if (specializedBean.getName() != null) {
                 name = specializedBean.getName();
@@ -170,7 +170,7 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
      */
     public abstract EnhancedAnnotated<T, S> getEnhancedAnnotated();
 
-    protected Set<? extends AbstractBean<?, ?>> getSpecializedBeans() {
+    protected Set<? extends AbstractBean<?, ?, ?>> getSpecializedBeans() {
         return getBeanManager().getServices().get(SpecializationAndEnablementRegistry.class).resolveSpecializedBeans(this);
     }
 
@@ -198,14 +198,14 @@ public abstract class AbstractBean<T, S> extends RIBean<T> {
         return proxyRequired;
     }
 
-    public Producer<T> getProducer() {
+    public P getProducer() {
         return producer;
     }
 
     /**
      * Set a Producer for this bean. This operation is *not* threadsafe, and should not be called outside bootstrap.
      */
-    public void setProducer(Producer<T> producer) {
+    public void setProducer(P producer) {
         this.producer = producer;
     }
 }

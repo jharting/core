@@ -250,13 +250,13 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
         searchForNewBeanDeclarations(getEnvironment().getInterceptors());
     }
 
-    private void preInitializeBeans(Iterable<? extends AbstractBean<?, ?>> beans) {
-        for (AbstractBean<?, ?> bean : beans) {
+    private void preInitializeBeans(Iterable<? extends AbstractBean<?, ?, ?>> beans) {
+        for (AbstractBean<?, ?, ?> bean : beans) {
             bean.preInitialize();
         }
     }
 
-    protected void processBeanAttributes(Iterable<? extends AbstractBean<?, ?>> beans) {
+    protected void processBeanAttributes(Iterable<? extends AbstractBean<?, ?, ?>> beans) {
         if (!containerLifecycleEvents.isProcessBeanAttributesObserved()) {
             return;
         }
@@ -264,9 +264,9 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
             return; // exit recursion
         }
 
-        Collection<AbstractBean<?, ?>> vetoedBeans = new HashSet<AbstractBean<?, ?>>();
-        Collection<AbstractBean<?, ?>> previouslySpecializedBeans = new HashSet<AbstractBean<?, ?>>();
-        for (AbstractBean<?, ?> bean : beans) {
+        Collection<AbstractBean<?, ?, ?>> vetoedBeans = new HashSet<AbstractBean<?, ?, ?>>();
+        Collection<AbstractBean<?, ?, ?>> previouslySpecializedBeans = new HashSet<AbstractBean<?, ?, ?>>();
+        for (AbstractBean<?, ?, ?> bean : beans) {
             // fire ProcessBeanAttributes for class beans
             boolean vetoed = fireProcessBeanAttributes(bean);
             if (vetoed) {
@@ -275,7 +275,7 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
         }
 
         // remove vetoed class beans
-        for (AbstractBean<?, ?> bean : vetoedBeans) {
+        for (AbstractBean<?, ?, ?> bean : vetoedBeans) {
             if (bean.isSpecializing()) {
                 previouslySpecializedBeans.addAll(specializationAndEnablementRegistry.resolveSpecializedBeans(bean));
                 specializationAndEnablementRegistry.vetoSpecializingBean(bean);
@@ -286,8 +286,8 @@ public class BeanDeployer extends AbstractBeanDeployer<BeanDeployerEnvironment> 
         processBeanAttributes(previouslySpecializedBeans);
     }
 
-    protected void searchForNewBeanDeclarations(Iterable<? extends AbstractBean<?, ?>> beans) {
-        for (AbstractBean<?, ?> bean : beans) {
+    protected void searchForNewBeanDeclarations(Iterable<? extends AbstractBean<?, ?, ?>> beans) {
+        for (AbstractBean<?, ?, ?> bean : beans) {
             getEnvironment().addNewBeansFromInjectionPoints(bean);
         }
     }
