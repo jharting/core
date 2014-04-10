@@ -57,10 +57,6 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
 
     private final AbstractClassBean<X> declaringBean;
 
-    // Passivation flags
-    private boolean passivationCapableBean;
-    private boolean passivationCapableDependency;
-
     /**
      * Constructor
      *
@@ -98,28 +94,16 @@ public abstract class AbstractProducerBean<X, T, S extends Member> extends Abstr
     public void internalInitialize(BeanDeployerEnvironment environment) {
         getDeclaringBean().initialize(environment);
         super.internalInitialize(environment);
-        initPassivationCapable();
-    }
-
-    private void initPassivationCapable() {
-        this.passivationCapableBean = !Reflections.isFinal(getEnhancedAnnotated().getJavaClass()) || Reflections.isSerializable(getEnhancedAnnotated().getJavaClass());
-        if (isNormalScoped()) {
-            this.passivationCapableDependency = true;
-        } else if (getScope().equals(Dependent.class) && passivationCapableBean) {
-            this.passivationCapableDependency = true;
-        } else {
-            this.passivationCapableDependency = false;
-        }
     }
 
     @Override
     public boolean isPassivationCapableBean() {
-        return passivationCapableBean;
+        return !Reflections.isFinal(getEnhancedAnnotated().getJavaClass()) || Reflections.isSerializable(getEnhancedAnnotated().getJavaClass());
     }
 
     @Override
     public boolean isPassivationCapableDependency() {
-        return passivationCapableDependency;
+        return isNormalScoped() || (getScope().equals(Dependent.class) && isPassivationCapableBean());
     }
 
     @Override
