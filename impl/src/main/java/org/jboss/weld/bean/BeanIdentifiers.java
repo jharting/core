@@ -18,6 +18,13 @@ package org.jboss.weld.bean;
 
 import static org.jboss.weld.serialization.spi.BeanIdentifier.BEAN_ID_SEPARATOR;
 
+import java.lang.annotation.Annotation;
+import java.util.Set;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.ConversationScoped;
+import javax.enterprise.context.Dependent;
+import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.spi.BeanAttributes;
 import javax.enterprise.inject.spi.Extension;
 
@@ -31,7 +38,15 @@ import org.jboss.weld.util.AnnotatedTypes;
 import org.jboss.weld.util.Beans;
 import org.jboss.weld.util.reflection.DeclaredMemberIndexer;
 
+import com.google.common.collect.ImmutableSet;
+
 public class BeanIdentifiers {
+
+    private static final Set<Class<? extends Annotation>> COMPOSITE_IDENTIFIER_SCOPES = ImmutableSet.of(Dependent.class, ApplicationScoped.class, SessionScoped.class, ConversationScoped.class);
+
+    public static boolean isCompositeIdentifierSupported(Class<? extends Annotation> scope) {
+        return COMPOSITE_IDENTIFIER_SCOPES.contains(scope);
+    }
 
     private BeanIdentifiers() {
     }

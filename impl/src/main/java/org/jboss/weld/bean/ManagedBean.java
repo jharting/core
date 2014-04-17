@@ -20,8 +20,6 @@ import static org.jboss.weld.bean.BeanIdentifiers.forManagedBean;
 
 import java.util.Set;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.Dependent;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.Bean;
@@ -72,7 +70,7 @@ public class ManagedBean<T> extends AbstractClassBean<T> {
     }
 
     private static BeanIdentifier createId(BeanAttributes<?> attributes, EnhancedAnnotatedType<?> clazz) {
-        if (Dependent.class.equals(attributes.getScope()) || ApplicationScoped.class.equals(attributes.getScope())) {
+        if (BeanIdentifiers.isCompositeIdentifierSupported(attributes.getScope())) {
             return new ManagedBeanIdentifier(clazz.slim().getIdentifier());
         } else {
             return new StringBeanIdentifier(forManagedBean(clazz));

@@ -19,8 +19,6 @@ package org.jboss.weld.bean;
 import java.lang.reflect.Method;
 import java.util.Set;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.spi.AnnotatedMethod;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanAttributes;
@@ -61,7 +59,7 @@ public class ProducerMethod<X, T> extends AbstractProducerBean<X, T, Method> {
     }
 
     private static BeanIdentifier createId(BeanAttributes<?> attributes, EnhancedAnnotatedMethod<?, ?> method, AbstractClassBean<?> declaringBean) {
-        if (Dependent.class.equals(attributes.getScope()) || ApplicationScoped.class.equals(attributes.getScope())) {
+        if (BeanIdentifiers.isCompositeIdentifierSupported(attributes.getScope())) {
             return new ProducerMethodIdentifier(method, declaringBean);
         } else {
             return new StringBeanIdentifier(BeanIdentifiers.forProducerMethod(method, declaringBean));
