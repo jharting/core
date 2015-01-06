@@ -26,3 +26,5 @@ Then, run the upgrade script
 > $ mvn package -Pupdate-jboss-as -f jboss-as/pom.xml -Dweld.update.version=${weld.version}
 
 where ${weld.version} is the version of Weld you want to use
+
+fo
