@@ -44,7 +44,6 @@ import org.jboss.weld.bean.builtin.ee.HttpServletRequestBean;
 import org.jboss.weld.bean.builtin.ee.HttpSessionBean;
 import org.jboss.weld.bean.builtin.ee.PrincipalBean;
 import org.jboss.weld.bean.builtin.ee.ServletContextBean;
-import org.jboss.weld.bean.builtin.ee.UserTransactionBean;
 import org.jboss.weld.bootstrap.api.Environment;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
 import org.jboss.weld.bootstrap.api.helpers.SimpleServiceRegistry;
@@ -65,13 +64,13 @@ import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.manager.api.ExecutorServices;
 import org.jboss.weld.metadata.FilterPredicate;
 import org.jboss.weld.metadata.ScanningPredicate;
+import org.jboss.weld.module.WeldExtensionRegistrar;
 import org.jboss.weld.persistence.PersistenceApiAbstraction;
 import org.jboss.weld.resources.DefaultResourceLoader;
 import org.jboss.weld.resources.WeldClassLoaderResourceLoader;
 import org.jboss.weld.resources.spi.ResourceLoader;
 import org.jboss.weld.security.spi.SecurityServices;
 import org.jboss.weld.servlet.ServletApiAbstraction;
-import org.jboss.weld.transaction.spi.TransactionServices;
 import org.jboss.weld.util.AnnotationApiAbstraction;
 import org.jboss.weld.util.JtaApiAbstraction;
 import org.jboss.weld.util.collections.WeldCollections;
@@ -223,6 +222,7 @@ public class BeanDeployment {
     }
 
     public void createBeans(Environment environment) {
+        WeldExtensionRegistrar.registerBeans(beanManager.getServices(), beanManager, environment, getBeanDeployer());
         beanDeployer.addBuiltInBean(new InjectionPointBean(beanManager));
         beanDeployer.addBuiltInBean(new EventMetadataBean(beanManager));
         beanDeployer.addBuiltInBean(new EventBean(beanManager));
@@ -237,9 +237,6 @@ public class BeanDeployment {
             beanDeployer.addBuiltInBean(new HttpServletRequestBean(beanManager));
             beanDeployer.addBuiltInBean(new HttpSessionBean(beanManager));
             beanDeployer.addBuiltInBean(new ServletContextBean(beanManager));
-        }
-        if (beanManager.getServices().contains(TransactionServices.class)) {
-            beanDeployer.addBuiltInBean(new UserTransactionBean(beanManager));
         }
         if (beanManager.getServices().contains(SecurityServices.class)) {
             beanDeployer.addBuiltInBean(new PrincipalBean(beanManager));
