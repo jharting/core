@@ -16,12 +16,16 @@
  */
 package org.jboss.weld.module;
 
+import javax.enterprise.context.spi.Context;
+
 import org.jboss.weld.bean.builtin.AbstractBuiltInBean;
 import org.jboss.weld.bootstrap.BeanDeployer;
+import org.jboss.weld.bootstrap.ContextHolder;
 import org.jboss.weld.bootstrap.api.Environment;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
 import org.jboss.weld.bootstrap.spi.Metadata;
 import org.jboss.weld.manager.BeanManagerImpl;
+import org.jboss.weld.module.WeldModule.ContextRegistrationContext;
 import org.jboss.weld.module.WeldModule.PreBeanRegistrationContext;
 import org.jboss.weld.module.WeldModule.RegistrationContext;
 import org.jboss.weld.util.ServiceLoader;
@@ -31,7 +35,8 @@ public class WeldExtensionRegistrar {
     private WeldExtensionRegistrar() {
     }
 
-    public static void register(final ServiceRegistry services) {
+    public static void register(final ServiceRegistry services, final String contextId) {
+        services.add(WeldModules.class, new WeldModules());
         final RegistrationContext ctx = new RegistrationContext() {
             @Override
             public ObserverNotifierFactory getObserverNotifierFactory() {
@@ -45,9 +50,36 @@ public class WeldExtensionRegistrar {
             public ServiceRegistry getServices() {
                 return services;
             }
+            @Override
+            public String getContextId() {
+                return contextId;
+            }
         };
         for (Metadata<WeldModule> extension : ServiceLoader.load(WeldModule.class, WeldModule.class.getClassLoader())) {
             extension.getValue().register(ctx);
+        }
+    }
+
+    public static void postCreateContexts(final ServiceRegistry services, final String contextId) {
+        ContextRegistrationContext ctx = new ContextRegistrationContext() {
+
+            @Override
+            public ServiceRegistry getServices() {
+                return services;
+            }
+
+            @Override
+            public String getContextId() {
+                return contextId;
+            }
+
+            @Override
+            public void addContext(ContextHolder<? extends Context> context) {
+                services.get(WeldModules.class).addContext(context);
+            }
+        };
+        for (Metadata<WeldModule> extension : ServiceLoader.load(WeldModule.class, WeldModule.class.getClassLoader())) {
+            extension.getValue().postCreateContexts(ctx);
         }
     }
 

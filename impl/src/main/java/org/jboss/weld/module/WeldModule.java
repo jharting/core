@@ -16,7 +16,10 @@
  */
 package org.jboss.weld.module;
 
+import javax.enterprise.context.spi.Context;
+
 import org.jboss.weld.bean.builtin.AbstractBuiltInBean;
+import org.jboss.weld.bootstrap.ContextHolder;
 import org.jboss.weld.bootstrap.api.Environment;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
 import org.jboss.weld.manager.BeanManagerImpl;
@@ -30,9 +33,19 @@ public interface WeldModule {
 
     interface RegistrationContext {
 
+        String getContextId();
         ObserverNotifierFactory getObserverNotifierFactory();
         void setObserverNotifierFactory(ObserverNotifierFactory factory);
         ServiceRegistry getServices();
+    }
+
+    default void postCreateContexts(ContextRegistrationContext ctx) {
+    }
+
+    interface ContextRegistrationContext {
+        String getContextId();
+        ServiceRegistry getServices();
+        void addContext(ContextHolder<? extends Context> context);
     }
 
     default void preDeployBeans(PreBeanRegistrationContext ctx) {

@@ -14,32 +14,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.weld.event;
+package org.jboss.weld.module;
 
-import java.io.Serializable;
+import java.util.LinkedList;
+import java.util.List;
 
-import javax.enterprise.context.Destroyed;
-import javax.enterprise.context.Initialized;
+import javax.enterprise.context.spi.Context;
 
-/**
- * General event payload for {@link Initialized} / {@link Destroyed} events. A more specific payload is necessary
- * for certain contexts (e.g. {@link javax.servlet.http.HttpServletRequest})
- *
- * @author Jozef Hartinger
- *
- */
-public class ContextEvent implements Serializable {
+import org.jboss.weld.bootstrap.ContextHolder;
+import org.jboss.weld.bootstrap.api.BootstrapService;
 
-    private static final long serialVersionUID = -1197351184144276424L;
+public class WeldModules implements BootstrapService {
 
-    private final String message;
+    private final List<ContextHolder<? extends Context>> additionalContexts = new LinkedList<>();
 
-    public ContextEvent(String message) {
-        this.message = message;
+    void addContext(ContextHolder<? extends Context> context) {
+        additionalContexts.add(context);
+    }
+
+    public List<ContextHolder<? extends Context>> getAdditionalContexts() {
+        return additionalContexts;
     }
 
     @Override
-    public String toString() {
-        return message;
+    public void cleanup() {
     }
+
+    @Override
+    public void cleanupAfterBoot() {
+        additionalContexts.clear();
+    }
+
 }

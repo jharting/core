@@ -86,14 +86,6 @@ import org.jboss.weld.context.bound.BoundSessionContextImpl;
 import org.jboss.weld.context.ejb.EjbLiteral;
 import org.jboss.weld.context.ejb.EjbRequestContext;
 import org.jboss.weld.context.ejb.EjbRequestContextImpl;
-import org.jboss.weld.context.http.HttpConversationContext;
-import org.jboss.weld.context.http.HttpLiteral;
-import org.jboss.weld.context.http.HttpRequestContext;
-import org.jboss.weld.context.http.HttpRequestContextImpl;
-import org.jboss.weld.context.http.HttpSessionContext;
-import org.jboss.weld.context.http.HttpSessionContextImpl;
-import org.jboss.weld.context.http.HttpSessionDestructionContext;
-import org.jboss.weld.context.http.LazyHttpConversationContextImpl;
 import org.jboss.weld.context.unbound.ApplicationContextImpl;
 import org.jboss.weld.context.unbound.DependentContextImpl;
 import org.jboss.weld.context.unbound.RequestContextImpl;
@@ -116,6 +108,7 @@ import org.jboss.weld.metadata.TypeStore;
 import org.jboss.weld.metadata.cache.MetaAnnotationStore;
 import org.jboss.weld.module.ObserverNotifierFactory;
 import org.jboss.weld.module.WeldExtensionRegistrar;
+import org.jboss.weld.module.WeldModules;
 import org.jboss.weld.resources.ClassTransformer;
 import org.jboss.weld.resources.DefaultResourceLoader;
 import org.jboss.weld.resources.MemberTransformer;
@@ -123,7 +116,6 @@ import org.jboss.weld.resources.ReflectionCache;
 import org.jboss.weld.resources.ReflectionCacheFactory;
 import org.jboss.weld.resources.SharedObjectCache;
 import org.jboss.weld.resources.SingleThreadScheduledExecutorServiceFactory;
-import org.jboss.weld.resources.WeldClassLoaderResourceLoader;
 import org.jboss.weld.resources.spi.ClassFileServices;
 import org.jboss.weld.resources.spi.ResourceLoader;
 import org.jboss.weld.resources.spi.ScheduledExecutorServiceFactory;
@@ -131,8 +123,6 @@ import org.jboss.weld.serialization.BeanIdentifierIndex;
 import org.jboss.weld.serialization.ContextualStoreImpl;
 import org.jboss.weld.serialization.spi.ContextualStore;
 import org.jboss.weld.serialization.spi.ProxyServices;
-import org.jboss.weld.servlet.ServletApiAbstraction;
-import org.jboss.weld.servlet.ServletContextService;
 import org.jboss.weld.servlet.spi.HttpContextActivationFilter;
 import org.jboss.weld.servlet.spi.helpers.AcceptingHttpContextActivationFilter;
 import org.jboss.weld.transaction.spi.TransactionServices;
@@ -206,9 +196,7 @@ public class WeldStartup {
             registry.add(ProxyServices.class, new SimpleProxyServices());
         }
 
-        addImplementationServices(registry);
-
-        WeldExtensionRegistrar.register(registry);
+        addImplementationServices(registry, contextId);
 
         verifyServices(registry, environment.getRequiredDeploymentServices());
         if (!registry.contains(TransactionServices.class)) {
@@ -266,7 +254,7 @@ public class WeldStartup {
         initialServices.add(ClassTransformer.class, classTransformer);
     }
 
-    private void addImplementationServices(ServiceRegistry services) {
+    private void addImplementationServices(ServiceRegistry services, String contextId) {
         final WeldConfiguration configuration = services.get(WeldConfiguration.class);
         services.add(SlimAnnotatedTypeStore.class, new SlimAnnotatedTypeStoreImpl());
         if (services.get(ClassTransformer.class) == null) {
@@ -311,12 +299,11 @@ public class WeldStartup {
         if (!services.contains(HttpContextActivationFilter.class)) {
             services.add(HttpContextActivationFilter.class, AcceptingHttpContextActivationFilter.INSTANCE);
         }
-        services.add(ServletContextService.class, new ServletContextService());
         services.add(ProtectionDomainCache.class, new ProtectionDomainCache());
 
         services.add(ProxyInstantiator.class, ProxyInstantiator.Factory.create(configuration));
 
-        WeldExtensionRegistrar.register(services);
+        WeldExtensionRegistrar.register(services, contextId);
 
         GlobalObserverNotifierService observerNotificationService = new GlobalObserverNotifierService(services, contextId);
         services.add(GlobalObserverNotifierService.class, observerNotificationService);
@@ -543,18 +530,13 @@ public class WeldStartup {
         contexts.add(new ContextHolder<RequestContext>(new RequestContextImpl(contextId), RequestContext.class, UnboundLiteral.INSTANCE));
         contexts.add(new ContextHolder<DependentContext>(new DependentContextImpl(services.get(ContextualStore.class)), DependentContext.class, UnboundLiteral.INSTANCE));
 
-        if (Reflections.isClassLoadable(ServletApiAbstraction.SERVLET_CONTEXT_CLASS_NAME, WeldClassLoaderResourceLoader.INSTANCE)) {
-            // Register the Http contexts if not in
-            contexts.add(new ContextHolder<HttpSessionContext>(new HttpSessionContextImpl(contextId, beanIdentifierIndex), HttpSessionContext.class, HttpLiteral.INSTANCE));
-            contexts.add(new ContextHolder<HttpSessionDestructionContext>(new HttpSessionDestructionContext(contextId, beanIdentifierIndex), HttpSessionDestructionContext.class, HttpLiteral.INSTANCE));
-            contexts.add(new ContextHolder<HttpConversationContext>(new LazyHttpConversationContextImpl(contextId, beanIdentifierIndex), HttpConversationContext.class, HttpLiteral.INSTANCE));
-            contexts.add(new ContextHolder<HttpRequestContext>(new HttpRequestContextImpl(contextId), HttpRequestContext.class, HttpLiteral.INSTANCE));
-        }
-
         if (isEjbServicesRegistered()) {
             // Register the EJB Request context if EjbServices are available
             contexts.add(new ContextHolder<EjbRequestContext>(new EjbRequestContextImpl(contextId), EjbRequestContext.class, EjbLiteral.INSTANCE));
         }
+
+        WeldExtensionRegistrar.postCreateContexts(services, contextId);
+        contexts.addAll(services.get(WeldModules.class).getAdditionalContexts());
 
         /*
         * Register the contexts with the bean manager and add the beans to the

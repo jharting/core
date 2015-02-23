@@ -16,14 +16,32 @@
  */
 package org.jboss.weld.web;
 
+import java.util.LinkedList;
+import java.util.List;
+
 import javax.el.ELResolver;
 import javax.el.ExpressionFactory;
+import javax.enterprise.context.spi.Context;
 
+import org.jboss.weld.bootstrap.ContextHolder;
+import org.jboss.weld.context.http.HttpConversationContext;
+import org.jboss.weld.context.http.HttpLiteral;
+import org.jboss.weld.context.http.HttpRequestContext;
+import org.jboss.weld.context.http.HttpRequestContextImpl;
+import org.jboss.weld.context.http.HttpSessionContext;
+import org.jboss.weld.context.http.HttpSessionContextImpl;
+import org.jboss.weld.context.http.HttpSessionDestructionContext;
+import org.jboss.weld.context.http.LazyHttpConversationContextImpl;
 import org.jboss.weld.el.WeldELResolver;
 import org.jboss.weld.el.WeldExpressionFactory;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.module.ExpressionLanguageService;
 import org.jboss.weld.module.WeldModule;
+import org.jboss.weld.resources.WeldClassLoaderResourceLoader;
+import org.jboss.weld.serialization.BeanIdentifierIndex;
+import org.jboss.weld.servlet.ServletApiAbstraction;
+import org.jboss.weld.servlet.ServletContextService;
+import org.jboss.weld.util.reflection.Reflections;
 
 public class WeldWebModule implements WeldModule {
 
@@ -49,7 +67,35 @@ public class WeldWebModule implements WeldModule {
         return "weld-web";
     }
 
+    private final List<ContextHolder<? extends Context>> contexts = new LinkedList<>();
+
     public void register(RegistrationContext ctx) {
         ctx.getServices().add(ExpressionLanguageService.class, EL_SERVICE);
+        ctx.getServices().add(ServletContextService.class, new ServletContextService());
+        ctx.getServices().add(ServletApiAbstraction.class, new ServletApiAbstraction(WeldClassLoaderResourceLoader.INSTANCE));
+    }
+
+    public void postCreateContexts(ContextRegistrationContext ctx) {
+        final BeanIdentifierIndex index = ctx.getServices().get(BeanIdentifierIndex.class);
+        final String contextId = ctx.getContextId();
+        if (Reflections.isClassLoadable(ServletApiAbstraction.SERVLET_CONTEXT_CLASS_NAME, WeldClassLoaderResourceLoader.INSTANCE)) {
+            // Register the Http contexts if not in
+            contexts.add(new ContextHolder<HttpSessionContext>(new HttpSessionContextImpl(contextId, index), HttpSessionContext.class, HttpLiteral.INSTANCE));
+            contexts.add(new ContextHolder<HttpSessionDestructionContext>(new HttpSessionDestructionContext(contextId, index), HttpSessionDestructionContext.class, HttpLiteral.INSTANCE));
+            contexts.add(new ContextHolder<HttpConversationContext>(new LazyHttpConversationContextImpl(contextId, index), HttpConversationContext.class, HttpLiteral.INSTANCE));
+            contexts.add(new ContextHolder<HttpRequestContext>(new HttpRequestContextImpl(contextId), HttpRequestContext.class, HttpLiteral.INSTANCE));
+        }
+
+        for (ContextHolder<? extends Context> context : contexts) {
+            ctx.addContext(context);
+        }
+    }
+
+    public void preDeployBeans(PreBeanRegistrationContext ctx) {
+        if (Reflections.isClassLoadable(ServletApiAbstraction.SERVLET_CONTEXT_CLASS_NAME, WeldClassLoaderResourceLoader.INSTANCE)) {
+            ctx.registerBean(new HttpServletRequestBean(ctx.getBeanManager()));
+            ctx.registerBean(new HttpSessionBean(ctx.getBeanManager()));
+            ctx.registerBean(new ServletContextBean(ctx.getBeanManager()));
+        }
     }
 }
