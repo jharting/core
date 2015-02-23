@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2008, Red Hat, Inc., and individual contributors
+ * Copyright 2015, Red Hat, Inc., and individual contributors
  * by the @authors tag. See the copyright.txt in the distribution for a
  * full listing of individual contributors.
  *
@@ -14,18 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.weld.manager;
+package org.jboss.weld.module;
 
+import javax.el.ELResolver;
+import javax.el.ExpressionFactory;
 
-class NamespaceTransform implements Transform<String> {
+import org.jboss.weld.bootstrap.api.Service;
+import org.jboss.weld.manager.BeanManagerImpl;
 
-    static final NamespaceTransform INSTANCE = new NamespaceTransform();
+public interface ExpressionLanguageService extends Service {
 
-    private NamespaceTransform() {
-    }
+    ExpressionFactory wrapExpressionFactory(ExpressionFactory expressionFactory);
 
-    public Iterable<String> transform(BeanManagerImpl beanManager) {
-        return beanManager.getNamespaces();
-    }
-
+    ELResolver createElResolver(BeanManagerImpl manager);
 }
