@@ -5,6 +5,7 @@ Weld is the reference implementation of CDI: Contexts and Dependency Injection f
 
 Weld is integrated into many Java EE application servers such as WildFly, JBoss Enterprise Application Platform, GlassFish, Oracle WebLogic and others. Weld can also be used in a Servlet-only environment (Tomcat, Jetty) or plain Java SE environment.
 
+See http://weld.cdi-spec.org for more details.
 
 Building Weld
 -------------
