@@ -46,9 +46,10 @@ import org.jboss.weld.util.cache.ComputingCacheBuilder;
 import org.jboss.weld.util.reflection.Reflections;
 
 /**
- * Provides event-related operations such sa observer method resolution and event delivery.
+ * Provides event-related operations such as observer method resolution and event delivery.
  *
- *
+ * An ObserverNotifier may be created with strict checks enabled. In such case event type checks are performed. Otherwise, the ObserverNotifier is called lenient.
+ * The lenient version should be used for internal dispatching of events only.
  *
  * @author Jozef Hartinger
  * @author David Allen
@@ -79,16 +80,37 @@ public class ObserverNotifier {
         this.asyncEventExecutor = services.getOptional(ExecutorServices.class).map((e) -> e.getTaskExecutor()).orElse(ForkJoinPool.commonPool());
     }
 
+    /**
+     * Resolves observer methods based on the runtime type of the given event object and qualifiers. If strict checks are enabled the runtime type of the event
+     * object is verified.
+     *
+     * @param event the event object
+     * @param bindings given qualifiers
+     * @return resolved observer methods
+     */
     public <T> ResolvedObservers<T> resolveObserverMethods(T event, Annotation... bindings) {
         checkEventObjectType(event);
         return this.<T>resolveObserverMethods(buildEventResolvable(event.getClass(), bindings));
     }
 
+    /**
+     * Resolves observer methods based on the given type and qualifiers. If strict checks are enabled the given type is verified.
+     *
+     * @param event the event object
+     * @param bindings given qualifiers
+     * @return resolved observer methods
+     */
     public <T> ResolvedObservers<T> resolveObserverMethods(Type eventType, Set<Annotation> qualifiers) {
         checkEventObjectType(eventType);
         return this.<T>resolveObserverMethods(buildEventResolvable(eventType, qualifiers));
     }
 
+    public <T> ResolvedObservers<T> resolveObserverMethods(Type eventType, Annotation... qualifiers) {
+        checkEventObjectType(eventType);
+        return this.<T>resolveObserverMethods(buildEventResolvable(eventType, qualifiers));
+    }
+
+    // TODO remove
     public <T> ResolvedObservers<T> resolveObserverMethods(Resolvable resolvable) {
         return cast(resolver.resolve(resolvable, true));
     }
@@ -112,7 +134,7 @@ public class ObserverNotifier {
         notify(resolveObserverMethods(resolvable), event, null);
     }
 
-    public Resolvable buildEventResolvable(Type eventType, Set<Annotation> qualifiers) {
+    protected Resolvable buildEventResolvable(Type eventType, Set<Annotation> qualifiers) {
         // We can always cache as this is only ever called by Weld where we avoid non-static inner classes for annotation literals
         Set<Type> typeClosure = sharedObjectCache.getTypeClosureHolder(eventType).get();
         return new ResolvableBuilder(resolver.getMetaAnnotationStore())
@@ -123,7 +145,7 @@ public class ObserverNotifier {
             .create();
     }
 
-    public Resolvable buildEventResolvable(Type eventType, Annotation... qualifiers) {
+    protected Resolvable buildEventResolvable(Type eventType, Annotation... qualifiers) {
         // We can always cache as this is only ever called by Weld where we avoid non-static inner classes for annotation literals
         return new ResolvableBuilder(resolver.getMetaAnnotationStore())
             .addTypes(sharedObjectCache.getTypeClosureHolder(eventType).get())

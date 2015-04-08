@@ -28,6 +28,13 @@ import javax.enterprise.inject.spi.ObserverMethod;
 import org.jboss.weld.util.Observers;
 import org.jboss.weld.util.collections.ImmutableList;
 
+/**
+ * Immutable information about observer methods resolved for a type/qualifiers combination.
+ *
+ * @author Jozef Hartinger
+ *
+ * @param <T> the event type
+ */
 public class ResolvedObservers<T> {
 
     private static final ResolvedObservers<Object> EMPTY = new ResolvedObservers<Object>(Collections.emptyList(), Collections.emptyList(), false) {
