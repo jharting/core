@@ -36,3 +36,4 @@ within WildFly. Then, run:
 
 > $ mvn clean verify -Dincontainer -f jboss-tck-runner/pom.xml
 
+FOO
