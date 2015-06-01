@@ -31,7 +31,7 @@ import org.jboss.weld.bean.RIBean;
 import org.jboss.weld.bootstrap.api.ServiceRegistry;
 import org.jboss.weld.ejb.EjbDescriptors;
 import org.jboss.weld.ejb.InternalEjbDescriptor;
-import org.jboss.weld.executor.IterativeWorkerTaskFactory;
+import org.jboss.weld.executor.TaskPerItemTaskFactory;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.manager.api.ExecutorServices;
 import org.jboss.weld.util.Beans;
@@ -59,7 +59,7 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
     @Override
     public BeanDeployer addClasses(Iterable<String> c) {
         final AnnotatedTypeLoader loader = createAnnotatedTypeLoader();
-        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<String>(c) {
+        executor.invokeAllAndCheckForExceptions(new TaskPerItemTaskFactory<String>(c) {
             @Override
             protected void doWork(String className) {
                 addClass(className, loader);
@@ -72,14 +72,14 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
     public void createClassBeans() {
         final LoadingCache<Class<?>, Set<SlimAnnotatedType<?>>> otherWeldClasses = Multimaps.newConcurrentSetMultimap();
 
-        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<SlimAnnotatedTypeContext<?>>(getEnvironment().getAnnotatedTypes()) {
+        executor.invokeAllAndCheckForExceptions(new TaskPerItemTaskFactory<SlimAnnotatedTypeContext<?>>(getEnvironment().getAnnotatedTypes()) {
             @Override
             protected void doWork(SlimAnnotatedTypeContext<?> ctx) {
                 createClassBean(ctx.getAnnotatedType(), otherWeldClasses);
             }
         });
 
-        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<InternalEjbDescriptor<?>>(getEnvironment().getEjbDescriptors()) {
+        executor.invokeAllAndCheckForExceptions(new TaskPerItemTaskFactory<InternalEjbDescriptor<?>>(getEnvironment().getEjbDescriptors()) {
             @Override
             protected void doWork(InternalEjbDescriptor<?> descriptor) {
                 if (!getEnvironment().isVetoed(descriptor.getBeanClass()) && !Beans.isVetoed(descriptor.getBeanClass())) {
@@ -100,7 +100,7 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
 
     @Override
     public void createProducersAndObservers() {
-        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<AbstractClassBean<?>>(getEnvironment().getClassBeans()) {
+        executor.invokeAllAndCheckForExceptions(new TaskPerItemTaskFactory<AbstractClassBean<?>>(getEnvironment().getClassBeans()) {
             @Override
             protected void doWork(AbstractClassBean<?> bean) {
                 createObserversProducersDisposers(bean);
@@ -115,7 +115,7 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
 
     @Override
     public AbstractBeanDeployer<BeanDeployerEnvironment> initializeBeans() {
-        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<RIBean<?>>(getEnvironment().getBeans()) {
+        executor.invokeAllAndCheckForExceptions(new TaskPerItemTaskFactory<RIBean<?>>(getEnvironment().getBeans()) {
             @Override
             protected void doWork(RIBean<?> bean) {
                 bean.initialize(getEnvironment());
@@ -124,7 +124,7 @@ public class ConcurrentBeanDeployer extends BeanDeployer {
         return this;
     }
 
-    private static class AfterBeanDiscoveryInitializerFactory extends IterativeWorkerTaskFactory<Bean<?>> {
+    private static class AfterBeanDiscoveryInitializerFactory extends TaskPerItemTaskFactory<Bean<?>> {
 
         public AfterBeanDiscoveryInitializerFactory(Iterable<? extends Bean<?>> iterable) {
             super(iterable);

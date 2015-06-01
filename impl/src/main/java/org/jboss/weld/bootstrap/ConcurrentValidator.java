@@ -32,7 +32,7 @@ import javax.enterprise.inject.spi.Producer;
 
 import org.jboss.weld.bean.CommonBean;
 import org.jboss.weld.exceptions.DeploymentException;
-import org.jboss.weld.executor.IterativeWorkerTaskFactory;
+import org.jboss.weld.executor.TaskPerItemTaskFactory;
 import org.jboss.weld.logging.ValidatorLogger;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.manager.api.ExecutorServices;
@@ -63,7 +63,7 @@ public class ConcurrentValidator extends Validator {
         final List<RuntimeException> problems = new CopyOnWriteArrayList<RuntimeException>();
         final Set<CommonBean<?>> specializedBeans = Sets.newSetFromMap(new ConcurrentHashMap<CommonBean<?>, Boolean>());
 
-        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<Bean<?>>(beans) {
+        executor.invokeAllAndCheckForExceptions(new TaskPerItemTaskFactory<Bean<?>>(beans) {
             protected void doWork(Bean<?> bean) {
                 validateBean(bean, specializedBeans, manager, problems);
             }
@@ -80,7 +80,7 @@ public class ConcurrentValidator extends Validator {
 
     @Override
     public void validateInterceptors(Collection<? extends Interceptor<?>> interceptors, final BeanManagerImpl manager) {
-        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<Interceptor<?>>(interceptors) {
+        executor.invokeAllAndCheckForExceptions(new TaskPerItemTaskFactory<Interceptor<?>>(interceptors) {
             protected void doWork(Interceptor<?> interceptor) {
                 validateInterceptor(interceptor, manager);
             }
@@ -91,7 +91,7 @@ public class ConcurrentValidator extends Validator {
     public void validateDecorators(Collection<? extends Decorator<?>> decorators, final BeanManagerImpl manager) {
         final Set<CommonBean<?>> specializedBeans = Sets.newSetFromMap(new ConcurrentHashMap<CommonBean<?>, Boolean>());
 
-        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<Decorator<?>>(decorators) {
+        executor.invokeAllAndCheckForExceptions(new TaskPerItemTaskFactory<Decorator<?>>(decorators) {
             protected void doWork(Decorator<?> decorator) {
                 validateDecorator(decorator, specializedBeans, manager);
             }
@@ -100,7 +100,7 @@ public class ConcurrentValidator extends Validator {
 
     @Override
     protected void validateObserverMethods(Iterable<ObserverInitializationContext<?, ?>> observers, final BeanManagerImpl beanManager) {
-        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<ObserverInitializationContext<?, ?>>(observers) {
+        executor.invokeAllAndCheckForExceptions(new TaskPerItemTaskFactory<ObserverInitializationContext<?, ?>>(observers) {
             protected void doWork(ObserverInitializationContext<?, ?> observerMethod) {
                 for (InjectionPoint ip : observerMethod.getObserver().getInjectionPoints()) {
                     validateInjectionPointForDefinitionErrors(ip, ip.getBean(), beanManager);
@@ -127,7 +127,7 @@ public class ConcurrentValidator extends Validator {
         }
 
         final SpecializationAndEnablementRegistry registry = beanManager.getServices().get(SpecializationAndEnablementRegistry.class);
-        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<String>(namedAccessibleBeans.keySet()) {
+        executor.invokeAllAndCheckForExceptions(new TaskPerItemTaskFactory<String>(namedAccessibleBeans.keySet()) {
             protected void doWork(String name) {
                 Set<Bean<?>> resolvedBeans = beanManager.getBeanResolver().<Object>resolve(Beans.removeDisabledBeans(namedAccessibleBeans.get(name), beanManager, registry));
                 if (resolvedBeans.size() > 1) {
@@ -142,7 +142,7 @@ public class ConcurrentValidator extends Validator {
 
     @Override
     public void validateProducers(Collection<Producer<?>> producers, final BeanManagerImpl beanManager) {
-        executor.invokeAllAndCheckForExceptions(new IterativeWorkerTaskFactory<Producer<?>>(producers) {
+        executor.invokeAllAndCheckForExceptions(new TaskPerItemTaskFactory<Producer<?>>(producers) {
             protected void doWork(Producer<?> producer) {
                 validateProducer(producer, beanManager);
             }
